@@ -1,4 +1,5 @@
 # Variant Interpretation Pipeline - VCF Report Generator
+See https://github.com/molgenis/vip-report#readme
 
 ## Report API
 JavaScript Report API that can be used to query report data in a report template to generate reports for any VCF (Variant Call Format) file.
