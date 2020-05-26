@@ -1,11 +1,15 @@
 language: node_js
 node_js:
-- lts/*
+  - lts/*
+addons:
+  sonarcloud:
+    organization: molgenis
+    token:
+      secure: jLuVPAB7cIfVQfISdPSRfZ0PDTAdpSk5ziqfcfpqSHvI4sczDF9V8nZiSBCIRoL42Kvy1DZHS81qQHyvhleduihfn1cjYQ80QHDFiX6lIQbb/P4b5CZpCVhGTLUYPrG1buI/nSEIrj3c4I4dgfwpv0+OUKKV1OttmE3dH0pxKqcjWpaRvPZqd/zZJsPPkVkQtuUWkdHbppjjWt2r7YuPtudjAQ5tABgexzKMHgfVCuxGdY10YUVI2pYyWtUdpyGWykYmZayyJllsG4apZhlvqDVMG8vuLnmo7NuixVLXYDXu9YFGob6+rAk5OlXep2JtCZBXLPDK3FMjrhM2EA1MQYoQHIDlI+CxcG+udyY5XJ8ETMIr/U032Oq60kIns1CTs85mddlMGsoBNbVpNMtuxzay/OSq+b+KiRP792/R5DW+fD3VsWhNMX9GY4kKUdsgaHiObbnc6784uPzHBtDFC+8cktAvYfyw2ADvO4lLQXqxvE4IO6xLVbyWxplRzs7gBLmbmQ3S8fm7shUP7b401d5sHyzfhCFn+VlHafBKuDj3qACNSZj8ueH/0mcyWzM/e2LP9yeukUSxMpQhhvOlzf64fiH0POoCfqKE1VHowMtiIvt1++CvS86G/swcSfKIxvRKc8/gVQC5eawg4jugZqPges8oX8JAIqbs5zZAEWM=
 deploy:
   provider: npm
   api_token:
     secure: s4D98zUZ2cuGc4+bNDB6OOvcGc4guMQ+SVsVLSS3Deq0aKX/QQVamP/IS9G5DbxNxxDrWplHhuLTzcsLYBgQ0vmn2vqLLxJOcyYX93+7mnQvYxLwilkVMfVEtmqV1Nf2bKNlyZk+LnjPNp8+yyWdUaLDzt0GG0YwLaoLZPUxdjV1i532MItFmlwBdEOl3olxpJ9qEh5YxL9sJ92vFbmCg3f65/bv8n1I70AVKiwXYyXjhSXz61w8j6rDAWfQ24jq5m+qvDrpEIuUENZbD45XBX09g6Kmu7CuPvwfiO5z6TBxWajIEVXZcUV+U9y58RKwcuWFagNSr5j5oXZhUqXdEJVFuHIpbrXUthn0YdST/0nsidXwMuzrIcperI7+mCUi/gxZ4tKEODUbq176niDOVnBc5aV02sHPY3yKn6clo4w7l1ng3GwzGFH7qMC6EoTXaUPoALlE09OXaQBGNvSy2rJgKP//GNnqj8N3YzStUje5Car5MJaI3rKo0pNyLT0rMm+hXdubEKmiYFpp6QziXXVXICu5MX9hJAjEbPkyw7pDGeGi3M2eAE2I3QAR8JS/cuB/qo76KnJbHcrvULTi3KrCgyA55PhEENrt09s0u2z/stp+arAv3f3GI/5ECZ/JkL0hmJMRHSXczXfF5MMw7e3fvC0Rk5xcXs9Ie7J1ylA=
-  prerelease: true
-    on:
-      tags: true
+  on:
+    tags: true
   edge: true
