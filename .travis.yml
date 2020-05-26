@@ -10,7 +10,6 @@ deploy:
   provider: npm
   api_token:
     secure: s4D98zUZ2cuGc4+bNDB6OOvcGc4guMQ+SVsVLSS3Deq0aKX/QQVamP/IS9G5DbxNxxDrWplHhuLTzcsLYBgQ0vmn2vqLLxJOcyYX93+7mnQvYxLwilkVMfVEtmqV1Nf2bKNlyZk+LnjPNp8+yyWdUaLDzt0GG0YwLaoLZPUxdjV1i532MItFmlwBdEOl3olxpJ9qEh5YxL9sJ92vFbmCg3f65/bv8n1I70AVKiwXYyXjhSXz61w8j6rDAWfQ24jq5m+qvDrpEIuUENZbD45XBX09g6Kmu7CuPvwfiO5z6TBxWajIEVXZcUV+U9y58RKwcuWFagNSr5j5oXZhUqXdEJVFuHIpbrXUthn0YdST/0nsidXwMuzrIcperI7+mCUi/gxZ4tKEODUbq176niDOVnBc5aV02sHPY3yKn6clo4w7l1ng3GwzGFH7qMC6EoTXaUPoALlE09OXaQBGNvSy2rJgKP//GNnqj8N3YzStUje5Car5MJaI3rKo0pNyLT0rMm+hXdubEKmiYFpp6QziXXVXICu5MX9hJAjEbPkyw7pDGeGi3M2eAE2I3QAR8JS/cuB/qo76KnJbHcrvULTi3KrCgyA55PhEENrt09s0u2z/stp+arAv3f3GI/5ECZ/JkL0hmJMRHSXczXfF5MMw7e3fvC0Rk5xcXs9Ie7J1ylA=
-  prerelease: true
-    on:
-      tags: true
+  on:
+    tags: true
   edge: true
