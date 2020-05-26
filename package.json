@@ -1,0 +1,22 @@
+{
+  "name": "@molgenis/vip-report-api",
+  "version": "0.0.1",
+  "description": "Report API for Variant Call Format (VCF) Report Templates",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/molgenis/vip-report-api.git"
+  },
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/molgenis/vip-report-api/issues"
+  },
+  "homepage": "https://github.com/molgenis/vip-report-api#readme",
+  "devDependencies": {
+    "mocha": "^7.2.0",
+    "chai": "^4.2.0"
+  }
+}
