@@ -1,0 +1,10 @@
+# npm
+node_modules
+npm-debug.log
+
+# ide
+/.idea/
+/vip-report-api.iml
+
+# misc
+package-lock.json
