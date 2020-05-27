@@ -17,7 +17,7 @@ module.exports = class Api {
 
             let resources = this.reportData.data[resource].items.slice()
             if (params.query) {
-                resources = resources.filter(resource => matches(params.query, resource))
+                resources = resources.filter(aResource => matches(params.query, aResource))
             }
             if (params.sort) {
                 const prop = params.sort
@@ -61,24 +61,24 @@ module.exports = class Api {
 }
 
 function matches(query, resource) {
-    let matches
+    let match
     switch (query.operator) {
         case '==':
-            matches = matchesEquals(query, resource)
+            match = matchesEquals(query, resource)
             break
         case 'in':
-            matches = matchesIn(query, resource)
+            match = matchesIn(query, resource)
             break
         case '!=':
-            matches = !matchesEquals(query, resource)
+            match = !matchesEquals(query, resource)
             break
         case '!in':
-            matches = !matchesIn(query, resource)
+            match = !matchesIn(query, resource)
             break
         default:
             throw 'unexpected query operator ' + query.operator
     }
-    return matches
+    return match
 }
 
 function matchesEquals(query, resource) {

@@ -121,7 +121,7 @@ describe('get', function () {
 
     it('should throw an error when the resource is unknown', async function () {
         try {
-
+            await api.get('unknown')
         } catch (err) {
             assert.equal(err, 'unknown resource \'unknown\'')
         }
