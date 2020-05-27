@@ -103,13 +103,13 @@ function matchesIn(query, resource) {
         value = resource[query.selector]
     }
 
-    let matches = false
+    let match = false
     for (const arg of query.args) {
         if (value === arg) {
-            matches = true
+            match = true
             break
         }
     }
-    return matches
+    return match
 }
 
