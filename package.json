@@ -4,7 +4,7 @@
   "description": "Report API for Variant Call Format (VCF) Report Templates",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -16,10 +16,10 @@
   },
   "homepage": "https://github.com/molgenis/vip-report-api#readme",
   "devDependencies": {
-    "mocha": "^7.2.0",
-    "chai": "^4.2.0"
+    "jest": "^26.0.1"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "dependencies": {}
 }
