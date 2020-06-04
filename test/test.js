@@ -46,6 +46,46 @@ beforeEach(() => {
                             "t": "hom_r"
                         }
                     }]
+                },
+                {
+                    "c": "1",
+                    "p": 16376412,
+                    "r": "G",
+                    "a": [
+                        "A"
+                    ],
+                    "s": [
+                        {
+                            "gt": {
+                                "a": [
+                                    "A",
+                                    "G"
+                                ],
+                                "p": true,
+                                "t": "het"
+                            }
+                        },
+                        {
+                            "gt": {
+                                "a": [
+                                    "G",
+                                    "A"
+                                ],
+                                "p": true,
+                                "t": "het"
+                            }
+                        },
+                        {
+                            "gt": {
+                                "a": [
+                                    "A",
+                                    "G"
+                                ],
+                                "p": true,
+                                "t": "het"
+                            }
+                        }
+                    ]
                 }],
                 "total": 32
             }
@@ -100,8 +140,290 @@ test('get - all records', async () => {
                     "t": "hom_r"
                 }
             }]
+        },
+        {
+            "c": "1",
+            "p": 16376412,
+            "r": "G",
+            "a": [
+                "A"
+            ],
+            "s": [
+                {
+                    "gt": {
+                        "a": [
+                            "A",
+                            "G"
+                        ],
+                        "p": true,
+                        "t": "het"
+                    }
+                },
+                {
+                    "gt": {
+                        "a": [
+                            "G",
+                            "A"
+                        ],
+                        "p": true,
+                        "t": "het"
+                    }
+                },
+                {
+                    "gt": {
+                        "a": [
+                            "A",
+                            "G"
+                        ],
+                        "p": true,
+                        "t": "het"
+                    }
+                }
+            ]
         }],
-        page: {number: 0, size: 10, totalElements: 1},
+        page: {number: 0, size: 10, totalElements: 2},
+        total: 32
+    })
+});
+
+test('get - one record', async () => {
+    const params = {
+        query: {
+            selector: ['p'],
+            operator: '==',
+            args: 10042538
+        }
+    }
+    const records = await api.get('records', params)
+    expect(records).toEqual({
+        items: [{
+            "c": "1",
+            "p": 10042538,
+            "i": ["rs123"],
+            "r": "C",
+            "a": ["T"],
+            "s": [{
+                "gt": {
+                    "a": ["T", "C"],
+                    "p": true,
+                    "t": "het"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }]
+        }],
+        page: {number: 0, size: 10, totalElements: 2},
+        total: 32
+    })
+});
+
+test('get - all records sorted descending on position', async () => {
+    const params = {
+        sort: 'p',
+        desc: true
+    }
+    const records = await api.get('records', params)
+    expect(records).toEqual({
+        items: [{
+                "c": "1",
+                "p": 16376412,
+                "r": "G",
+                "a": [
+                    "A"
+                ],
+                "s": [
+                    {
+                        "gt": {
+                            "a": [
+                                "A",
+                                "G"
+                            ],
+                            "p": true,
+                            "t": "het"
+                        }
+                    },
+                    {
+                        "gt": {
+                            "a": [
+                                "G",
+                                "A"
+                            ],
+                            "p": true,
+                            "t": "het"
+                        }
+                    },
+                    {
+                        "gt": {
+                            "a": [
+                                "A",
+                                "G"
+                            ],
+                            "p": true,
+                            "t": "het"
+                        }
+                    }
+                ]
+            },
+            {
+            "c": "1",
+            "p": 10042538,
+            "i": ["rs123"],
+            "r": "C",
+            "a": ["T"],
+            "s": [{
+                "gt": {
+                    "a": ["T", "C"],
+                    "p": true,
+                    "t": "het"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }]
+        }],
+        page: {number: 0, size: 10, totalElements: 2},
+        total: 32
+    })
+});
+
+test('get - not one record', async () => {
+    const params = {
+        query: {
+            selector: ['p'],
+            operator: '!=',
+            args: 16376412
+        }
+    }
+    const records = await api.get('records', params)
+    expect(records).toEqual({
+        items: [{
+            "c": "1",
+            "p": 10042538,
+            "i": ["rs123"],
+            "r": "C",
+            "a": ["T"],
+            "s": [{
+                "gt": {
+                    "a": ["T", "C"],
+                    "p": true,
+                    "t": "het"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }]
+        }],
+        page: {number: 0, size: 10, totalElements: 2},
+        total: 32
+    })
+});
+
+test('get - some records', async () => {
+    const params = {
+        query: {
+            selector: ['p'],
+            operator: 'in',
+            args: [10042537, 10042538, 10042539]
+        }
+    }
+    const records = await api.get('records', params)
+    expect(records).toEqual({
+        items: [{
+            "c": "1",
+            "p": 10042538,
+            "i": ["rs123"],
+            "r": "C",
+            "a": ["T"],
+            "s": [{
+                "gt": {
+                    "a": ["T", "C"],
+                    "p": true,
+                    "t": "het"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }]
+        }],
+        page: {number: 0, size: 10, totalElements: 2},
+        total: 32
+    })
+});
+
+test('get - not some records', async () => {
+    const params = {
+        query: {
+            selector: ['p'],
+            operator: '!in',
+            args: [16376411, 16376412, 16376413]
+        }
+    }
+    const records = await api.get('records', params)
+    expect(records).toEqual({
+        items: [{
+            "c": "1",
+            "p": 10042538,
+            "i": ["rs123"],
+            "r": "C",
+            "a": ["T"],
+            "s": [{
+                "gt": {
+                    "a": ["T", "C"],
+                    "p": true,
+                    "t": "het"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }, {
+                "gt": {
+                    "a": ["C", "C"],
+                    "p": true,
+                    "t": "hom_r"
+                }
+            }]
+        }],
+        page: {number: 0, size: 10, totalElements: 2},
         total: 32
     })
 });
