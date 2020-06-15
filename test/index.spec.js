@@ -1,4 +1,4 @@
-const Api = require('../index.js')
+const Api = require('../src')
 
 let api
 const record0 = {
@@ -105,7 +105,7 @@ test('getMeta', async () => {
 });
 
 test('get - all samples', async () => {
-    const samples = await api.get('samples')
+    const samples = await api.getSamples()
     expect(samples).toEqual({
         items: [{name: 'Patient'}, {name: 'Mother'}, {name: 'Father'}],
         page: {number: 0, size: 10, totalElements: 3},
@@ -114,7 +114,7 @@ test('get - all samples', async () => {
 });
 
 test('get - all records', async () => {
-    const records = await api.get('records')
+    const records = await api.getRecords()
     expect(records).toEqual({
         items: [record0, record1],
         page: {number: 0, size: 10, totalElements: 2},
@@ -130,7 +130,7 @@ test('get - one record', async () => {
             args: 10042538
         }
     }
-    const records = await api.get('records', params)
+    const records = await api.getRecords(params)
     expect(records).toEqual({
         items: [record0],
         page: {number: 0, size: 10, totalElements: 2},
@@ -143,7 +143,7 @@ test('get - all records sorted descending on position', async () => {
         sort: 'p',
         desc: true
     }
-    const records = await api.get('records', params)
+    const records = await api.getRecords(params)
     expect(records).toEqual({
         items: [record1, record0],
         page: {number: 0, size: 10, totalElements: 2},
@@ -159,7 +159,7 @@ test('get - not one record', async () => {
             args: 16376412
         }
     }
-    const records = await api.get('records', params)
+    const records = await api.getRecords(params)
     expect(records).toEqual({
         items: [record0],
         page: {number: 0, size: 10, totalElements: 2},
@@ -175,7 +175,7 @@ test('get - some records', async () => {
             args: [10042537, 10042538, 10042539]
         }
     }
-    const records = await api.get('records', params)
+    const records = await api.getRecords(params)
     expect(records).toEqual({
         items: [record0],
         page: {number: 0, size: 10, totalElements: 2},
@@ -191,7 +191,7 @@ test('get - not some records', async () => {
             args: [16376411, 16376412, 16376413]
         }
     }
-    const records = await api.get('records', params)
+    const records = await api.getRecords(params)
     expect(records).toEqual({
         items: [record0],
         page: {number: 0, size: 10, totalElements: 2},
