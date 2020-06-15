@@ -5,7 +5,7 @@ export = Api
 declare class Api {
     constructor(reportData: ReportData)
 
-    getMeta(): Metadata
+    getMeta(): Promise<Metadata>
 
     getRecords(params?: Params): Promise<Items<Record>>
     getSamples(params?: Params): Promise<Items<Sample>>
