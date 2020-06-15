@@ -58,6 +58,18 @@ module.exports = class Api {
             resolve(response)
         })
     }
+
+    getRecords(params = {}) {
+        return this.get('records', params)
+    }
+
+    getSamples(params = {}) {
+        return this.get('samples', params)
+    }
+
+    getPhenotypes(params = {}) {
+        return this.get('phenotypes', params)
+    }
 }
 
 function matches(query, resource) {
@@ -112,4 +124,3 @@ function matchesIn(query, resource) {
     }
     return match
 }
-
