@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/molgenis/vip-report-api#readme",
   "devDependencies": {
-    "jest": "^26.0.1"
+    "jest": "^26.0.1",
+    "typescript": "^3.9.5"
   },
   "publishConfig": {
     "access": "public"
