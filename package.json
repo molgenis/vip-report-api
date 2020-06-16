@@ -2,8 +2,8 @@
   "name": "@molgenis/vip-report-api",
   "version": "0.0.3",
   "description": "Report API for Variant Call Format (VCF) Report Templates",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "src/api.js",
+  "types": "src/api.d.ts",
   "scripts": {
     "test": "jest --coverage"
   },
@@ -17,7 +17,12 @@
   },
   "homepage": "https://github.com/molgenis/vip-report-api#readme",
   "devDependencies": {
-    "jest": "^26.0.1"
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
+    "@babel/preset-typescript": "^7.10.1",
+    "babel-jest": "^26.0.1",
+    "jest": "^26.0.1",
+    "typescript": "^3.9.5"
   },
   "publishConfig": {
     "access": "public"

@@ -1,4 +1,4 @@
-const Api = require('../src')
+import Api from '../src/api.ts'
 
 let api
 const record0 = {
@@ -89,6 +89,10 @@ beforeEach(() => {
             "records": {
                 "items": [record0, record1],
                 "total": 32
+            },
+            "phenotypes": {
+                "items": [],
+                "total": 0
             }
         }
     }
@@ -205,4 +209,13 @@ test('get - unknown resource', async () => {
     } catch (err) {
         expect(err).toEqual('unknown resource \'unknown\'')
     }
+});
+
+test('get - all phenotypes', async () => {
+    const phenotypes = await api.getPhenotypes()
+    expect(phenotypes).toEqual({
+        items: [],
+        page: {number: 0, size: 10, totalElements: 0},
+        total: 0
+    })
 });
