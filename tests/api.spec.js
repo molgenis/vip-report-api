@@ -1,4 +1,4 @@
-const Api = require('../src')
+import Api from '../src/api.ts'
 
 let api
 const record0 = {
