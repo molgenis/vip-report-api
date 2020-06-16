@@ -1,18 +1,20 @@
+export = Api
+
+declare class Api {
+    constructor(reportData: Report.ReportData)
+
+    getMeta(): Promise<Report.Metadata>
+
+    getRecords(params?: Report.Params): Promise<Report.Items<Report.Record>>
+
+    getSamples(params?: Report.Params): Promise<Report.Items<Report.Sample>>
+
+    getPhenotypes(params?: Report.Params): Promise<Report.Items<Report.Phenotype>>
+
+    get(resource: string, params?: Report.Params): Promise<Report.Items<Report.Resource>>
+}
+
 declare namespace Report {
-    export class Api {
-        constructor(reportData: Report.ReportData)
-
-        getMeta(): Promise<Report.Metadata>
-
-        getRecords(params?: Report.Params): Promise<Report.Items<Report.Record>>
-
-        getSamples(params?: Report.Params): Promise<Report.Items<Report.Sample>>
-
-        getPhenotypes(params?: Report.Params): Promise<Report.Items<Report.Phenotype>>
-
-        get(resource: string, params?: Report.Params): Promise<Report.Items<Report.Resource>>
-    }
-
     export interface ReportData {
         metadata: Metadata,
         data: object
