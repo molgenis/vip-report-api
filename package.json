@@ -2,8 +2,8 @@
   "name": "@molgenis/vip-report-api",
   "version": "0.0.3",
   "description": "Report API for Variant Call Format (VCF) Report Templates",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest --config jestconfig.json --coverage",
