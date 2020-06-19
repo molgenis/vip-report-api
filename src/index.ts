@@ -73,10 +73,11 @@ export interface RecordsMetadata {
 export interface InfoMetadata {
     id: string
     number?: InfoNumberMetadata
-    type: 'CHARACTER' | 'INTEGER' | 'FLAG' | 'FLOAT' | 'STRING'
+    type: 'CHARACTER' | 'INTEGER' | 'FLAG' | 'FLOAT' | 'STRING' | 'NESTED'
     description: string
     source?: string
     version?: string
+    nested?: Array<InfoMetadata>
 }
 
 export interface InfoNumberMetadata {

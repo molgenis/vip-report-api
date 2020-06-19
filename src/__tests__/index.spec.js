@@ -1,4 +1,4 @@
-import Api from '../src/api.ts'
+import Api from '../index'
 
 let api
 const record0 = {
