@@ -1,6 +1,6 @@
-import Api from '../index';
+import Api, { Params } from '../index';
 
-let api;
+let api: Api;
 const record0 = {
   c: '1',
   p: 10042538,
@@ -64,9 +64,19 @@ const record1 = {
 beforeEach(() => {
   const reportData = {
     metadata: {
-      appName: 'vcf-report',
-      appVersion: '0.0.1',
-      appArgs: '-i test.vcf -d',
+      app: {
+        name: 'vcf-report',
+        version: '0.0.1',
+        args: '-i test.vcf -d',
+      },
+      htsFile: {
+        htsFormat: 'VCF',
+        uri: 'file://file0.vcf.gz',
+        genomeAssembly: 'GRCh38',
+      },
+      records: {
+        info: [],
+      },
     },
     data: {
       samples: {
@@ -99,9 +109,19 @@ beforeEach(() => {
 test('getMeta', async () => {
   const metadata = await api.getMeta();
   expect(metadata).toEqual({
-    appName: 'vcf-report',
-    appVersion: '0.0.1',
-    appArgs: '-i test.vcf -d',
+    app: {
+      name: 'vcf-report',
+      version: '0.0.1',
+      args: '-i test.vcf -d',
+    },
+    htsFile: {
+      htsFormat: 'VCF',
+      uri: 'file://file0.vcf.gz',
+      genomeAssembly: 'GRCh38',
+    },
+    records: {
+      info: [],
+    },
   });
 });
 
@@ -124,7 +144,7 @@ test('get - all records', async () => {
 });
 
 test('get - one record', async () => {
-  const params = {
+  const params: Params = {
     query: {
       selector: ['p'],
       operator: '==',
@@ -140,7 +160,7 @@ test('get - one record', async () => {
 });
 
 test('get - all records sorted descending on position', async () => {
-  const params = {
+  const params: Params = {
     sort: 'p',
     desc: true,
   };
@@ -153,7 +173,7 @@ test('get - all records sorted descending on position', async () => {
 });
 
 test('get - not one record', async () => {
-  const params = {
+  const params: Params = {
     query: {
       selector: ['p'],
       operator: '!=',
@@ -169,7 +189,7 @@ test('get - not one record', async () => {
 });
 
 test('get - some records', async () => {
-  const params = {
+  const params: Params = {
     query: {
       selector: ['p'],
       operator: 'in',
@@ -185,7 +205,7 @@ test('get - some records', async () => {
 });
 
 test('get - not some records', async () => {
-  const params = {
+  const params: Params = {
     query: {
       selector: ['p'],
       operator: '!in',

@@ -45,6 +45,9 @@ export interface Sample extends Resource {
 export interface Items<T extends Resource> {
   items: T[];
   total: number;
+}
+
+export interface PagedItems<T extends Resource> extends Items<T> {
   page: Page;
 }
 
@@ -139,7 +142,7 @@ export default class Api {
     });
   }
 
-  get<T extends Resource>(resource: string, params: Params = {}): Promise<Items<T>> {
+  get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
     return new Promise((resolve, reject) => {
       if (!this.reportData.data[resource]) {
         reject(`unknown resource '${resource}'`);
@@ -177,7 +180,7 @@ export default class Api {
       const size = params.size ? params.size : 10;
       resources = resources.slice(page * size, page * size + size);
 
-      const response: Items<T> = {
+      const response: PagedItems<T> = {
         items: resources,
         page: {
           number: page,
@@ -190,15 +193,15 @@ export default class Api {
     });
   }
 
-  getRecords(params: Params = {}): Promise<Items<Record>> {
+  getRecords(params: Params = {}): Promise<PagedItems<Record>> {
     return this.get('records', params);
   }
 
-  getSamples(params = {}): Promise<Items<Sample>> {
+  getSamples(params = {}): Promise<PagedItems<Sample>> {
     return this.get('samples', params);
   }
 
-  getPhenotypes(params = {}): Promise<Items<Phenotype>> {
+  getPhenotypes(params = {}): Promise<PagedItems<Phenotype>> {
     return this.get('phenotypes', params);
   }
 }
