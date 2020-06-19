@@ -28,13 +28,13 @@ export interface Params {
 export interface Record extends Resource {
     c: string
     p: number
-    i?: Array<string>
+    i?: string[]
     r: string,
-    a: Array<string>
+    a: string[]
     q?: number
-    f?: Array<string>
-    n?: Object
-    s?: Array<RecordSample>
+    f?: string[]
+    n?: object
+    s?: RecordSample[]
 }
 
 export interface Sample extends Resource {
@@ -43,7 +43,7 @@ export interface Sample extends Resource {
 }
 
 export interface Items<T extends Resource> {
-    items: Array<T>
+    items: T[]
     total: number
     page: Page
 }
@@ -67,7 +67,7 @@ export interface HtsFileMetadata {
 }
 
 export interface RecordsMetadata {
-    info: Array<InfoMetadata>
+    info: InfoMetadata[]
 }
 
 export interface InfoMetadata {
@@ -77,7 +77,7 @@ export interface InfoMetadata {
     description: string
     source?: string
     version?: string
-    nested?: Array<InfoMetadata>
+    nested?: InfoMetadata[]
 }
 
 export interface InfoNumberMetadata {
@@ -87,8 +87,8 @@ export interface InfoNumberMetadata {
 
 export interface Query {
     operator: '==' | '!=' | 'in' | '!in',
-    selector: string | Array<string>
-    args: string | number | boolean | Array<string> | Array<number>
+    selector: string | string[]
+    args: string | number | boolean | string[] | number[]
 }
 
 export interface RecordSample {
@@ -96,7 +96,7 @@ export interface RecordSample {
 }
 
 export interface Genotype {
-    a?: Array<string>
+    a?: string[]
     p: boolean,
     t: 'het' | 'hom_a' | 'hom_r' | 'miss' | 'part'
 }
@@ -112,7 +112,7 @@ export interface Person {
 
 export interface Phenotype extends Resource {
     subject: PhenotypeSubject
-    phenotypicFeaturesList: Array<PhenotypicFeature>
+    phenotypicFeaturesList: PhenotypicFeature[]
 }
 
 export interface PhenotypeSubject {
@@ -145,7 +145,7 @@ export default class Api {
                 reject(`unknown resource '${resource}'`)
             }
 
-            let resources: Array<T> = <Array<T>> this.reportData.data[resource].items.slice()
+            let resources: T[] = this.reportData.data[resource].items.slice() as T[]
             const query = params.query
             if (query) {
                 resources = resources.filter(aResource => matches(query, aResource))
@@ -155,7 +155,7 @@ export default class Api {
                 const desc = !!params.desc
                 resources.sort((a, b) => {
                     if (desc) {
-                        let tmp = a
+                        const tmp = a
                         a = b
                         b = tmp
                     }
@@ -181,7 +181,7 @@ export default class Api {
                 items: resources,
                 page: {
                     number: page,
-                    size: size,
+                    size,
                     totalElements: this.reportData.data[resource].items.length
                 },
                 total: this.reportData.data[resource].total
@@ -219,7 +219,7 @@ function matches(query: Query, resource: Resource): boolean {
             match = !matchesIn(query, resource)
             break
         default:
-            throw 'unexpected query operator ' + query.operator
+            throw new Error('unexpected query operator ' + query.operator)
     }
     return match
 }
