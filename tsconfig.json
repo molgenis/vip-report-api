@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "declaration": true,
     "strict": true,
     "importHelpers": true,
     "moduleResolution": "node",
@@ -20,13 +21,14 @@
     },
     "lib": [
       "esnext"
-    ]
+    ],
+    "outDir": "./dist"
   },
   "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts"
+    "src"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/__tests__/*"
   ]
 }

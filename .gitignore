@@ -9,3 +9,5 @@ npm-debug.log
 # misc
 package-lock.json
 /coverage/
+/dist/
+molgenis-vip-report-api-*.tgz

@@ -2,10 +2,13 @@
   "name": "@molgenis/vip-report-api",
   "version": "0.0.3",
   "description": "Report API for Variant Call Format (VCF) Report Templates",
-  "main": "src/api.js",
-  "types": "src/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "jest --coverage"
+    "build": "tsc",
+    "test": "jest --config jestconfig.json --coverage",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json"
   },
   "repository": {
     "type": "git",
@@ -20,12 +23,20 @@
     "@babel/core": "^7.10.2",
     "@babel/preset-env": "^7.10.2",
     "@babel/preset-typescript": "^7.10.1",
+    "@types/jest": "^26.0.0",
     "babel-jest": "^26.0.1",
     "jest": "^26.0.1",
+    "prettier": "2.0.5",
+    "ts-jest": "^26.1.0",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.9.5"
   },
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "files": [
+    "dist/**/*"
+  ]
 }
