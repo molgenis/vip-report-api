@@ -73,7 +73,7 @@ export interface RecordsMetadata {
 export interface InfoMetadata {
   id: string;
   number?: InfoNumberMetadata;
-  type: "CHARACTER" | "INTEGER" | "FLAG" | "FLOAT" | "STRING" | "NESTED";
+  type: 'CHARACTER' | 'INTEGER' | 'FLAG' | 'FLOAT' | 'STRING' | 'NESTED';
   description: string;
   source?: string;
   version?: string;
@@ -81,12 +81,12 @@ export interface InfoMetadata {
 }
 
 export interface InfoNumberMetadata {
-  type: "NUMBER" | "PER_ALT" | "PER_ALT_AND_REF" | "PER_GENOTYPE" | "OTHER";
+  type: 'NUMBER' | 'PER_ALT' | 'PER_ALT_AND_REF' | 'PER_GENOTYPE' | 'OTHER';
   count?: number;
 }
 
 export interface Query {
-  operator: "==" | "!=" | "in" | "!in";
+  operator: '==' | '!=' | 'in' | '!in';
   selector: string | string[];
   args: string | number | boolean | string[] | number[];
 }
@@ -98,7 +98,7 @@ export interface RecordSample {
 export interface Genotype {
   a?: string[];
   p: boolean;
-  t: "het" | "hom_a" | "hom_r" | "miss" | "part";
+  t: 'het' | 'hom_a' | 'hom_r' | 'miss' | 'part';
 }
 
 export interface Person {
@@ -106,8 +106,8 @@ export interface Person {
   individualId: string;
   paternalId: string;
   maternalId: string;
-  sex: "UNKNOWN_SEX" | "FEMALE" | "MALE" | "OTHER_SEX";
-  affectedStatus: "MISSING" | "UNAFFECTED" | "AFFECTED";
+  sex: 'UNKNOWN_SEX' | 'FEMALE' | 'MALE' | 'OTHER_SEX';
+  affectedStatus: 'MISSING' | 'UNAFFECTED' | 'AFFECTED';
 }
 
 export interface Phenotype extends Resource {
@@ -139,10 +139,7 @@ export default class Api {
     });
   }
 
-  get<T extends Resource>(
-    resource: string,
-    params: Params = {}
-  ): Promise<Items<T>> {
+  get<T extends Resource>(resource: string, params: Params = {}): Promise<Items<T>> {
     return new Promise((resolve, reject) => {
       if (!this.reportData.data[resource]) {
         reject(`unknown resource '${resource}'`);
@@ -169,7 +166,7 @@ export default class Api {
             return valB === undefined ? 0 : -1;
           } else if (valB === undefined) {
             return 1;
-          } else if (typeof valA === "number") {
+          } else if (typeof valA === 'number') {
             return valA - valB;
           } else {
             return valA.toUpperCase().localeCompare(valB.toUpperCase());
@@ -194,35 +191,35 @@ export default class Api {
   }
 
   getRecords(params: Params = {}): Promise<Items<Record>> {
-    return this.get("records", params);
+    return this.get('records', params);
   }
 
   getSamples(params = {}): Promise<Items<Sample>> {
-    return this.get("samples", params);
+    return this.get('samples', params);
   }
 
   getPhenotypes(params = {}): Promise<Items<Phenotype>> {
-    return this.get("phenotypes", params);
+    return this.get('phenotypes', params);
   }
 }
 
 function matches(query: Query, resource: Resource): boolean {
   let match;
   switch (query.operator) {
-    case "==":
+    case '==':
       match = matchesEquals(query, resource);
       break;
-    case "in":
+    case 'in':
       match = matchesIn(query, resource);
       break;
-    case "!=":
+    case '!=':
       match = !matchesEquals(query, resource);
       break;
-    case "!in":
+    case '!in':
       match = !matchesIn(query, resource);
       break;
     default:
-      throw new Error("unexpected query operator " + query.operator);
+      throw new Error('unexpected query operator ' + query.operator);
   }
   return match;
 }

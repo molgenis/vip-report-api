@@ -1,61 +1,61 @@
-import Api from "../index";
+import Api from '../index';
 
 let api;
 const record0 = {
-  c: "1",
+  c: '1',
   p: 10042538,
-  i: ["rs123"],
-  r: "C",
-  a: ["T"],
+  i: ['rs123'],
+  r: 'C',
+  a: ['T'],
   s: [
     {
       gt: {
-        a: ["T", "C"],
+        a: ['T', 'C'],
         p: true,
-        t: "het",
+        t: 'het',
       },
     },
     {
       gt: {
-        a: ["C", "C"],
+        a: ['C', 'C'],
         p: true,
-        t: "hom_r",
+        t: 'hom_r',
       },
     },
     {
       gt: {
-        a: ["C", "C"],
+        a: ['C', 'C'],
         p: true,
-        t: "hom_r",
+        t: 'hom_r',
       },
     },
   ],
 };
 const record1 = {
-  c: "1",
+  c: '1',
   p: 16376412,
-  r: "G",
-  a: ["A"],
+  r: 'G',
+  a: ['A'],
   s: [
     {
       gt: {
-        a: ["A", "G"],
+        a: ['A', 'G'],
         p: true,
-        t: "het",
+        t: 'het',
       },
     },
     {
       gt: {
-        a: ["G", "A"],
+        a: ['G', 'A'],
         p: true,
-        t: "het",
+        t: 'het',
       },
     },
     {
       gt: {
-        a: ["A", "G"],
+        a: ['A', 'G'],
         p: true,
-        t: "het",
+        t: 'het',
       },
     },
   ],
@@ -64,21 +64,21 @@ const record1 = {
 beforeEach(() => {
   const reportData = {
     metadata: {
-      appName: "vcf-report",
-      appVersion: "0.0.1",
-      appArgs: "-i test.vcf -d",
+      appName: 'vcf-report',
+      appVersion: '0.0.1',
+      appArgs: '-i test.vcf -d',
     },
     data: {
       samples: {
         items: [
           {
-            name: "Patient",
+            name: 'Patient',
           },
           {
-            name: "Mother",
+            name: 'Mother',
           },
           {
-            name: "Father",
+            name: 'Father',
           },
         ],
         total: 3,
@@ -96,25 +96,25 @@ beforeEach(() => {
   api = new Api(reportData);
 });
 
-test("getMeta", async () => {
+test('getMeta', async () => {
   const metadata = await api.getMeta();
   expect(metadata).toEqual({
-    appName: "vcf-report",
-    appVersion: "0.0.1",
-    appArgs: "-i test.vcf -d",
+    appName: 'vcf-report',
+    appVersion: '0.0.1',
+    appArgs: '-i test.vcf -d',
   });
 });
 
-test("get - all samples", async () => {
+test('get - all samples', async () => {
   const samples = await api.getSamples();
   expect(samples).toEqual({
-    items: [{ name: "Patient" }, { name: "Mother" }, { name: "Father" }],
+    items: [{ name: 'Patient' }, { name: 'Mother' }, { name: 'Father' }],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
   });
 });
 
-test("get - all records", async () => {
+test('get - all records', async () => {
   const records = await api.getRecords();
   expect(records).toEqual({
     items: [record0, record1],
@@ -123,11 +123,11 @@ test("get - all records", async () => {
   });
 });
 
-test("get - one record", async () => {
+test('get - one record', async () => {
   const params = {
     query: {
-      selector: ["p"],
-      operator: "==",
+      selector: ['p'],
+      operator: '==',
       args: 10042538,
     },
   };
@@ -139,9 +139,9 @@ test("get - one record", async () => {
   });
 });
 
-test("get - all records sorted descending on position", async () => {
+test('get - all records sorted descending on position', async () => {
   const params = {
-    sort: "p",
+    sort: 'p',
     desc: true,
   };
   const records = await api.getRecords(params);
@@ -152,11 +152,11 @@ test("get - all records sorted descending on position", async () => {
   });
 });
 
-test("get - not one record", async () => {
+test('get - not one record', async () => {
   const params = {
     query: {
-      selector: ["p"],
-      operator: "!=",
+      selector: ['p'],
+      operator: '!=',
       args: 16376412,
     },
   };
@@ -168,11 +168,11 @@ test("get - not one record", async () => {
   });
 });
 
-test("get - some records", async () => {
+test('get - some records', async () => {
   const params = {
     query: {
-      selector: ["p"],
-      operator: "in",
+      selector: ['p'],
+      operator: 'in',
       args: [10042537, 10042538, 10042539],
     },
   };
@@ -184,11 +184,11 @@ test("get - some records", async () => {
   });
 });
 
-test("get - not some records", async () => {
+test('get - not some records', async () => {
   const params = {
     query: {
-      selector: ["p"],
-      operator: "!in",
+      selector: ['p'],
+      operator: '!in',
       args: [16376411, 16376412, 16376413],
     },
   };
@@ -200,15 +200,15 @@ test("get - not some records", async () => {
   });
 });
 
-test("get - unknown resource", async () => {
+test('get - unknown resource', async () => {
   try {
-    await api.get("unknown");
+    await api.get('unknown');
   } catch (err) {
     expect(err).toEqual("unknown resource 'unknown'");
   }
 });
 
-test("get - all phenotypes", async () => {
+test('get - all phenotypes', async () => {
   const phenotypes = await api.getPhenotypes();
   expect(phenotypes).toEqual({
     items: [],
