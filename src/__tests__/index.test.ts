@@ -143,6 +143,19 @@ test('get - all records', async () => {
   });
 });
 
+test('get - page of records', async () => {
+  const params: Params = {
+    page: 1,
+    size: 1,
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 1, size: 1, totalElements: 2 },
+    total: 32,
+  });
+});
+
 test('get - one record', async () => {
   const params: Params = {
     query: {
@@ -154,7 +167,7 @@ test('get - one record', async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
-    page: { number: 0, size: 10, totalElements: 2 },
+    page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });
 });
@@ -183,7 +196,7 @@ test('get - not one record', async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
-    page: { number: 0, size: 10, totalElements: 2 },
+    page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });
 });
@@ -199,7 +212,7 @@ test('get - some records', async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
-    page: { number: 0, size: 10, totalElements: 2 },
+    page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });
 });
@@ -215,7 +228,7 @@ test('get - not some records', async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
-    page: { number: 0, size: 10, totalElements: 2 },
+    page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });
 });
