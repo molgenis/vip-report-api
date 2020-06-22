@@ -178,6 +178,7 @@ export default class Api {
       }
       const page = params.page ? params.page : 0;
       const size = params.size ? params.size : 10;
+      const totalElements = resources.length;
       resources = resources.slice(page * size, page * size + size);
 
       const response: PagedItems<T> = {
@@ -185,7 +186,7 @@ export default class Api {
         page: {
           number: page,
           size,
-          totalElements: this.reportData.data[resource].items.length,
+          totalElements: totalElements,
         },
         total: this.reportData.data[resource].total,
       };
