@@ -186,7 +186,7 @@ export default class Api {
         page: {
           number: page,
           size,
-          totalElements: totalElements,
+          totalElements,
         },
         total: this.reportData.data[resource].total,
       };
