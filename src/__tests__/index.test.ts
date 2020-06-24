@@ -76,6 +76,7 @@ beforeEach(() => {
       },
       records: {
         info: [],
+        format: [],
       },
     },
     data: {
@@ -121,6 +122,7 @@ test('getMeta', async () => {
     },
     records: {
       info: [],
+      format: []
     },
   });
 });
