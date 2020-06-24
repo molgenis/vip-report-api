@@ -122,7 +122,7 @@ test('getMeta', async () => {
     },
     records: {
       info: [],
-      format: []
+      format: [],
     },
   });
 });
