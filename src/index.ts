@@ -74,30 +74,30 @@ export interface RecordsMetadata {
   format: FormatMetadata[];
 }
 
-export interface InfoMetadata {
+export interface CompoundMetadata {
   id: string;
   number?: NumberMetadata;
-  type: 'CHARACTER' | 'INTEGER' | 'FLAG' | 'FLOAT' | 'STRING' | 'NESTED';
+  type: "CHARACTER" | "INTEGER" | "FLAG" | "FLOAT" | "STRING" | "NESTED";
   description: string;
+}
+
+export interface InfoMetadata extends CompoundMetadata {
   source?: string;
   version?: string;
   nested?: InfoMetadata[];
 }
 
-export interface FormatMetadata {
-  id: string;
-  number?: NumberMetadata;
-  type: 'CHARACTER' | 'INTEGER' | 'FLOAT' | 'STRING';
-  description: string;
+export interface FormatMetadata extends CompoundMetadata {
+  nested?: FormatMetadata[];
 }
 
 export interface NumberMetadata {
-  type: 'NUMBER' | 'PER_ALT' | 'PER_ALT_AND_REF' | 'PER_GENOTYPE' | 'OTHER';
+  type: "NUMBER" | "PER_ALT" | "PER_ALT_AND_REF" | "PER_GENOTYPE" | "OTHER";
   count?: number;
 }
 
 export interface Query {
-  operator: '==' | '!=' | 'in' | '!in';
+  operator: "==" | "!=" | "in" | "!in";
   selector: string | string[];
   args: string | number | boolean | string[] | number[];
 }
@@ -110,7 +110,7 @@ export interface RecordSample {
 export interface Genotype {
   a?: string[];
   p: boolean;
-  t: 'het' | 'hom_a' | 'hom_r' | 'miss' | 'part';
+  t: "het" | "hom_a" | "hom_r" | "miss" | "part";
 }
 
 export interface Person {
@@ -118,8 +118,8 @@ export interface Person {
   individualId: string;
   paternalId: string;
   maternalId: string;
-  sex: 'UNKNOWN_SEX' | 'FEMALE' | 'MALE' | 'OTHER_SEX';
-  affectedStatus: 'MISSING' | 'UNAFFECTED' | 'AFFECTED';
+  sex: "UNKNOWN_SEX" | "FEMALE" | "MALE" | "OTHER_SEX";
+  affectedStatus: "MISSING" | "UNAFFECTED" | "AFFECTED";
 }
 
 export interface Phenotype extends Resource {
@@ -178,7 +178,7 @@ export default class Api {
             return valB === undefined ? 0 : -1;
           } else if (valB === undefined) {
             return 1;
-          } else if (typeof valA === 'number') {
+          } else if (typeof valA === "number") {
             return valA - valB;
           } else {
             return valA.toUpperCase().localeCompare(valB.toUpperCase());
@@ -195,44 +195,44 @@ export default class Api {
         page: {
           number: page,
           size,
-          totalElements,
+          totalElements
         },
-        total: this.reportData.data[resource].total,
+        total: this.reportData.data[resource].total
       };
       resolve(response);
     });
   }
 
   getRecords(params: Params = {}): Promise<PagedItems<Record>> {
-    return this.get('records', params);
+    return this.get("records", params);
   }
 
   getSamples(params = {}): Promise<PagedItems<Sample>> {
-    return this.get('samples', params);
+    return this.get("samples", params);
   }
 
   getPhenotypes(params = {}): Promise<PagedItems<Phenotype>> {
-    return this.get('phenotypes', params);
+    return this.get("phenotypes", params);
   }
 }
 
 function matches(query: Query, resource: Resource): boolean {
   let match;
   switch (query.operator) {
-    case '==':
+    case "==":
       match = matchesEquals(query, resource);
       break;
-    case 'in':
+    case "in":
       match = matchesIn(query, resource);
       break;
-    case '!=':
+    case "!=":
       match = !matchesEquals(query, resource);
       break;
-    case '!in':
+    case "!in":
       match = !matchesIn(query, resource);
       break;
     default:
-      throw new Error('unexpected query operator ' + query.operator);
+      throw new Error("unexpected query operator " + query.operator);
   }
   return match;
 }
