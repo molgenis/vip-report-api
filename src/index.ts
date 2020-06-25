@@ -71,19 +71,27 @@ export interface HtsFileMetadata {
 
 export interface RecordsMetadata {
   info: InfoMetadata[];
+  format: FormatMetadata[];
 }
 
-export interface InfoMetadata {
+export interface CompoundMetadata {
   id: string;
-  number?: InfoNumberMetadata;
+  number?: NumberMetadata;
   type: 'CHARACTER' | 'INTEGER' | 'FLAG' | 'FLOAT' | 'STRING' | 'NESTED';
   description: string;
+}
+
+export interface InfoMetadata extends CompoundMetadata {
   source?: string;
   version?: string;
   nested?: InfoMetadata[];
 }
 
-export interface InfoNumberMetadata {
+export interface FormatMetadata extends CompoundMetadata {
+  nested?: FormatMetadata[];
+}
+
+export interface NumberMetadata {
   type: 'NUMBER' | 'PER_ALT' | 'PER_ALT_AND_REF' | 'PER_GENOTYPE' | 'OTHER';
   count?: number;
 }
@@ -95,7 +103,8 @@ export interface Query {
 }
 
 export interface RecordSample {
-  gt: Genotype;
+  gt?: Genotype;
+  f?: object;
 }
 
 export interface Genotype {
