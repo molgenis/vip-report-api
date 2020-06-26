@@ -174,6 +174,22 @@ test('get - one record', async () => {
   });
 });
 
+test('get - one record with invalid selector', async () => {
+  const params: Params = {
+    query: {
+      selector: ['p', 'x', 'y', 'z'],
+      operator: '==',
+      args: 10042538,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [],
+    page: { number: 0, size: 10, totalElements: 0 },
+    total: 32,
+  });
+});
+
 test('get - all records sorted descending on position', async () => {
   const params: Params = {
     sort: 'p',
@@ -215,6 +231,22 @@ test('get - some records', async () => {
   expect(records).toEqual({
     items: [record0],
     page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - some records with invalid selector', async () => {
+  const params: Params = {
+    query: {
+      selector: ['p', 'x', 'y', 'z'],
+      operator: 'in',
+      args: [10042537, 10042538, 10042539],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [],
+    page: { number: 0, size: 10, totalElements: 0 },
     total: 32,
   });
 });
