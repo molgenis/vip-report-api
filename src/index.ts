@@ -241,6 +241,9 @@ function matchesEquals(query: Query, resource: Resource): boolean {
   let value: any = resource;
   if (Array.isArray(query.selector)) {
     for (const part of query.selector) {
+      if (value === undefined) {
+        return false;
+      }
       value = value[part];
     }
   } else {
@@ -253,6 +256,9 @@ function matchesIn(query: Query, resource: Resource): boolean {
   let value: any = resource;
   if (Array.isArray(query.selector)) {
     for (const part of query.selector) {
+      if (value === undefined) {
+        return false;
+      }
       value = value[part];
     }
   } else {
