@@ -33,7 +33,7 @@ export interface Record extends Resource {
   a: string[];
   q?: number;
   f?: string[];
-  n?: object;
+  n?: Info;
   s?: RecordSample[];
 }
 
@@ -98,8 +98,14 @@ export interface NumberMetadata {
 
 export interface Query {
   operator: '==' | '!=' | 'in' | '!in';
-  selector: string | string[];
+  selector: string | string[] | number;
   args: string | number | boolean | string[] | number[];
+}
+
+export type InfoValue = string | number | boolean | InfoValue[] | null;
+
+export interface Info {
+  [index: string]: InfoValue | InfoValue[];
 }
 
 export interface RecordSample {
