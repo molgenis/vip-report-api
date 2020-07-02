@@ -7,7 +7,6 @@ npm-debug.log
 /vip-report-api.iml
 
 # misc
-package-lock.json
 /coverage/
 /dist/
 molgenis-vip-report-api-*.tgz
