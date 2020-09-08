@@ -7,7 +7,9 @@ addons:
     token:
       secure: RTMhhr37hbk+n4TEmTdheFA9QYcFS9zUiZJbilVQZ2ttwoohJdsT3Zd40cV0ipPJwFcgjcJ/+w8tVm6G8Uxi3BfAP2VZxHgSuqI2FKyw28s9Dk2pY+IpmYmF4eAtyodo7tebOODuKzpytaWivIua0JsG7Efy/h5j5xGUT4AUcH7sWheGNC3tuRzjbSdGR43SQ2nR6ljok+xAF8Gek9qKMe9SRn4UPbrpupOvbIQK0zs8Gv6io6p7LrSYShQNQeCpTSZ5ZChFT1g9EjiwVuw4V5+FtXR/Gnm46rfpWQA0tID2PCAeTtME3gKkcJuqVXdUg6t8IRpmh+atFdURRhqbIIfYkyOEVhG1ZTs08bwPuUtkay4ADyYlwebT42ECNQgCmp/Gm/X0/nPsR1PR8oJWszn0UNLHldE7jAwG7MnEXDZSdxWBgXyRfl05TIFmzgWgjSyfQWwmaa5M1+8+krb60ZHoQrDjGxXFEsPE1oTs8HMEf2YZ8gP78ZpZF723mu1DJAlsp9p0OKYTkjlTfJzc3eDRMzFquV37XImDcmgAK4VrRQ2sB2TS03JPaVEWwNsLE/gpgXsuhb5icgjPMmrOlVDARk458RnbNmD0AnzGsG6rdhlyE9hWRp1y3vQ0r+KkWfwoU6uZ/yzrWE4R8NlbcgyEnVqmRMVR1KWMrZYh4+w=
 script:
+  - npm run lint
   - npm test
+  - npm run build
   - sonar-scanner
 deploy:
   provider: npm
