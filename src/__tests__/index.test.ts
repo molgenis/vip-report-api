@@ -7,6 +7,24 @@ const record0 = {
   i: ['rs123'],
   r: 'C',
   a: ['T'],
+  n: {
+    n_bool0: true,
+    n_bool1: true,
+    n_bool2: true,
+    n_bool3: false,
+    n_bool4: false,
+    n_bool5: false,
+    n_number0: 0,
+    n_number1: 0,
+    n_number2: 1,
+    n_string0: 'a',
+    n_string1: 'a',
+    n_string2: 'A',
+    n_string3: 'b',
+    n_string4: 'b',
+    n_array0: [],
+    n_object0: { n_object0: { n_string0: 'a' } },
+  },
   s: [
     {
       gt: {
@@ -36,6 +54,24 @@ const record1 = {
   p: 16376412,
   r: 'G',
   a: ['A'],
+  n: {
+    n_bool0: true,
+    n_bool1: false,
+    n_bool3: true,
+    n_bool4: false,
+    n_bool6: true,
+    n_bool7: false,
+    n_number0: 0,
+    n_number1: 1,
+    n_number2: 0,
+    n_string0: 'a',
+    n_string1: 'b',
+    n_string2: 'b',
+    n_string3: 'a',
+    n_string4: 'A',
+    n_array0: [],
+    n_object0: {},
+  },
   s: [
     {
       gt: {
@@ -59,6 +95,11 @@ const record1 = {
       },
     },
   ],
+};
+
+const sortAllExpected = {
+  page: { number: 0, size: 10, totalElements: 2 },
+  total: 32,
 };
 
 beforeEach(() => {
@@ -190,16 +231,182 @@ test('get - one record with invalid selector', async () => {
   });
 });
 
+test('get - all records sorted on n.n_bool0', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool0'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_bool1', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool1'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_bool2', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool2'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_bool3', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool3'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_bool4', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool4'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_bool5', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool5'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_bool6', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool6'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_bool7', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool7'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_bool8', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_bool8'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_number0', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_number0'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_number1', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_number1'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_number2', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_number2'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_string0', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_string0'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_string1', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_string1'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_string2', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_string2'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_string3', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_string3'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_string4', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_string4'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test('get - all records sorted on n.n_array0 throws an error', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_array0'] },
+  };
+  // note: [] is an object
+  await expect(api.getRecords(params)).rejects.toThrow(
+    "can't compare values of type 'object'. consider providing a custom compare function."
+  );
+});
+
+test('get - all records sorted on n.n_object0 throws an error', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_object0'] },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow(
+    "can't compare values of type 'object'. consider providing a custom compare function."
+  );
+});
+
+test('get - all records sorted on n.n_object0.n_object0_object0.n_object0_string0', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_object0', 'n_object0_object0', 'n_object0_object0_string0'] },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+});
+
+test('get - all records sorted on n.n_array0 throws an error for invalid path', async () => {
+  const params: Params = {
+    sort: { property: ['n', 'n_array0', 'invalid'] },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow('invalid path n,n_array0,invalid');
+});
+
 test('get - all records sorted ascending on position implicitly', async () => {
   const params: Params = {
     sort: { property: 'p' },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0, record1],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test('get - all records sorted ascending on position', async () => {
@@ -207,11 +414,7 @@ test('get - all records sorted ascending on position', async () => {
     sort: { property: 'p', compare: 'asc' },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0, record1],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test('get - all records sorted descending on position', async () => {
@@ -219,11 +422,7 @@ test('get - all records sorted descending on position', async () => {
     sort: { property: 'p', compare: 'desc' },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1, record0],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test('get - all records sorted ascending on reference', async () => {
@@ -231,11 +430,7 @@ test('get - all records sorted ascending on reference', async () => {
     sort: { property: 'r', compare: 'asc' },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0, record1],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test('get - all records sorted descending on reference', async () => {
@@ -243,11 +438,7 @@ test('get - all records sorted descending on reference', async () => {
     sort: { property: 'r', compare: 'desc' },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1, record0],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test('get - all records sorted custom on identifier', async () => {
@@ -264,11 +455,7 @@ test('get - all records sorted custom on identifier', async () => {
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0, record1],
-    page: { number: 0, size: 10, totalElements: 2 },
-    total: 32,
-  });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test('get - not one record', async () => {

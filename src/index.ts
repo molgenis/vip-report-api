@@ -29,12 +29,10 @@ export interface SortOrder {
   compare?: 'asc' | 'desc' | CompareFn;
 }
 
-interface CompareFn {
-  (
-    a: boolean | boolean[] | string | string[] | number | number[] | null,
-    b: boolean | boolean[] | string | string[] | number | number[] | null
-  ): number;
-}
+export type CompareFn = (
+  a: boolean | boolean[] | string | string[] | number | number[] | null,
+  b: boolean | boolean[] | string | string[] | number | number[] | null
+) => number;
 
 export interface Record extends Resource {
   c: string;
@@ -222,8 +220,8 @@ function get(
     if (valueAtDepth === undefined) {
       valueAtDepth = null;
     } else if (valueAtDepth !== null) {
-      if (typeof valueAtDepth !== 'object') {
-        throw new Error(`invalid path ${path} for value ${value}`);
+      if (typeof valueAtDepth !== 'object' || Array.isArray(valueAtDepth)) {
+        throw new Error(`invalid path ${path}`);
       }
       valueAtDepth = valueAtDepth[token];
     }
@@ -233,17 +231,18 @@ function get(
 
 function compareAsc(a: unknown, b: unknown) {
   if (a === null) {
-    return b === null ? 0 : -1;
+    return b === null ? 0 : 1;
   } else if (b === null) {
-    return 1;
+    return -1;
   } else if (typeof a === 'number' && typeof b === 'number') {
     return a - b;
   } else if (typeof a === 'string' && typeof b === 'string') {
     return a.toUpperCase().localeCompare(b.toUpperCase());
   } else if (typeof a === 'boolean' && typeof b === 'boolean') {
-    return a === b ? 0 : a ? 1 : -1;
+    return a === b ? 0 : a ? -1 : 1;
   } else {
-    throw new Error(`bla`);
+    const type = typeof a;
+    throw new Error(`can't compare values of type '${type}'. consider providing a custom compare function.`);
   }
 }
 
@@ -253,11 +252,11 @@ function compareDesc(a: unknown, b: unknown) {
 
 function getCompareFn(sortOrder: SortOrder): CompareFn {
   let compareFn;
-  if (sortOrder.compare == 'asc' || sortOrder.compare === null || sortOrder.compare === undefined) {
+  if (sortOrder.compare === 'asc' || sortOrder.compare === null || sortOrder.compare === undefined) {
     compareFn = compareAsc;
-  } else if (sortOrder.compare == 'desc') {
+  } else if (sortOrder.compare === 'desc') {
     compareFn = compareDesc;
-  } else if (typeof sortOrder.compare == 'function') {
+  } else if (typeof sortOrder.compare === 'function') {
     compareFn = sortOrder.compare;
   } else {
     throw new Error(
