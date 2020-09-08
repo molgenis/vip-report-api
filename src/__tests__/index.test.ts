@@ -190,14 +190,82 @@ test('get - one record with invalid selector', async () => {
   });
 });
 
+test('get - all records sorted ascending on position implicitly', async () => {
+  const params: Params = {
+    sort: { property: 'p' },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
+test('get - all records sorted ascending on position', async () => {
+  const params: Params = {
+    sort: { property: 'p', compare: 'asc' },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
 test('get - all records sorted descending on position', async () => {
   const params: Params = {
-    sort: 'p',
-    desc: true,
+    sort: { property: 'p', compare: 'desc' },
   };
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record1, record0],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
+test('get - all records sorted ascending on reference', async () => {
+  const params: Params = {
+    sort: { property: 'r', compare: 'asc' },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
+test('get - all records sorted descending on reference', async () => {
+  const params: Params = {
+    sort: { property: 'r', compare: 'desc' },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1, record0],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
+test('get - all records sorted custom on identifier', async () => {
+  const params: Params = {
+    sort: {
+      property: 'i',
+      compare: function (a: any, b: any) {
+        if (a === null || a.length === 0) {
+          return b === null || b.length === 0 ? 0 : 1;
+        } else {
+          return b === null || b.length === 0 ? -1 : a[0].localeCompare(b[0]);
+        }
+      },
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
     page: { number: 0, size: 10, totalElements: 2 },
     total: 32,
   });

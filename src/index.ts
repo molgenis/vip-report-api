@@ -19,10 +19,21 @@ export interface Resource {
 
 export interface Params {
   query?: Query;
-  sort?: string;
-  desc?: boolean;
+  sort?: SortOrder | SortOrder[];
   page?: number;
   size?: number;
+}
+
+export interface SortOrder {
+  property: string | string[];
+  compare?: 'asc' | 'desc' | CompareFn;
+}
+
+interface CompareFn {
+  (
+    a: boolean | boolean[] | string | string[] | number | number[] | null,
+    b: boolean | boolean[] | string | string[] | number | number[] | null
+  ): number;
 }
 
 export interface Record extends Resource {
@@ -169,27 +180,7 @@ export default class Api {
         resources = resources.filter((aResource) => matches(query, aResource));
       }
       if (params.sort) {
-        const prop = params.sort;
-        const desc = !!params.desc;
-        resources.sort((a, b) => {
-          if (desc) {
-            const tmp = a;
-            a = b;
-            b = tmp;
-          }
-
-          const valA = a[prop];
-          const valB = b[prop];
-          if (valA === undefined) {
-            return valB === undefined ? 0 : -1;
-          } else if (valB === undefined) {
-            return 1;
-          } else if (typeof valA === 'number') {
-            return valA - valB;
-          } else {
-            return valA.toUpperCase().localeCompare(valB.toUpperCase());
-          }
-        });
+        sort(resources, Array.isArray(params.sort) ? params.sort : [params.sort]);
       }
       const page = params.page ? params.page : 0;
       const size = params.size ? params.size : 10;
@@ -220,6 +211,77 @@ export default class Api {
   getPhenotypes(params = {}): Promise<PagedItems<Phenotype>> {
     return this.get('phenotypes', params);
   }
+}
+
+function get(
+  value: object | null | undefined,
+  path: string[]
+): boolean | boolean[] | number | number[] | string | string[] | null {
+  let valueAtDepth: any = value;
+  for (const token of path) {
+    if (valueAtDepth === undefined) {
+      valueAtDepth = null;
+    } else if (valueAtDepth !== null) {
+      if (typeof valueAtDepth !== 'object') {
+        throw new Error(`invalid path ${path} for value ${value}`);
+      }
+      valueAtDepth = valueAtDepth[token];
+    }
+  }
+  return valueAtDepth !== undefined ? valueAtDepth : null;
+}
+
+function compareAsc(a: unknown, b: unknown) {
+  if (a === null) {
+    return b === null ? 0 : -1;
+  } else if (b === null) {
+    return 1;
+  } else if (typeof a === 'number' && typeof b === 'number') {
+    return a - b;
+  } else if (typeof a === 'string' && typeof b === 'string') {
+    return a.toUpperCase().localeCompare(b.toUpperCase());
+  } else if (typeof a === 'boolean' && typeof b === 'boolean') {
+    return a === b ? 0 : a ? 1 : -1;
+  } else {
+    throw new Error(`bla`);
+  }
+}
+
+function compareDesc(a: unknown, b: unknown) {
+  return compareAsc(b, a);
+}
+
+function getCompareFn(sortOrder: SortOrder): CompareFn {
+  let compareFn;
+  if (sortOrder.compare == 'asc' || sortOrder.compare === null || sortOrder.compare === undefined) {
+    compareFn = compareAsc;
+  } else if (sortOrder.compare == 'desc') {
+    compareFn = compareDesc;
+  } else if (typeof sortOrder.compare == 'function') {
+    compareFn = sortOrder.compare;
+  } else {
+    throw new Error(
+      `illegal sort compare value '${sortOrder.compare}'. valid values are 'asc', 'desc' or a function (a, b) => number`
+    );
+  }
+  return compareFn;
+}
+
+function sort<T extends Resource>(resources: T[], sortOrders: SortOrder[]) {
+  resources.sort((a, b) => {
+    let val = 0;
+    for (const sortOrder of sortOrders) {
+      const path = Array.isArray(sortOrder.property) ? sortOrder.property : [sortOrder.property];
+      const left = get(a, path);
+      const right = get(b, path);
+
+      val = getCompareFn(sortOrder)(left, right);
+      if (val !== 0) {
+        break;
+      }
+    }
+    return val;
+  });
 }
 
 function matches(query: Query, resource: Resource): boolean {
