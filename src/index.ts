@@ -49,6 +49,7 @@ export interface Record extends Resource {
 export interface Sample extends Resource {
   person: Person;
   index: number;
+  proband: boolean;
 }
 
 export interface Items<T extends Resource> {
