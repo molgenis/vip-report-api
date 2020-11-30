@@ -316,12 +316,12 @@ function matches(query: Query, resource: Resource): boolean {
 }
 
 function matchesEquals(query: Query, resource: Resource): boolean {
-  let value: any = select(query.selector, resource);
+  const value: any = select(query.selector, resource);
   return value === query.args;
 }
 
 function matchesIn(query: Query, resource: Resource): boolean {
-  let value: any = select(query.selector, resource);
+  const value: any = select(query.selector, resource);
 
   let match = false;
   if (Array.isArray(query.args)) {
@@ -336,7 +336,7 @@ function matchesIn(query: Query, resource: Resource): boolean {
 }
 
 function matchesAnyHasAny(query: Query, resource: Resource): boolean {
-  let value: any = select(query.selector, resource);
+  const value: any = select(query.selector, resource);
 
   if (!Array.isArray(value)) {
     throw new Error('todo');
@@ -355,7 +355,7 @@ function matchesAnyHasAny(query: Query, resource: Resource): boolean {
 }
 
 function matchesHasAny(query: Query, resource: Resource): boolean {
-  let value: any = select(query.selector, resource);
+  const value: any = select(query.selector, resource);
 
   if (!Array.isArray(value)) {
     throw new Error('todo');
