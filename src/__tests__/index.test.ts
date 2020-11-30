@@ -223,12 +223,7 @@ test('get - one record with invalid selector', async () => {
       args: 10042538,
     },
   };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
-    total: 32,
-  });
+  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
 });
 
 test('get - all records sorted on n.n_bool0', async () => {
@@ -498,10 +493,37 @@ test('get - some records with invalid selector', async () => {
       args: [10042537, 10042538, 10042539],
     },
   };
+  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+});
+
+test('get - some records using wildcard selector part with has_any', async () => {
+  const params: Params = {
+    query: {
+      selector: ['s', '*', 'gt', 't'],
+      operator: 'has_any',
+      args: ['hom_a', 'hom_r'],
+    },
+  };
   const records = await api.getRecords(params);
   expect(records).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - some records using wildcard selector part with any_has_any', async () => {
+  const params: Params = {
+    query: {
+      selector: ['s', '*', 'gt', 'a'],
+      operator: 'any_has_any',
+      args: ['GG', 'G'],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });
 });
