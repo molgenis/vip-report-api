@@ -215,6 +215,22 @@ test('get - one record', async () => {
   });
 });
 
+test('get - one record array', async () => {
+  const params: Params = {
+    query: {
+      selector: ['a', 0],
+      operator: '==',
+      args: 'T',
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
 test('get - one record with invalid selector', async () => {
   const params: Params = {
     query: {

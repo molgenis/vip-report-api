@@ -339,7 +339,7 @@ function matchesAnyHasAny(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
   if (!Array.isArray(value)) {
-    throw new Error('todo');
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
@@ -358,7 +358,7 @@ function matchesHasAny(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
   if (!Array.isArray(value)) {
-    throw new Error('todo');
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
@@ -410,16 +410,16 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
   return selectedValue;
 }
 
-function selectFromObject(part: SelectorPart, value: unknown) {
+function selectFromObject(part: string, value: unknown) {
   if (typeof value !== 'object') {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'object'`);
   }
-  return value !== null ? (value as { [index: string]: unknown })[part as string] : null;
+  return value !== null ? (value as { [index: string]: unknown })[part] : null;
 }
 
-function selectFromArray(part: SelectorPart, value: unknown) {
+function selectFromArray(part: number, value: unknown) {
   if (!Array.isArray(value)) {
     throw new Error(`value is of type '${typeof value}' instead of array`);
   }
-  return (value as unknown[])[part as number];
+  return (value as unknown[])[part];
 }
