@@ -18,7 +18,7 @@ export interface Resource {
 }
 
 export interface Params {
-  query?: Query;
+  query?: Query | ComposedQuery;
   sort?: SortOrder | SortOrder[];
   page?: number;
   size?: number;
@@ -109,6 +109,11 @@ export interface NumberMetadata {
 export type SelectorPart = string | number;
 
 export type Selector = SelectorPart | SelectorPart[];
+
+export interface ComposedQuery {
+  operator: 'and' | 'or';
+  args: (Query | ComposedQuery)[];
+}
 
 export interface Query {
   operator: '==' | '!=' | 'in' | '!in' | 'has_any' | 'any_has_any';
@@ -288,31 +293,68 @@ function sort<T extends Resource>(resources: T[], sortOrders: SortOrder[]) {
   });
 }
 
-function matches(query: Query, resource: Resource): boolean {
+function matchesAnd(args: (Query | ComposedQuery)[], resource: Resource): boolean {
+  for (const query of args) {
+    if (!matches(query, resource)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function matchesOr(args: (Query | ComposedQuery)[], resource: Resource): boolean {
+  for (const query of args) {
+    if (matches(query, resource)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function matchesComposed(composedQuery: ComposedQuery, resource: Resource): boolean {
   let match;
-  switch (query.operator) {
-    case '==':
-      match = matchesEquals(query, resource);
+  switch (composedQuery.operator) {
+    case 'and':
+      match = matchesAnd(composedQuery.args, resource);
       break;
-    case 'in':
-      match = matchesIn(query, resource);
-      break;
-    case 'has_any':
-      match = matchesHasAny(query, resource);
-      break;
-    case 'any_has_any':
-      match = matchesAnyHasAny(query, resource);
-      break;
-    case '!=':
-      match = !matchesEquals(query, resource);
-      break;
-    case '!in':
-      match = !matchesIn(query, resource);
+    case 'or':
+      match = matchesOr(composedQuery.args, resource);
       break;
     default:
-      throw new Error('unexpected query operator ' + query.operator);
+      throw new Error(`invalid operator '${composedQuery.operator}'`);
   }
   return match;
+}
+
+function matches(query: Query | ComposedQuery, resource: Resource): boolean {
+  if (query.operator === 'and' || query.operator === 'or') {
+    return matchesComposed(query, resource);
+  } else {
+    let match;
+    switch (query.operator) {
+      case '==':
+        match = matchesEquals(query, resource);
+        break;
+      case 'in':
+        match = matchesIn(query, resource);
+        break;
+      case 'has_any':
+        match = matchesHasAny(query, resource);
+        break;
+      case 'any_has_any':
+        match = matchesAnyHasAny(query, resource);
+        break;
+      case '!=':
+        match = !matchesEquals(query, resource);
+        break;
+      case '!in':
+        match = !matchesIn(query, resource);
+        break;
+      default:
+        throw new Error('unexpected query operator ' + query.operator);
+    }
+    return match;
+  }
 }
 
 function matchesEquals(query: Query, resource: Resource): boolean {
