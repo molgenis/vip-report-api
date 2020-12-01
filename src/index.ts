@@ -106,9 +106,13 @@ export interface NumberMetadata {
   count?: number;
 }
 
+export type SelectorPart = string | number;
+
+export type Selector = SelectorPart | SelectorPart[];
+
 export interface Query {
-  operator: '==' | '!=' | 'in' | '!in';
-  selector: string | string[] | number;
+  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | 'any_has_any';
+  selector: Selector;
   args: string | number | boolean | string[] | number[];
 }
 
@@ -293,6 +297,12 @@ function matches(query: Query, resource: Resource): boolean {
     case 'in':
       match = matchesIn(query, resource);
       break;
+    case 'has_any':
+      match = matchesHasAny(query, resource);
+      break;
+    case 'any_has_any':
+      match = matchesAnyHasAny(query, resource);
+      break;
     case '!=':
       match = !matchesEquals(query, resource);
       break;
@@ -306,32 +316,12 @@ function matches(query: Query, resource: Resource): boolean {
 }
 
 function matchesEquals(query: Query, resource: Resource): boolean {
-  let value: any = resource;
-  if (Array.isArray(query.selector)) {
-    for (const part of query.selector) {
-      if (value === undefined) {
-        return false;
-      }
-      value = value[part];
-    }
-  } else {
-    value = resource[query.selector];
-  }
+  const value: any = select(query.selector, resource);
   return value === query.args;
 }
 
 function matchesIn(query: Query, resource: Resource): boolean {
-  let value: any = resource;
-  if (Array.isArray(query.selector)) {
-    for (const part of query.selector) {
-      if (value === undefined) {
-        return false;
-      }
-      value = value[part];
-    }
-  } else {
-    value = resource[query.selector];
-  }
+  const value: any = select(query.selector, resource);
 
   let match = false;
   if (Array.isArray(query.args)) {
@@ -343,4 +333,93 @@ function matchesIn(query: Query, resource: Resource): boolean {
     }
   }
   return match;
+}
+
+function matchesAnyHasAny(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (!Array.isArray(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
+  }
+
+  let match = false;
+  for (const item of value as unknown[]) {
+    for (const arg of query.args as unknown[]) {
+      if ((item as unknown[]).includes(arg)) {
+        match = true;
+        break;
+      }
+    }
+  }
+  return match;
+}
+
+function matchesHasAny(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (!Array.isArray(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
+  }
+
+  let match = false;
+  for (const arg of query.args as unknown[]) {
+    if ((value as unknown[]).includes(arg)) {
+      match = true;
+      break;
+    }
+  }
+  return match;
+}
+
+function select(selector: Selector, resource: Resource) {
+  let parts: SelectorPart[];
+  if (Array.isArray(selector)) {
+    parts = (selector as SelectorPart[]).slice();
+  } else {
+    parts = [selector];
+  }
+  return selectRecursive(parts, resource);
+}
+
+function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
+  if (parts.length === 0) {
+    throw new Error(`expected selector part`);
+  }
+
+  const part = parts.shift();
+  let selectedValue;
+
+  if (part === '*') {
+    if (!Array.isArray(value)) {
+      throw new Error(`value is of type '${typeof value}' instead of array`);
+    }
+    selectedValue = (value as unknown[]).map((item) => selectRecursive(parts.slice(), item));
+  } else {
+    if (typeof part === 'string') {
+      selectedValue = selectFromObject(part, value);
+    } else if (Number.isInteger(part)) {
+      selectedValue = selectFromArray(part as number, value);
+    } else {
+      throw new Error(`part type '${typeof part}' is not a 'string' or 'number'`);
+    }
+
+    if (parts.length > 0) {
+      selectedValue = selectRecursive(parts, selectedValue);
+    }
+  }
+  return selectedValue;
+}
+
+function selectFromObject(part: string, value: unknown) {
+  if (typeof value !== 'object') {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'object'`);
+  }
+  return value !== null ? (value as { [index: string]: unknown })[part] : null;
+}
+
+function selectFromArray(part: number, value: unknown) {
+  if (!Array.isArray(value)) {
+    throw new Error(`value is of type '${typeof value}' instead of array`);
+  }
+  return (value as unknown[])[part];
 }
