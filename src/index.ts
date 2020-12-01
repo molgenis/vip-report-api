@@ -376,7 +376,7 @@ function select(selector: Selector, resource: Resource) {
   if (Array.isArray(selector)) {
     parts = (selector as SelectorPart[]).slice();
   } else {
-    parts = [selector as SelectorPart];
+    parts = [selector];
   }
   return selectRecursive(parts, resource);
 }
@@ -396,7 +396,7 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
     selectedValue = (value as unknown[]).map((item) => selectRecursive(parts.slice(), item));
   } else {
     if (typeof part === 'string') {
-      selectedValue = selectFromObject(part as string, value);
+      selectedValue = selectFromObject(part, value);
     } else if (Number.isInteger(part)) {
       selectedValue = selectFromArray(part as number, value);
     } else {
