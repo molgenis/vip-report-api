@@ -1,6 +1,6 @@
 {
   "name": "@molgenis/vip-report-api",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Report API for Variant Call Format (VCF) Report Templates",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
