@@ -386,6 +386,10 @@ function matchesIn(query: Query, resource: Resource): boolean {
 function matchesAnyHasAny(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
+  if (value === undefined) {
+    return false;
+  }
+
   if (!Array.isArray(value)) {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
   }
@@ -404,6 +408,10 @@ function matchesAnyHasAny(query: Query, resource: Resource): boolean {
 
 function matchesHasAny(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
 
   if (!Array.isArray(value)) {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
