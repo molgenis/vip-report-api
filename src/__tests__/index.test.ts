@@ -554,6 +554,22 @@ test('get - some records using wildcard selector part with has_any', async () =>
   });
 });
 
+test('get - some records using wildcard selector part with !has_any', async () => {
+  const params: Params = {
+    query: {
+      selector: ['s', '*', 'gt', 't'],
+      operator: '!has_any',
+      args: ['hom_a', 'hom_r'],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
 test('get - some records using wildcard selector part with any_has_any', async () => {
   const params: Params = {
     query: {
@@ -565,6 +581,22 @@ test('get - some records using wildcard selector part with any_has_any', async (
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - some records using wildcard selector part with !any_has_any', async () => {
+  const params: Params = {
+    query: {
+      selector: ['s', '*', 'gt', 'a'],
+      operator: '!any_has_any',
+      args: ['GG', 'G'],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
     page: { number: 0, size: 10, totalElements: 1 },
     total: 32,
   });

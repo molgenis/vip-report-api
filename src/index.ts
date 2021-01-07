@@ -116,7 +116,7 @@ export interface ComposedQuery {
 }
 
 export interface Query {
-  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | 'any_has_any';
+  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | '!has_any' | 'any_has_any' | '!any_has_any';
   selector: Selector;
   args: string | number | boolean | string[] | number[];
 }
@@ -341,8 +341,14 @@ function matches(query: Query | ComposedQuery, resource: Resource): boolean {
       case 'has_any':
         match = matchesHasAny(query, resource);
         break;
+      case '!has_any':
+        match = !matchesHasAny(query, resource);
+        break;
       case 'any_has_any':
         match = matchesAnyHasAny(query, resource);
+        break;
+      case '!any_has_any':
+        match = !matchesAnyHasAny(query, resource);
         break;
       case '!=':
         match = !matchesEquals(query, resource);
