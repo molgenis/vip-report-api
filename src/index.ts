@@ -116,7 +116,7 @@ export interface ComposedQuery {
 }
 
 export interface Query {
-  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | '!has_any' | 'any_has_any' | '!any_has_any';
+  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | '!has_any' | 'any_has_any' | '!any_has_any' | '>' | '>=' | '<' | '<=';
   selector: Selector;
   args: string | number | boolean | string[] | number[];
 }
@@ -356,6 +356,18 @@ function matches(query: Query | ComposedQuery, resource: Resource): boolean {
       case '!in':
         match = !matchesIn(query, resource);
         break;
+      case '>':
+        match = matchesGreaterThan(query, resource);
+        break;
+      case '>=':
+        match = matchesGreaterThanOrEqual(query, resource);
+        break;
+      case '<':
+        match = matchesLesserThan(query, resource);
+        break;
+      case '<=':
+        match = matchesLesserThanOrEqual(query, resource);
+        break;
       default:
         throw new Error('unexpected query operator ' + query.operator);
     }
@@ -425,6 +437,62 @@ function matchesHasAny(query: Query, resource: Resource): boolean {
     }
   }
   return match;
+}
+
+function matchesGreaterThan(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  }
+
+  return value > query.args;
+}
+
+function matchesGreaterThanOrEqual(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  }
+
+  return value >= query.args;
+}
+
+function matchesLesserThan(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  }
+
+  return value < query.args;
+}
+
+function matchesLesserThanOrEqual(query: Query, resource: Resource): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  }
+
+  return value <= query.args;
 }
 
 function select(selector: Selector, resource: Resource) {
