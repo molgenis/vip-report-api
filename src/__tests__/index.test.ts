@@ -242,6 +242,114 @@ test('get - one record with invalid selector', async () => {
   await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
 });
 
+test('get - records with greater than query', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_number2'],
+      operator: '>',
+      args: 0,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - records with greater than or equal query', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_number2'],
+      operator: '>=',
+      args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - records with less than query', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_number2'],
+      operator: '<',
+      args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - records with less than or equal query', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_number2'],
+      operator: '<=',
+      args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 32,
+  });
+});
+
+test('get - records with less than or equal query invalid field', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_string0'],
+      operator: '<=',
+      args: 1,
+    },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow("value 'a' is of type 'string' instead of 'number'");
+});
+
+test('get - one record with invalid selector', async () => {
+  const params: Params = {
+    query: {
+      selector: ['p', 'x', 'y', 'z'],
+      operator: '==',
+      args: 10042538,
+    },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+});
+
+test('get - one record with invalid selector', async () => {
+  const params: Params = {
+    query: {
+      selector: ['p', 'x', 'y', 'z'],
+      operator: '==',
+      args: 10042538,
+    },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+});
+
+test('get - one record with invalid selector', async () => {
+  const params: Params = {
+    query: {
+      selector: ['p', 'x', 'y', 'z'],
+      operator: '==',
+      args: 10042538,
+    },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+});
+
 test('get - one record using composed and query', async () => {
   const params: Params = {
     query: {
