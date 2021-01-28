@@ -306,6 +306,17 @@ test('get - records with less than or equal query', async () => {
   });
 });
 
+test('get - records with less than or equal query invalid field', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_string0'],
+      operator: '<=',
+      args: 1,
+    },
+  };
+  await expect(api.getRecords(params)).rejects.toThrow("value 'a' is of type 'string' instead of 'number'");
+});
+
 test('get - one record with invalid selector', async () => {
   const params: Params = {
     query: {

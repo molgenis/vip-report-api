@@ -442,11 +442,11 @@ function matchesHasAny(query: Query, resource: Resource): boolean {
 function matchesGreaterThan(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return false;
   }
 
-  if (!Number.isInteger(value)) {
+  if (typeof value !== 'number') {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
   }
 
@@ -456,11 +456,11 @@ function matchesGreaterThan(query: Query, resource: Resource): boolean {
 function matchesGreaterThanOrEqual(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return false;
   }
 
-  if (!Number.isInteger(value)) {
+  if (typeof value !== 'number') {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
   }
 
@@ -470,11 +470,11 @@ function matchesGreaterThanOrEqual(query: Query, resource: Resource): boolean {
 function matchesLesserThan(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return false;
   }
 
-  if (!Number.isInteger(value)) {
+  if (typeof value !== 'number') {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
   }
 
@@ -484,11 +484,11 @@ function matchesLesserThan(query: Query, resource: Resource): boolean {
 function matchesLesserThanOrEqual(query: Query, resource: Resource): boolean {
   const value: any = select(query.selector, resource);
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return false;
   }
 
-  if (!Number.isInteger(value)) {
+  if (typeof value !== 'number') {
     throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
   }
 
