@@ -23,6 +23,7 @@ const record0 = {
     n_string3: 'b',
     n_string4: 'b',
     n_array0: [],
+    n_array1: [{ n_number0: 1 }, { n_number0: 2 }],
     n_object0: { n_object0: { n_string0: 'a' } },
   },
   s: [
@@ -700,6 +701,22 @@ test('get - some records using wildcard selector part with !any_has_any', async 
       selector: ['s', '*', 'gt', 'a'],
       operator: '!any_has_any',
       args: ['GG', 'G'],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 32,
+  });
+});
+
+test('get - some records using wildcard selector part on undefined selector part', async () => {
+  const params: Params = {
+    query: {
+      selector: ['n', 'n_array1', '*', 'n_number0'],
+      operator: 'has_any',
+      args: [1],
     },
   };
   const records = await api.getRecords(params);

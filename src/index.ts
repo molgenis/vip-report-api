@@ -116,7 +116,19 @@ export interface ComposedQuery {
 }
 
 export interface Query {
-  operator: '==' | '!=' | 'in' | '!in' | 'has_any' | '!has_any' | 'any_has_any' | '!any_has_any' | '>' | '>=' | '<' | '<=';
+  operator:
+    | '=='
+    | '!='
+    | 'in'
+    | '!in'
+    | 'has_any'
+    | '!has_any'
+    | 'any_has_any'
+    | '!any_has_any'
+    | '>'
+    | '>='
+    | '<'
+    | '<=';
   selector: Selector;
   args: string | number | boolean | string[] | number[];
 }
@@ -514,10 +526,13 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
   let selectedValue;
 
   if (part === '*') {
-    if (!Array.isArray(value)) {
+    if (value === undefined) {
+      selectedValue = [];
+    } else if (!Array.isArray(value)) {
       throw new Error(`value is of type '${typeof value}' instead of array`);
+    } else {
+      selectedValue = (value as unknown[]).map((item) => selectRecursive(parts.slice(), item));
     }
-    selectedValue = (value as unknown[]).map((item) => selectRecursive(parts.slice(), item));
   } else {
     if (typeof part === 'string') {
       selectedValue = selectFromObject(part, value);
