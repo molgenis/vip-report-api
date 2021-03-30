@@ -193,9 +193,7 @@ export default class Api {
   }
 
   getMeta(): Promise<Metadata> {
-    return new Promise((resolve) => {
-      resolve(this.reportData.metadata);
-    });
+    return Promise.resolve(this.reportData.metadata);
   }
 
   get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
@@ -267,14 +265,30 @@ function compareAsc(a: unknown, b: unknown) {
   } else if (b === null) {
     return -1;
   } else if (typeof a === 'number' && typeof b === 'number') {
-    return a - b;
+    return compareAscNumber(a, b);
   } else if (typeof a === 'string' && typeof b === 'string') {
-    return a.toUpperCase().localeCompare(b.toUpperCase());
+    return compareAscString(a, b);
   } else if (typeof a === 'boolean' && typeof b === 'boolean') {
-    return a === b ? 0 : a ? -1 : 1;
+    return compareAscBoolean(a, b);
   } else {
     const type = typeof a;
     throw new Error(`can't compare values of type '${type}'. consider providing a custom compare function.`);
+  }
+}
+
+function compareAscNumber(a: number, b: number) {
+  return a - b;
+}
+
+function compareAscString(a: string, b: string) {
+  return a.toUpperCase().localeCompare(b.toUpperCase());
+}
+
+function compareAscBoolean(a: boolean, b: boolean) {
+  if (a === b) {
+    return 0;
+  } else {
+    return a ? -1 : 1;
   }
 }
 
