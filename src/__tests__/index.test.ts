@@ -120,6 +120,7 @@ beforeEach(() => {
         info: [],
         format: [],
       },
+      urls: {},
     },
     data: {
       samples: {
@@ -166,6 +167,7 @@ test('getMeta', async () => {
       info: [],
       format: [],
     },
+    urls: {},
   });
 });
 
