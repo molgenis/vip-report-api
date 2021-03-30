@@ -7,6 +7,7 @@ export interface Metadata {
   app: AppMetadata;
   htsFile: HtsFileMetadata;
   records: RecordsMetadata;
+  urls: UrlsMetadata;
 }
 
 export interface Data {
@@ -82,6 +83,15 @@ export interface HtsFileMetadata {
 export interface RecordsMetadata {
   info: InfoMetadata[];
   format: FormatMetadata[];
+}
+
+export interface UrlsMetadata {
+  reference?: string;
+  referenceAccessToken?: string;
+  alignment?: string;
+  alignmentAccessToken?: string;
+  variant?: string;
+  variantAccessToken?: string;
 }
 
 export interface CompoundMetadata {
