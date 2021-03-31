@@ -12,7 +12,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "jest"
+      "jest",
+      "node"
     ],
     "paths": {
       "@/*": [
@@ -20,7 +21,8 @@
       ]
     },
     "lib": [
-      "esnext"
+      "esnext",
+      "dom"
     ],
     "outDir": "./dist"
   },
