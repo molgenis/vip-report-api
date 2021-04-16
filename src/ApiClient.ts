@@ -458,11 +458,11 @@ function base85ToBinary(obj: ApiData.EncodedDataContainer): BinaryDataNode {
   for (const [key, value] of Object.entries(obj)) {
     switch (typeof value) {
       case 'string':
-        binaryObj[key] = base85.decode(value as string);
+        binaryObj[key] = base85.decode(value);
         delete obj.key; // release memory as soon as possible
         break;
       case 'object':
-        binaryObj[key] = base85ToBinary(value as ApiData.EncodedDataContainer);
+        binaryObj[key] = base85ToBinary(value);
         delete obj.key; // release memory as soon as possible
         break;
       default:
