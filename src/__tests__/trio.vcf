@@ -1,0 +1,15 @@
+##fileformat=VCFv4.2
+##INFO=<ID=n_bool3,Number=0,Type=Flag,Description="n_bool3">
+##INFO=<ID=n_bool6,Number=0,Type=Flag,Description="n_bool6">
+##INFO=<ID=n_bool7,Number=0,Type=Flag,Description="n_bool7">
+##INFO=<ID=n_number2,Number=1,Type=Integer,Description="n_number2">
+##INFO=<ID=n_string0,Number=1,Type=String,Description="n_string0">
+##INFO=<ID=n_string3,Number=1,Type=String,Description="n_string3">
+##INFO=<ID=n_string4,Number=1,Type=String,Description="n_string4">
+##INFO=<ID=n_array0,Number=.,Type=String,Description="n_array0">
+##INFO=<ID=n_object0,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: n_string0|n_string1">
+##FORMAT=<ID=DP,Number=1,Type=String,Description="Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Patient	Mother	Father
+1	10042538	.	C	T	.	PASS	n_array0=.;n_number2=1;n_object0=x|y;n_string0=a;n_string3=b;n_string4=b	GT:DP	1|0:50	0|0:10	0|0:10
+1	16376412	.	G	A	.	PASS	n_array0=.;n_bool3;n_bool6;n_bool7;n_number2=0;n_object0=y|z;n_string0=a;n_string3=a;n_string4=A	GT:DP	0|1:10	1|0:11	1|0:11
