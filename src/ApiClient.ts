@@ -33,10 +33,11 @@ interface Data {
 
 interface BinaryData extends BinaryDataNode {
   vcfGz: Buffer;
+  fastaGz: BinaryDataNode;
 }
 
 interface BinaryDataNode {
-  [key: string]: Uint8Array | BinaryDataNode;
+  [key: string]: Buffer | BinaryDataNode;
 }
 
 export class ApiClient implements Api {
@@ -64,6 +65,21 @@ export class ApiClient implements Api {
 
   getVcfGz(): Promise<Buffer> {
     return Promise.resolve(this.reportData.binary.vcfGz);
+  }
+
+  getFastaGz(contig: string, pos: number): Promise<Buffer | null> {
+    let buffer: Buffer | null = null;
+    for (const [key, value] of Object.entries(this.reportData.binary.fastaGz)) {
+      const pair = key.split(':');
+      if (pair[0] === contig) {
+        const interval = pair[1].split('-');
+        if (pos >= parseInt(interval[0], 10) && pos <= parseInt(interval[1], 10)) {
+          buffer = value as Buffer;
+          break;
+        }
+      }
+    }
+    return Promise.resolve(buffer);
   }
 
   private get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
