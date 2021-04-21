@@ -50,7 +50,15 @@ beforeEach(() => {
       }
     },
     base85: {
-      vcfGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/trio.vcf'))))
+      vcfGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/trio.vcf')))),
+      fastaGz: {
+        '1:17350500-17350600': new Base85().encode(
+          Buffer.from(gzipSync(fs.readFileSync(__dirname + '/interval0.fasta')))
+        ),
+        '2:47637200-47637300': new Base85().encode(
+          Buffer.from(gzipSync(fs.readFileSync(__dirname + '/interval1.fasta')))
+        )
+      }
     }
   };
   api = new ApiClient(reportData);
@@ -635,4 +643,21 @@ test('getVcfGz', async () => {
   const vcfGz = await api.getVcfGz();
   // null check, because size check differs between local machine and Travis
   expect(vcfGz).not.toBe(null);
+});
+
+test('getFastaGz', async () => {
+  const fastaGz = await api.getFastaGz('1', 17350550);
+  // null check, because size check differs between local machine and Travis
+  expect(fastaGz).not.toBe(null);
+});
+
+test('getFastaGz - unknown interval', async () => {
+  const fastaGz = await api.getFastaGz('1', 17350450);
+  // null check, because size check differs between local machine and Travis
+  expect(fastaGz).toBe(null);
+});
+
+test('getFastaGz - existing interval in other contig', async () => {
+  const fastaGz = await api.getFastaGz('1', 47637250);
+  expect(fastaGz).toBe(null);
 });
