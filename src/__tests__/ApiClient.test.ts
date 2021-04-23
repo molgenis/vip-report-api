@@ -58,7 +58,8 @@ beforeEach(() => {
         '2:47637200-47637300': new Base85().encode(
           Buffer.from(gzipSync(fs.readFileSync(__dirname + '/interval1.fasta')))
         )
-      }
+      },
+      genesGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/example.gff'))))
     }
   };
   api = new ApiClient(reportData);
@@ -660,4 +661,10 @@ test('getFastaGz - unknown interval', async () => {
 test('getFastaGz - existing interval in other contig', async () => {
   const fastaGz = await api.getFastaGz('1', 47637250);
   expect(fastaGz).toBe(null);
+});
+
+test('getGenesGz', async () => {
+  const genesGz = await api.getGenesGz();
+  // null check, because size check differs between local machine and Travis
+  expect(genesGz).not.toBe(null);
 });
