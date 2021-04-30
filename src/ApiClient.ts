@@ -38,7 +38,7 @@ interface BinaryData extends BinaryDataNode {
 }
 
 interface BinaryDataNode {
-  [key: string]: Buffer | BinaryDataNode;
+  [key: string]: Buffer | BinaryDataNode | null;
 }
 
 export class ApiClient implements Api {
@@ -83,7 +83,7 @@ export class ApiClient implements Api {
     return Promise.resolve(buffer);
   }
 
-  getGenesGz(): Promise<Buffer> {
+  getGenesGz(): Promise<Buffer | null> {
     return Promise.resolve(this.reportData.binary.genesGz);
   }
 
@@ -483,7 +483,11 @@ function base85ToBinary(obj: ApiData.EncodedDataContainer): BinaryDataNode {
         delete obj.key; // release memory as soon as possible
         break;
       case 'object':
-        binaryObj[key] = base85ToBinary(value);
+        if(value !== null) {
+          binaryObj[key] = base85ToBinary(value);
+        }else{
+          binaryObj[key] = null;
+        }
         delete obj.key; // release memory as soon as possible
         break;
       default:
