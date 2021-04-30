@@ -59,7 +59,9 @@ beforeEach(() => {
           Buffer.from(gzipSync(fs.readFileSync(__dirname + '/interval1.fasta')))
         )
       },
-      genesGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/example.gff'))))
+      genesGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/example.gff')))),
+      bam: new Base85().encode(Buffer.from(fs.readFileSync(__dirname + '/example.bam'))),
+      bai: new Base85().encode(Buffer.from(fs.readFileSync(__dirname + '/example.bai')))
     }
   };
   api = new ApiClient(reportData);
@@ -667,4 +669,16 @@ test('getGenesGz', async () => {
   const genesGz = await api.getGenesGz();
   // null check, because size check differs between local machine and Travis
   expect(genesGz).not.toBe(null);
+});
+
+test('getBam', async () => {
+  const bam = await api.getBam();
+  // null check, because size check differs between local machine and Travis
+  expect(bam).not.toBe(null);
+});
+
+test('getBai', async () => {
+  const bai = await api.getBai();
+  // null check, because size check differs between local machine and Travis
+  expect(bai).not.toBe(null);
 });

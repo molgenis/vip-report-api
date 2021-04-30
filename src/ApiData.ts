@@ -35,6 +35,8 @@ export interface EncodedData extends EncodedDataContainer {
   vcfGz: string;
   fastaGz: EncodedDataContainer;
   genesGz: string;
+  bam: string;
+  bai: string;
 }
 
 export interface Resource {
