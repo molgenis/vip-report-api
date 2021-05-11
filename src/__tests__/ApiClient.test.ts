@@ -60,7 +60,7 @@ beforeEach(() => {
         )
       },
       genesGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/example.gff')))),
-      bam: new Base85().encode(Buffer.from('dummy bam content', 'utf8'))
+      bam: { Patient: new Base85().encode(Buffer.from('dummy bam content', 'utf8')) }
     }
   };
   api = new ApiClient(reportData);
@@ -671,6 +671,11 @@ test('getGenesGz', async () => {
 });
 
 test('getBam', async () => {
-  const bam = await api.getBam();
+  const bam = await api.getBam('Patient');
   expect(bam !== null ? bam.toString('utf-8') : null).toBe('dummy bam content');
+});
+
+test('getBam - unknown sample identifier', async () => {
+  const bam = await api.getBam('Father');
+  expect(bam).toBeNull();
 });
