@@ -112,7 +112,8 @@ export interface NestedInfoMetadata {
   items: InfoMetadata[];
 }
 
-const REG_EXP_INFO = /##INFO=<ID=(.+?),Number=(.+?),Type=(.+?),Description="(.+?)"(?:,Source="(.+?)")?(?:,Version="(.+?)")?>/;
+const REG_EXP_INFO =
+  /##INFO=<ID=(.+?),Number=(.+?),Type=(.+?),Description="(.+?)"(?:,Source="(.+?)")?(?:,Version="(.+?)")?>/;
 
 export function parseInfoMetadata(token: string): InfoMetadata {
   const result = token.match(REG_EXP_INFO);

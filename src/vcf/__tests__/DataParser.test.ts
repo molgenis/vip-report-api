@@ -118,7 +118,7 @@ test('parse value - invalid', () => {
   expect(() =>
     parseValue('', {
       id: 'INT',
-      number: ({ type: 'xx', separator: ',' } as unknown) as NumberMetadata,
+      number: { type: 'xx', separator: ',' } as unknown as NumberMetadata,
       type: 'INTEGER',
       description: 'Integer'
     })
