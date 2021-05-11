@@ -35,6 +35,7 @@ interface BinaryData extends BinaryDataNode {
   vcfGz: Buffer;
   fastaGz: BinaryDataNode;
   genesGz: Buffer;
+  bam: Buffer;
 }
 
 interface BinaryDataNode {
@@ -83,8 +84,12 @@ export class ApiClient implements Api {
     return Promise.resolve(buffer);
   }
 
-  getGenesGz(): Promise<Buffer> {
+  getGenesGz(): Promise<Buffer | null> {
     return Promise.resolve(this.reportData.binary.genesGz);
+  }
+
+  getBam(): Promise<Buffer | null> {
+    return Promise.resolve(this.reportData.binary.bam);
   }
 
   private get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
