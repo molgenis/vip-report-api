@@ -4,6 +4,7 @@ import { gzipSync } from 'fflate';
 import fs from 'fs';
 import { Base85 } from '../Base85';
 import { Vcf } from '../index';
+import { Data, Metadata } from '../ApiData';
 
 let api: ApiClient;
 
@@ -664,10 +665,38 @@ test('getFastaGz - existing interval in other contig', async () => {
   expect(fastaGz).toBe(null);
 });
 
+test('getFastaGz - undefined', async () => {
+  const reportData = {
+    metadata: jest.fn() as unknown as Metadata,
+    data: jest.fn() as unknown as Data,
+    base85: {
+      vcfGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/trio.vcf'))))
+    }
+  };
+
+  api = new ApiClient(reportData);
+  const fastaGz = await api.getFastaGz('1', 47637250);
+  expect(fastaGz).toBe(null);
+});
+
 test('getGenesGz', async () => {
   const genesGz = await api.getGenesGz();
   // null check, because size check differs between local machine and Travis
   expect(genesGz).not.toBe(null);
+});
+
+test('getGenesGz - undefined', async () => {
+  const reportData = {
+    metadata: jest.fn() as unknown as Metadata,
+    data: jest.fn() as unknown as Data,
+    base85: {
+      vcfGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/trio.vcf'))))
+    }
+  };
+
+  api = new ApiClient(reportData);
+  const genesGz = await api.getGenesGz();
+  expect(genesGz).toBe(null);
 });
 
 test('getBam', async () => {
@@ -678,4 +707,18 @@ test('getBam', async () => {
 test('getBam - unknown sample identifier', async () => {
   const bam = await api.getBam('Father');
   expect(bam).toBeNull();
+});
+
+test('getBam - undefined', async () => {
+  const reportData = {
+    metadata: jest.fn() as unknown as Metadata,
+    data: jest.fn() as unknown as Data,
+    base85: {
+      vcfGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/trio.vcf'))))
+    }
+  };
+
+  api = new ApiClient(reportData);
+  const bam = await api.getBam('Patient');
+  expect(bam).toBe(null);
 });

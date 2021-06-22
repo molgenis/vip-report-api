@@ -33,9 +33,9 @@ export interface Items<T extends Resource> {
 
 export interface EncodedData extends EncodedDataContainer {
   vcfGz: string;
-  fastaGz: EncodedDataContainer;
-  genesGz: string;
-  bam: EncodedDataContainer;
+  fastaGz?: EncodedDataContainer;
+  genesGz?: string;
+  bam?: EncodedDataContainer;
 }
 
 export interface Resource {
@@ -43,5 +43,5 @@ export interface Resource {
 }
 
 export interface EncodedDataContainer {
-  [key: string]: string | EncodedDataContainer;
+  [key: string]: string | EncodedDataContainer | undefined;
 }

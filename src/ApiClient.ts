@@ -33,13 +33,13 @@ interface Data {
 
 interface BinaryData extends BinaryDataNode {
   vcfGz: Buffer;
-  fastaGz: BinaryDataNode;
-  genesGz: Buffer;
-  bam: BinaryDataNode;
+  fastaGz?: BinaryDataNode;
+  genesGz?: Buffer;
+  bam?: BinaryDataNode;
 }
 
 interface BinaryDataNode {
-  [key: string]: Buffer | BinaryDataNode;
+  [key: string]: Buffer | BinaryDataNode | undefined;
 }
 
 export class ApiClient implements Api {
@@ -71,13 +71,15 @@ export class ApiClient implements Api {
 
   getFastaGz(contig: string, pos: number): Promise<Buffer | null> {
     let buffer: Buffer | null = null;
-    for (const [key, value] of Object.entries(this.reportData.binary.fastaGz)) {
-      const pair = key.split(':');
-      if (pair[0] === contig) {
-        const interval = pair[1].split('-');
-        if (pos >= parseInt(interval[0], 10) && pos <= parseInt(interval[1], 10)) {
-          buffer = value as Buffer;
-          break;
+    if (this.reportData.binary.fastaGz) {
+      for (const [key, value] of Object.entries(this.reportData.binary.fastaGz)) {
+        const pair = key.split(':');
+        if (pair[0] === contig) {
+          const interval = pair[1].split('-');
+          if (pos >= parseInt(interval[0], 10) && pos <= parseInt(interval[1], 10)) {
+            buffer = value as Buffer;
+            break;
+          }
         }
       }
     }
@@ -85,7 +87,8 @@ export class ApiClient implements Api {
   }
 
   getGenesGz(): Promise<Buffer | null> {
-    return Promise.resolve(this.reportData.binary.genesGz);
+    const genesGz = this.reportData.binary.genesGz;
+    return Promise.resolve(genesGz ? genesGz : null);
   }
 
   getBam(sampleId: string): Promise<Buffer | null> {
