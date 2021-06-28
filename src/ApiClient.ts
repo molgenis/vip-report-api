@@ -36,6 +36,7 @@ interface BinaryData extends BinaryDataNode {
   fastaGz?: BinaryDataNode;
   genesGz?: Buffer;
   bam?: BinaryDataNode;
+  decisionTree?: Buffer;
 }
 
 interface BinaryDataNode {
@@ -95,6 +96,11 @@ export class ApiClient implements Api {
     const bam = this.reportData.binary.bam;
     const sampleBam: Buffer | null = bam ? (bam[sampleId] as Buffer) : null;
     return Promise.resolve(sampleBam !== undefined ? sampleBam : null);
+  }
+
+  getDecisionTree(): Promise<Buffer | null> {
+    const decisionTree = this.reportData.binary.decisionTree;
+    return Promise.resolve(decisionTree ? decisionTree : null);
   }
 
   private get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
