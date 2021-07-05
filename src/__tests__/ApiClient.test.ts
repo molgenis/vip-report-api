@@ -62,7 +62,7 @@ beforeEach(() => {
       },
       genesGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/example.gff')))),
       bam: { Patient: new Base85().encode(Buffer.from('dummy bam content', 'utf8'))},
-      decisionTree: new Base85().encode(Buffer.from(fs.readFileSync(__dirname + '/tree.json'))),
+      decisionTreeGz: new Base85().encode(Buffer.from(gzipSync(fs.readFileSync(__dirname + '/tree.json')))),
     }
   };
   api = new ApiClient(reportData);
@@ -726,13 +726,13 @@ test('getBam - undefined', async () => {
 
 );
 
-test('getDecisionTree', async () => {
-  const decisionTree = await api.getDecisionTree();
+test('getDecisionTreeGz', async () => {
+  const decisionTreeGz = await api.getDecisionTreeGz();
   // null check, because size check differs between local machine and Travis
-  expect(decisionTree).not.toBe(null);
+  expect(decisionTreeGz).not.toBe(null);
 });
 
-test('getDecisionTree - undefined', async () => {
+test('getDecisionTreeGz - undefined', async () => {
   const reportData = {
     metadata: jest.fn() as unknown as Metadata,
     data: jest.fn() as unknown as Data,
@@ -742,7 +742,7 @@ test('getDecisionTree - undefined', async () => {
   };
 
   api = new ApiClient(reportData);
-  const decisionTree = await api.getDecisionTree();
-  expect(decisionTree).toBe(null);
+  const decisionTreeGz = await api.getDecisionTreeGz();
+  expect(decisionTreeGz).toBe(null);
 });
 
