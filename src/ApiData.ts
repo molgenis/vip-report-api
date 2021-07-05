@@ -36,7 +36,7 @@ export interface EncodedData extends EncodedDataContainer {
   fastaGz?: EncodedDataContainer;
   genesGz?: string;
   bam?: EncodedDataContainer;
-  decisionTree?: string;
+  decisionTreeGz?: string;
 }
 
 export interface Resource {
