@@ -79,3 +79,12 @@ test('parse record sample', () => {
     })
   ).toStrictEqual({ GT: { a: [0, 1], p: true, t: 'het' }, DP: 5 });
 });
+
+test('parse record sample - drop trailing fields', () => {
+  expect(
+    parseRecordSample('0|1', ['GT', 'DP'], {
+      GT: gtFormatMetadata,
+      DP: dpFormatMetadata
+    })
+  ).toStrictEqual({ GT: { a: [0, 1], p: true, t: 'het' } });
+});
