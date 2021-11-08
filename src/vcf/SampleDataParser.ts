@@ -28,7 +28,7 @@ export function parseRecordSample(
   const parts = token.split(':');
 
   const recordSample: RecordSample = {};
-  for (let i = 0; i < formatFields.length; ++i) {
+  for (let i = 0; i < parts.length; ++i) {
     const field = formatFields[i];
     recordSample[field] = parseFormatValue(parts[i], formatMetadataContainer[field]);
   }
