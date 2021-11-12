@@ -41,11 +41,11 @@ export function parseCharacterValue(token: string): string | null {
   return value;
 }
 
-export function parseStringValue(token: string): string | null {
+export function parseStringValue(token: string, unescape: boolean = true): string | null {
   let value;
   if (token.length === 0 || token === MISSING) {
     value = null;
-  } else if (token.indexOf('%') === -1) {
+  } else if (!unescape || token.indexOf('%') === -1) {
     value = token;
   } else {
     value = token
@@ -69,11 +69,11 @@ export function parseStringValueNonNull(token: string): string {
   return value;
 }
 
-export function parseStringArray(token: string, separator: string): (string | null)[] {
+export function parseStringArray(token: string, separator: string, unescape: boolean = true): (string | null)[] {
   const value: (string | null)[] = [];
   if (token.length > 0 && token !== MISSING) {
     for (const part of token.split(separator)) {
-      value.push(parseStringValue(part));
+      value.push(parseStringValue(part, unescape));
     }
   }
   return value;

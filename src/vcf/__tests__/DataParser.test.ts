@@ -48,6 +48,13 @@ test('parse multiple value - nested', () => {
   ]);
 });
 
+test('parse multiple value with escaped chars - nested', () => {
+  expect(parseMultiValue('xx|1&2,y%2Cy|3&4', csqInfoMetadata)).toStrictEqual([
+    ['xx', [1, 2]],
+    ['y,y', [3, 4]]
+  ]);
+});
+
 test('parse value - number', () => {
   expect(
     parseValue('12', {

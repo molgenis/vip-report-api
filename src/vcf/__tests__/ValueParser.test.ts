@@ -68,6 +68,10 @@ test('parse string - escape characters', () => {
   expect(parseStringValue('%%3A%3B%3D%25%2C%0D%0A%09%3A')).toBe('%:;=%,\r\n\t:');
 });
 
+test('parse string - escape characters, disabled escaping', () => {
+  expect(parseStringValue('%3A', false)).toBe('%3A');
+});
+
 test('parse string non null - empty string', () => {
   expect(() => parseStringValueNonNull('')).toThrow("invalid string ''");
 });

@@ -107,7 +107,7 @@ function parseInfoContainer(token: string, infoMetadataContainer: InfoMetadataCo
     return {};
   }
   const info: InfoContainer = {};
-  for (const part of parseStringArray(token, ';')) {
+  for (const part of parseStringArray(token, ';', false)) {
     if (part !== null) {
       const idx = part.indexOf('=');
       const key = idx !== -1 ? part.substring(0, idx) : part;
