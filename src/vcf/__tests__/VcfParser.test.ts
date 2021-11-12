@@ -105,3 +105,85 @@ test('parse vcf - no samples', () => {
     ]
   });
 });
+
+const vcfWithCSQ = `
+##fileformat=VCFv4.2
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: X|Y|Z">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+1\t12\t.\tC\tT\t.\t.\tCSQ=x0|y0|z0,x1|y1a%2Cy1b|z1,x2|y2|z2
+
+`;
+
+test('parse vcf - escaped nested info values', () => {
+  let actual = parseVcf(vcfWithCSQ);
+  expect(actual).toStrictEqual({
+    metadata: {
+      info: {
+        CSQ: {
+          id: 'CSQ',
+          number: {
+            type: 'OTHER',
+            separator: ','
+          },
+          type: 'STRING',
+          description: 'Consequence annotations from Ensembl VEP. Format: X|Y|Z',
+          nested: {
+            separator: '|',
+            items: [
+              {
+                id: 'X',
+                number: {
+                  type: 'NUMBER',
+                  count: 1
+                },
+                type: 'STRING',
+                description: 'X'
+              },
+              {
+                id: 'Y',
+                number: {
+                  type: 'NUMBER',
+                  count: 1
+                },
+                type: 'STRING',
+                description: 'Y'
+              },
+              {
+                id: 'Z',
+                number: {
+                  type: 'NUMBER',
+                  count: 1
+                },
+                type: 'STRING',
+                description: 'Z'
+              }
+            ]
+          }
+        }
+      },
+      format: {}
+    },
+    header: {
+      samples: []
+    },
+    data: [
+      {
+        c: '1',
+        p: 12,
+        i: [],
+        r: 'C',
+        a: ['T'],
+        q: null,
+        f: [],
+        n: {
+          CSQ: [
+            ['x0', 'y0', 'z0'],
+            ['x1', 'y1a,y1b', 'z1'],
+            ['x2', 'y2', 'z2']
+          ]
+        },
+        s: []
+      }
+    ]
+  });
+});
