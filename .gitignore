@@ -1,12 +1,5 @@
-# npm
 node_modules
-npm-debug.log
-
-# ide
+dist
 /.idea/
-/vip-report-api.iml
-
-# misc
-/coverage/
-/dist/
-molgenis-vip-report-api-*.tgz
+coverage
+/.vscode/
