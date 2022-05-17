@@ -1,84 +1,85 @@
 import {
   Api,
+  AppMetadata,
   CompareFn,
   ComposedQuery,
-  Items,
+  HtsFileMetadata,
+  Item,
   Metadata,
   PagedItems,
   Params,
   Phenotype,
   Query,
+  QueryClause,
   Resource,
   Sample,
   Selector,
   SelectorPart,
-  SortOrder
-} from './Api';
-import * as ApiData from './ApiData';
-import { Record } from './vcf/Vcf';
-import { Buffer } from 'buffer';
-import { gunzipSync } from 'fflate';
-import { parseVcf } from './vcf/VcfParser';
-import { Base85 } from './Base85';
+  SortOrder,
+} from "./Api";
+import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
+import { DecisionTree, LeafNode } from "./DecisionTree";
+import { FieldMetadata, NestedFieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
 
-interface ReportData {
+export interface ReportData {
   metadata: Metadata;
   data: Data;
-  binary: BinaryData;
+  binary: BinaryReportData;
+  decisionTree?: DecisionTree;
 }
 
 interface Data {
-  [key: string]: Items<Resource>;
+  [key: string]: Resource[];
 }
 
-interface BinaryData extends BinaryDataNode {
-  vcfGz: Buffer;
-  fastaGz?: BinaryDataNode;
-  genesGz?: Buffer;
-  bam?: BinaryDataNode;
-  decisionTreeGz?: Buffer;
-}
-
-interface BinaryDataNode {
-  [key: string]: Buffer | BinaryDataNode | undefined;
+export interface BinaryReportData {
+  vcf?: Uint8Array;
+  fastaGz?: { [key: string]: Uint8Array };
+  genesGz?: Uint8Array;
+  bam?: { [key: string]: Uint8Array };
+  decisionTree?: DecisionTree;
 }
 
 export class ApiClient implements Api {
   private reportData: ReportData;
 
-  constructor(apiDataContainer: ApiData.Container) {
-    this.reportData = decode(apiDataContainer);
+  constructor(reportData: ReportData) {
+    this.reportData = this.postProcessReportData(reportData);
   }
 
-  getMeta(): Promise<Metadata> {
-    return Promise.resolve(this.reportData.metadata);
+  getRecordsMeta(): Promise<RecordMetadata> {
+    return Promise.resolve(this.reportData.metadata.records);
   }
 
   getRecords(params: Params = {}): Promise<PagedItems<Record>> {
-    return this.get('records', params);
+    return this.get("records", params);
+  }
+
+  getRecordById(id: number): Promise<Item<Record>> {
+    return this.getById("records", id);
   }
 
   getSamples(params = {}): Promise<PagedItems<Sample>> {
-    return this.get('samples', params);
+    return this.get("samples", params);
+  }
+
+  getSampleById(id: number): Promise<Item<Sample>> {
+    return this.getById("samples", id);
   }
 
   getPhenotypes(params = {}): Promise<PagedItems<Phenotype>> {
-    return this.get('phenotypes', params);
+    return this.get("phenotypes", params);
   }
 
-  getVcfGz(): Promise<Buffer> {
-    return Promise.resolve(this.reportData.binary.vcfGz);
-  }
-
-  getFastaGz(contig: string, pos: number): Promise<Buffer | null> {
-    let buffer: Buffer | null = null;
+  getFastaGz(contig: string, pos: number): Promise<Uint8Array | null> {
+    let buffer: Uint8Array | null = null;
     if (this.reportData.binary.fastaGz) {
       for (const [key, value] of Object.entries(this.reportData.binary.fastaGz)) {
-        const pair = key.split(':');
+        const pair = key.split(":");
         if (pair[0] === contig) {
-          const interval = pair[1].split('-');
+          const interval = pair[1].split("-");
           if (pos >= parseInt(interval[0], 10) && pos <= parseInt(interval[1], 10)) {
-            buffer = value as Buffer;
+            buffer = value;
             break;
           }
         }
@@ -87,20 +88,65 @@ export class ApiClient implements Api {
     return Promise.resolve(buffer);
   }
 
-  getGenesGz(): Promise<Buffer | null> {
+  getHtsFileMetadata(): Promise<HtsFileMetadata> {
+    const htsFile = this.reportData.metadata.htsFile;
+    return Promise.resolve(htsFile);
+  }
+
+  getAppMetadata(): Promise<AppMetadata> {
+    const appMeta = this.reportData.metadata.app;
+    return Promise.resolve(appMeta);
+  }
+
+  getGenesGz(): Promise<Uint8Array | null> {
     const genesGz = this.reportData.binary.genesGz;
     return Promise.resolve(genesGz ? genesGz : null);
   }
 
-  getBam(sampleId: string): Promise<Buffer | null> {
+  getBam(sampleId: string): Promise<Uint8Array | null> {
     const bam = this.reportData.binary.bam;
-    const sampleBam: Buffer | null = bam ? (bam[sampleId] as Buffer) : null;
-    return Promise.resolve(sampleBam !== undefined ? sampleBam : null);
+    const sampleBam = bam ? (bam[sampleId] ? bam[sampleId] : null) : null;
+    return Promise.resolve(sampleBam);
   }
 
-  getDecisionTreeGz(): Promise<Buffer | null> {
-    const decisionTreeGz = this.reportData.binary.decisionTreeGz;
-    return Promise.resolve(decisionTreeGz ? decisionTreeGz : null);
+  getDecisionTree(): Promise<DecisionTree | null> {
+    const decisionTree = this.reportData.decisionTree;
+    return Promise.resolve(decisionTree ? decisionTree : null);
+  }
+
+  isDatasetSupport(): boolean {
+    return false;
+  }
+
+  getDatasetIds(): string[] {
+    throw new Error("unsupported");
+  }
+
+  selectDataset(id: string): void {
+    throw new Error(`unknown id ${id}`);
+  }
+
+  private postProcessReportData(reportData: ReportData): ReportData {
+    if (!reportData.decisionTree) {
+      return reportData;
+    }
+    const csqItems = reportData.metadata.records.info.CSQ?.nested?.items;
+    if (!csqItems) {
+      return reportData;
+    }
+
+    // make VIPC categorical with categories based on tree exit nodes
+    const categories = Object.values(reportData.decisionTree.nodes)
+      .filter((node) => node.type === "LEAF")
+      .map((node) => (node as LeafNode).class);
+    const csqItem = csqItems.find((item) => item.id === "VIPC");
+    if (!csqItem) {
+      return reportData;
+    }
+    csqItem.type = "CATEGORICAL";
+    csqItem.categories = categories;
+    csqItem.required = true;
+    return reportData;
   }
 
   private get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
@@ -109,7 +155,8 @@ export class ApiClient implements Api {
         reject(`unknown resource '${resource}'`);
       }
 
-      let resources: T[] = this.reportData.data[resource].items.slice() as T[];
+      let resources = this.reportData.data[resource].map((resource, i) => ({ id: i, data: resource })) as Item<T>[];
+
       const query = params.query;
       if (query) {
         resources = resources.filter((aResource) => matches(query, aResource));
@@ -127,33 +174,74 @@ export class ApiClient implements Api {
         page: {
           number: page,
           size,
-          totalElements
+          totalElements,
         },
-        total: this.reportData.data[resource].total
+        total: this.reportData.data[resource].length,
       };
       resolve(response);
     });
   }
+
+  private getById<T extends Resource>(resource: string, id: number): Promise<Item<T>> {
+    if (!this.reportData.data[resource]) {
+      throw new Error(`unknown resource '${resource}'`);
+    }
+    return Promise.resolve({ id: id, data: this.reportData.data[resource][id] as T });
+  }
 }
 
-const base85 = new Base85();
-
-function get(
-  value: object | null | undefined,
-  path: string[]
-): boolean | boolean[] | number | number[] | string | string[] | null {
-  let valueAtDepth: any = value;
-  for (const token of path) {
-    if (valueAtDepth === undefined) {
-      valueAtDepth = null;
-    } else if (valueAtDepth !== null) {
-      if (typeof valueAtDepth !== 'object' || Array.isArray(valueAtDepth)) {
-        throw new Error(`invalid path ${path}`);
+function getSingleNestedValue(
+  sort: SortOrder | null,
+  valueAtDepth: boolean[] | number[] | string[],
+  path: string[],
+  i: number,
+  value: object | null | undefined
+) {
+  if (sort !== null) {
+    let values: boolean[] | number[] | string[] = [];
+    valueAtDepth.forEach((nestedValues) => {
+      const nestedValue = nestedValues[path[i + 1] as keyof typeof value];
+      if (nestedValue !== undefined && nestedValue != null) {
+        values.push(nestedValue);
       }
-      valueAtDepth = valueAtDepth[token];
+    });
+    values = values.sort((a, b) => getCompareFn(sort)(a, b));
+    return values.length > 0 ? values[0] : null;
+  } else {
+    throw new Error(`Cannot get a single value for an array without a sort.`);
+  }
+}
+
+function getSingleValue(
+  value: object | null | undefined,
+  path: string[],
+  sort: SortOrder | null
+): boolean | boolean[] | number | number[] | string | string[] | null {
+  let valueAtDepth: boolean | boolean[] | number | number[] | string | string[] | null = value as
+    | boolean
+    | boolean[]
+    | number
+    | number[]
+    | string
+    | string[]
+    | null;
+  if (valueAtDepth === undefined || valueAtDepth === null) {
+    return null;
+  }
+
+  for (let i = 0; i < path.length; i++) {
+    const token = path[i];
+    if (typeof valueAtDepth !== "object") {
+      throw new Error(`invalid path ${path.join("/")}`);
+    } else {
+      if (Array.isArray(valueAtDepth) && token === "*") {
+        return getSingleNestedValue(sort, valueAtDepth, path, i, value);
+      } else {
+        valueAtDepth = valueAtDepth[token as keyof typeof value];
+      }
     }
   }
-  return valueAtDepth !== undefined ? valueAtDepth : null;
+  return valueAtDepth === undefined ? null : valueAtDepth;
 }
 
 function compareAsc(a: unknown, b: unknown) {
@@ -161,11 +249,11 @@ function compareAsc(a: unknown, b: unknown) {
     return b === null ? 0 : 1;
   } else if (b === null) {
     return -1;
-  } else if (typeof a === 'number' && typeof b === 'number') {
+  } else if (typeof a === "number" && typeof b === "number") {
     return compareAscNumber(a, b);
-  } else if (typeof a === 'string' && typeof b === 'string') {
+  } else if (typeof a === "string" && typeof b === "string") {
     return compareAscString(a, b);
-  } else if (typeof a === 'boolean' && typeof b === 'boolean') {
+  } else if (typeof a === "boolean" && typeof b === "boolean") {
     return compareAscBoolean(a, b);
   } else {
     const type = typeof a;
@@ -195,27 +283,60 @@ function compareDesc(a: unknown, b: unknown) {
 
 function getCompareFn(sortOrder: SortOrder): CompareFn {
   let compareFn;
-  if (sortOrder.compare === 'asc' || sortOrder.compare === null || sortOrder.compare === undefined) {
+  if (sortOrder.compare === "asc" || sortOrder.compare === null || sortOrder.compare === undefined) {
     compareFn = compareAsc;
-  } else if (sortOrder.compare === 'desc') {
+  } else if (sortOrder.compare === "desc") {
     compareFn = compareDesc;
-  } else if (typeof sortOrder.compare === 'function') {
+  } else if (typeof sortOrder.compare === "function") {
     compareFn = sortOrder.compare;
   } else {
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     throw new Error(
-      `illegal sort compare value '${sortOrder.compare}'. valid values are 'asc', 'desc' or a function (a, b) => number`
+      `illegal sort compare value '${
+        sortOrder.compare as string
+      }'. valid values are 'asc', 'desc' or a function (a, b) => number`
     );
   }
   return compareFn;
 }
 
-function sort<T extends Resource>(resources: T[], sortOrders: SortOrder[]) {
+function getNestedPath(sortOrder: SortOrder, path: string[]) {
+  if (typeof sortOrder.property === "string") {
+    throw new Error("Cannot create a nested path for a string value.");
+  }
+  const fieldMetadata: FieldMetadata = sortOrder.property;
+  path = [];
+  path.push("n");
+  if (fieldMetadata.parent) {
+    path.push(fieldMetadata.parent.id);
+    if (fieldMetadata.parent.number.type !== "NUMBER" || fieldMetadata.parent.number.count !== 1) {
+      path.push("*");
+    }
+    const nested: NestedFieldMetadata = fieldMetadata.parent.nested as NestedFieldMetadata;
+    const idx = nested.items.indexOf(fieldMetadata);
+    if (idx === -1) {
+      throw new Error(`unknown field '${fieldMetadata.id}'`);
+    }
+    //TODO index is a number and should be treated as such
+    path.push(idx as unknown as string);
+  } else {
+    path.push(fieldMetadata.id);
+  }
+  return path;
+}
+
+function sort<T extends Resource>(resources: Item<T>[], sortOrders: SortOrder[]) {
   resources.sort((a, b) => {
     let val = 0;
     for (const sortOrder of sortOrders) {
-      const path = Array.isArray(sortOrder.property) ? sortOrder.property : [sortOrder.property];
-      const left = get(a, path);
-      const right = get(b, path);
+      let path: string[] = [];
+      if (typeof sortOrder.property === "string") {
+        path = [sortOrder.property] as string[];
+      } else {
+        path = getNestedPath(sortOrder, path);
+      }
+      const left = getSingleValue(a.data, path, sortOrder);
+      const right = getSingleValue(b.data, path, sortOrder);
 
       val = getCompareFn(sortOrder)(left, right);
       if (val !== 0) {
@@ -226,7 +347,7 @@ function sort<T extends Resource>(resources: T[], sortOrders: SortOrder[]) {
   });
 }
 
-function matchesAnd(args: (Query | ComposedQuery)[], resource: Resource): boolean {
+function matchesAnd(args: Query[], resource: Item<Resource>): boolean {
   for (const query of args) {
     if (!matches(query, resource)) {
       return false;
@@ -235,7 +356,7 @@ function matchesAnd(args: (Query | ComposedQuery)[], resource: Resource): boolea
   return true;
 }
 
-function matchesOr(args: (Query | ComposedQuery)[], resource: Resource): boolean {
+function matchesOr(args: Query[], resource: Item<Resource>): boolean {
   for (const query of args) {
     if (matches(query, resource)) {
       return true;
@@ -244,76 +365,148 @@ function matchesOr(args: (Query | ComposedQuery)[], resource: Resource): boolean
   return false;
 }
 
-function matchesComposed(composedQuery: ComposedQuery, resource: Resource): boolean {
+function matchesComposed(composedQuery: ComposedQuery, resource: Item<Resource>): boolean {
   let match;
   switch (composedQuery.operator) {
-    case 'and':
+    case "and":
       match = matchesAnd(composedQuery.args, resource);
       break;
-    case 'or':
+    case "or":
       match = matchesOr(composedQuery.args, resource);
       break;
     default:
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`invalid operator '${composedQuery.operator}'`);
   }
   return match;
 }
 
-function matches(query: Query | ComposedQuery, resource: Resource): boolean {
-  if (query.operator === 'and' || query.operator === 'or') {
+function matches(query: Query, resource: Item<Resource>): boolean {
+  if (query.operator === "and" || query.operator === "or") {
     return matchesComposed(query, resource);
   } else {
     let match;
     switch (query.operator) {
-      case '==':
+      case "==":
         match = matchesEquals(query, resource);
         break;
-      case 'in':
+      case "~=":
+        match = matchesSearch(query, resource);
+        break;
+      case "~=_any":
+        match = matchesSearchAny(query, resource);
+        break;
+      case "any_~=_any":
+        match = matchesAnySearchAny(query, resource);
+        break;
+      case "in":
         match = matchesIn(query, resource);
         break;
-      case 'has_any':
+      case "has_any":
         match = matchesHasAny(query, resource);
         break;
-      case '!has_any':
+      case "!has_any":
         match = !matchesHasAny(query, resource);
         break;
-      case 'any_has_any':
+      case "any_has_any":
         match = matchesAnyHasAny(query, resource);
         break;
-      case '!any_has_any':
+      case "!any_has_any":
         match = !matchesAnyHasAny(query, resource);
         break;
-      case '!=':
+      case "!=":
         match = !matchesEquals(query, resource);
         break;
-      case '!in':
+      case "!in":
         match = !matchesIn(query, resource);
         break;
-      case '>':
+      case ">":
         match = matchesGreaterThan(query, resource);
         break;
-      case '>=':
+      case ">=":
         match = matchesGreaterThanOrEqual(query, resource);
         break;
-      case '<':
+      case "<":
         match = matchesLesserThan(query, resource);
         break;
-      case '<=':
+      case "<=":
         match = matchesLesserThanOrEqual(query, resource);
         break;
       default:
-        throw new Error('unexpected query operator ' + query.operator);
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(`unexpected query operator ${query.operator}`);
     }
     return match;
   }
 }
 
-function matchesEquals(query: Query, resource: Resource): boolean {
+function matchesEquals(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
   return value === query.args;
 }
 
-function matchesIn(query: Query, resource: Resource): boolean {
+function searchEquals(token: unknown, search: unknown): boolean {
+  if (typeof token === "string" && typeof search === "string") {
+    return token.toLowerCase().startsWith(search.toLowerCase());
+  } else {
+    return token === search;
+  }
+}
+
+function matchesSearch(query: QueryClause, resource: Item<Resource>): boolean {
+  const value: any = select(query.selector, resource);
+  if (typeof value === "string" && typeof query.args === "string") {
+    return searchEquals(value, query.args);
+  } else {
+    return value === query.args;
+  }
+}
+
+function matchesSearchAny(query: QueryClause, resource: Item<Resource>): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
+  }
+
+  for (const arg of query.args as unknown[]) {
+    for (const subValue of value as unknown[]) {
+      if (searchEquals(subValue, arg)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function matchesAnySearchAny(query: QueryClause, resource: Item<Resource>): boolean {
+  const value: any = select(query.selector, resource);
+
+  if (value === undefined) {
+    return false;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
+  }
+
+  for (const item of value as unknown[]) {
+    for (const arg of query.args as unknown[]) {
+      for (const subItem of item as unknown[]) {
+        if (searchEquals(subItem, arg)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function matchesIn(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   let match = false;
@@ -328,7 +521,7 @@ function matchesIn(query: Query, resource: Resource): boolean {
   return match;
 }
 
-function matchesAnyHasAny(query: Query, resource: Resource): boolean {
+function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   if (value === undefined) {
@@ -336,22 +529,24 @@ function matchesAnyHasAny(query: Query, resource: Resource): boolean {
   }
 
   if (!Array.isArray(value)) {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
   for (const item of value as unknown[]) {
-    for (const arg of query.args as unknown[]) {
-      if ((item as unknown[]).includes(arg)) {
-        match = true;
-        break;
+    if (item !== null) {
+      for (const arg of query.args as unknown[]) {
+        if ((item as unknown[]).includes(arg)) {
+          match = true;
+          break;
+        }
       }
     }
   }
   return match;
 }
 
-function matchesHasAny(query: Query, resource: Resource): boolean {
+function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   if (value === undefined) {
@@ -359,7 +554,7 @@ function matchesHasAny(query: Query, resource: Resource): boolean {
   }
 
   if (!Array.isArray(value)) {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'array'`);
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
@@ -372,70 +567,70 @@ function matchesHasAny(query: Query, resource: Resource): boolean {
   return match;
 }
 
-function matchesGreaterThan(query: Query, resource: Resource): boolean {
+function matchesGreaterThan(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
   }
 
-  if (typeof value !== 'number') {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  if (typeof value !== "number") {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
 
   return value > query.args;
 }
 
-function matchesGreaterThanOrEqual(query: Query, resource: Resource): boolean {
+function matchesGreaterThanOrEqual(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
   }
 
-  if (typeof value !== 'number') {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  if (typeof value !== "number") {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
 
   return value >= query.args;
 }
 
-function matchesLesserThan(query: Query, resource: Resource): boolean {
+function matchesLesserThan(query: QueryClause, resource: Item<Resource>): boolean {
   const value: any = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
   }
 
-  if (typeof value !== 'number') {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  if (typeof value !== "number") {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
 
   return value < query.args;
 }
 
-function matchesLesserThanOrEqual(query: Query, resource: Resource): boolean {
-  const value: any = select(query.selector, resource);
+function matchesLesserThanOrEqual(query: QueryClause, resource: Item<Resource>): boolean {
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
   }
 
-  if (typeof value !== 'number') {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'number'`);
+  if (typeof value !== "number") {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
 
   return value <= query.args;
 }
 
-function select(selector: Selector, resource: Resource) {
+function select(selector: Selector, resource: Item<Resource>) {
   let parts: SelectorPart[];
   if (Array.isArray(selector)) {
     parts = (selector as SelectorPart[]).slice();
   } else {
     parts = [selector];
   }
-  return selectRecursive(parts, resource);
+  return selectRecursive(parts, resource.data);
 }
 
 function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
@@ -446,7 +641,7 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
   const part = parts.shift();
   let selectedValue;
 
-  if (part === '*') {
+  if (part === "*") {
     if (value === undefined) {
       selectedValue = [];
     } else if (!Array.isArray(value)) {
@@ -455,7 +650,7 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
       selectedValue = (value as unknown[]).map((item) => selectRecursive(parts.slice(), item));
     }
   } else {
-    if (typeof part === 'string') {
+    if (typeof part === "string") {
       selectedValue = selectFromObject(part, value);
     } else if (Number.isInteger(part)) {
       selectedValue = selectFromArray(part as number, value);
@@ -470,48 +665,9 @@ function selectRecursive(parts: SelectorPart[], value: unknown): unknown {
   return selectedValue;
 }
 
-function decode(apiDataContainer: ApiData.Container): ReportData {
-  const reportData: ReportData = {
-    metadata: apiDataContainer.metadata as Metadata,
-    data: apiDataContainer.data,
-    binary: base85ToBinary(apiDataContainer.base85) as BinaryData
-  };
-
-  const binaryVcf = gunzipSync(reportData.binary.vcfGz);
-  const textVcf = Buffer.from(binaryVcf.buffer).toString();
-  const vcf = parseVcf(textVcf);
-
-  reportData.metadata.records = vcf.metadata;
-  reportData.data.records = {
-    items: vcf.data,
-    total: vcf.data.length
-  };
-
-  return reportData;
-}
-
-function base85ToBinary(obj: ApiData.EncodedDataContainer): BinaryDataNode {
-  const binaryObj: BinaryDataNode = {};
-  for (const [key, value] of Object.entries(obj)) {
-    switch (typeof value) {
-      case 'string':
-        binaryObj[key] = base85.decode(value);
-        delete obj.key; // release memory as soon as possible
-        break;
-      case 'object':
-        binaryObj[key] = base85ToBinary(value);
-        delete obj.key; // release memory as soon as possible
-        break;
-      default:
-        throw new Error(`unexpected type '${typeof value}'`);
-    }
-  }
-  return binaryObj;
-}
-
 function selectFromObject(part: string, value: unknown) {
-  if (typeof value !== 'object') {
-    throw new Error(`value '${value}' is of type '${typeof value}' instead of 'object'`);
+  if (typeof value !== "object") {
+    throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'object'`);
   }
   return value !== null ? (value as { [index: string]: unknown })[part] : null;
 }
