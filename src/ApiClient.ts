@@ -3,8 +3,10 @@ import {
   AppMetadata,
   CompareFn,
   ComposedQuery,
+  DecisionTree,
   HtsFileMetadata,
   Item,
+  LeafNode,
   Metadata,
   PagedItems,
   Params,
@@ -18,7 +20,6 @@ import {
   SortOrder,
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { DecisionTree, LeafNode } from "./DecisionTree";
 import { FieldMetadata, NestedFieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
 
 export interface ReportData {

@@ -1,23 +1,14 @@
 import { beforeEach, expect, test } from "vitest";
 import { ApiClient } from "../ApiClient";
-import { Item, Params } from "../Api";
+import { DecisionTree, Item, Params } from "../Api";
 import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
 import { Record } from "@molgenis/vip-report-vcf/src/Vcf";
 import path from "path";
 import { parseVcf } from "@molgenis/vip-report-vcf/src/VcfParser";
 import { FieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
-import { DecisionTree } from "../DecisionTree";
 
 let api: ApiClient;
-
-function fetchAsBytes(filename: string): Uint8Array {
-  return readFileSync(path.join(__dirname, filename));
-}
-
-function fetchAsString(filename: string): string {
-  return readFileSync(path.join(__dirname, filename), "utf8");
-}
 
 const sortAllExpected = {
   page: { number: 0, size: 10, totalElements: 2 },
@@ -149,15 +140,15 @@ beforeEach(() => {
       phenotypes: [],
     },
     binary: {
-      vcf: fetchAsBytes("trio.vcf"),
+      vcf: readFileSync(path.join(__dirname, "trio.vcf")),
       fastaGz: {
-        "1:17350500-17350600": fetchAsBytes("interval0.fasta"),
-        "2:47637200-47637300": fetchAsBytes("interval1.fasta"),
+        "1:17350500-17350600": readFileSync(path.join(__dirname, "interval0.fasta")),
+        "2:47637200-47637300": readFileSync(path.join(__dirname, "interval1.fasta")),
       },
-      genesGz: fetchAsBytes("example.gff"),
-      bam: { Patient: fetchAsBytes("alignment.bam") },
+      genesGz: readFileSync(path.join(__dirname, "example.gff")),
+      bam: { Patient: readFileSync(path.join(__dirname, "alignment.bam")) },
     },
-    decisionTree: JSON.parse(fetchAsString("decisionTree.json")) as DecisionTree,
+    decisionTree: JSON.parse(readFileSync(path.join(__dirname, "decisionTree.json"), "utf8")) as DecisionTree,
   };
 
   const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf));
