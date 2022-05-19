@@ -4,10 +4,10 @@ export default defineConfig({
   test: {
     coverage: {
       all: true,
-      lines: 90,
-      functions: 90,
-      branches: 90,
-      statements: 90,
+      lines: 65,
+      functions: 65,
+      branches: 65,
+      statements: 65,
     },
   },
 });
