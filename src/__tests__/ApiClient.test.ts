@@ -420,7 +420,7 @@ test("get - all records sorted on n.n_bool1", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool1 description",
       },
     },
   };
@@ -438,7 +438,7 @@ test("get - all records sorted on n.n_bool2", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool2 description",
       },
     },
   };
@@ -456,12 +456,12 @@ test("get - all records sorted on n.n_bool3", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool3 description",
       },
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool4", async () => {
@@ -474,7 +474,7 @@ test("get - all records sorted on n.n_bool4", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool4 description",
       },
     },
   };
@@ -492,7 +492,7 @@ test("get - all records sorted on n.n_bool5", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool5 description",
       },
     },
   };
@@ -510,12 +510,12 @@ test("get - all records sorted on n.n_bool6", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool6 description",
       },
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool7", async () => {
@@ -528,12 +528,12 @@ test("get - all records sorted on n.n_bool7", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool7 description",
       },
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool8", async () => {
@@ -546,7 +546,7 @@ test("get - all records sorted on n.n_bool8", async () => {
           count: 1,
         },
         type: "FLAG",
-        description: "n_bool0 description",
+        description: "n_bool8 description",
       },
     },
   };
