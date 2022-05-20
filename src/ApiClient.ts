@@ -247,9 +247,9 @@ function getSingleValue(
 
 function compareAsc(a: unknown, b: unknown) {
   if (a === null) {
-    return b === null ? 0 : 1;
+    return b === null ? 0 : -1;
   } else if (b === null) {
-    return -1;
+    return 1;
   } else if (typeof a === "number" && typeof b === "number") {
     return compareAscNumber(a, b);
   } else if (typeof a === "string" && typeof b === "string") {
