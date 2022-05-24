@@ -1,6 +1,6 @@
 {
   "name": "@molgenis/vip-report-api",
-  "version": "3.0.4",
+  "version": "3.1.0",
   "description": "TypeScript Report API for Variant Call Format (VCF) Report Templates",
   "scripts": {
     "build": "tsc --build",
@@ -43,6 +43,6 @@
     "vitest": "^0.12.6"
   },
   "dependencies": {
-    "@molgenis/vip-report-vcf": "^1.0.5"
+    "@molgenis/vip-report-vcf": "^1.1.0"
   }
 }
