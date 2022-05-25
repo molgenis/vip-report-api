@@ -137,16 +137,35 @@ export class ApiClient implements Api {
     }
 
     // make VIPC categorical with categories based on tree exit nodes
-    const categories = Object.values(reportData.decisionTree.nodes)
-      .filter((node) => node.type === "LEAF")
-      .map((node) => (node as LeafNode).class);
     const csqItem = csqItems.find((item) => item.id === "VIPC");
-    if (!csqItem) {
-      return reportData;
+    if (csqItem) {
+      csqItem.type = "CATEGORICAL";
+      csqItem.categories = Object.values(reportData.decisionTree.nodes)
+        .filter((node) => node.type === "LEAF")
+        .map((node) => (node as LeafNode).class);
+      csqItem.required = true;
     }
-    csqItem.type = "CATEGORICAL";
-    csqItem.categories = categories;
-    csqItem.required = true;
+
+    // make HPO categorical with categories based on phenotypes
+    const hpoItem = csqItems.find((item) => item.id === "HPO");
+    if (hpoItem) {
+      const categories = reportData.data.phenotypes
+        ? (reportData.data.phenotypes as Phenotype[])
+            .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
+            .map((phenotype) => phenotype.type.id)
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .sort()
+        : [];
+      if (categories.length > 0) {
+        hpoItem.type = "CATEGORICAL";
+        hpoItem.categories = (reportData.data.phenotypes as Phenotype[])
+          .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
+          .map((phenotype) => phenotype.type.id)
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .sort();
+      }
+    }
+
     return reportData;
   }
 
