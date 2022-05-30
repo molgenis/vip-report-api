@@ -18,6 +18,7 @@ import {
   Selector,
   SelectorPart,
   SortOrder,
+  VipMetadata,
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
 import { FieldMetadata, NestedFieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
@@ -97,6 +98,11 @@ export class ApiClient implements Api {
   getAppMetadata(): Promise<AppMetadata> {
     const appMeta = this.reportData.metadata.app;
     return Promise.resolve(appMeta);
+  }
+
+  getVipMetadata(): Promise<VipMetadata | null> {
+    const vipMeta = this.reportData.metadata.vip;
+    return Promise.resolve(vipMeta);
   }
 
   getGenesGz(): Promise<Uint8Array | null> {

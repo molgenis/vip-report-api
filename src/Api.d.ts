@@ -13,6 +13,7 @@ export interface Api {
   getBam(sampleId: string): Promise<Uint8Array | null>;
   getHtsFileMetadata(): Promise<HtsFileMetadata>;
   getAppMetadata(): Promise<AppMetadata>;
+  getVipMetadata(): Promise<VipMetadata | null>;
   getDecisionTree(): Promise<DecisionTree | null>;
 
   // testing purposes only
@@ -23,6 +24,7 @@ export interface Api {
 
 export interface Metadata {
   app: AppMetadata;
+  vip: VipMetadata | null;
   htsFile: HtsFileMetadata;
   records: RecordMetadata;
 }
@@ -78,6 +80,11 @@ export interface AppMetadata {
   name: string;
   version: string;
   args: string;
+}
+
+export interface VipMetadata {
+  version: string | null;
+  args: string | null;
 }
 
 export interface HtsFileMetadata {

@@ -119,6 +119,10 @@ beforeEach(() => {
         version: "0.0.1",
         args: "-i test.vcf -d",
       },
+      vip: {
+        version: "1.2.3",
+        args: "-i test.vcf",
+      },
       htsFile: {
         htsFormat: "VCF",
         uri: "file://file0.vcf.gz",
@@ -165,6 +169,16 @@ test("getAppMeta", async () => {
       name: "vcf-report",
       version: "0.0.1",
       args: "-i test.vcf -d",
+    })
+  );
+});
+
+test("getVipMeta", async () => {
+  const metadata = await api.getVipMetadata();
+  expect(metadata).toEqual(
+    expect.objectContaining({
+      version: "1.2.3",
+      args: "-i test.vcf",
     })
   );
 });
