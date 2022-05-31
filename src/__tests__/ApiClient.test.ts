@@ -26,9 +26,14 @@ const record0: Item<Record> = {
     q: null,
     f: ["PASS"],
     n: {
-      n_array0: [null],
+      n_array0: ["c", null, "d", "b"],
       n_number2: 1,
-      n_object0: [["x", "y"]],
+      n_object0: [
+        ["dummy", "c"],
+        ["dummy", null],
+        ["dummy", "d"],
+        ["dummy", "b"],
+      ],
       n_string0: "a",
       n_string3: "b",
       n_string4: "b",
@@ -72,12 +77,16 @@ const record1: Item<Record> = {
     q: null,
     f: ["PASS"],
     n: {
-      n_array0: [null],
+      n_array0: ["b", "c", "a"],
       n_bool3: true,
       n_bool6: true,
       n_bool7: true,
       n_number2: 0,
-      n_object0: [["y", "z"]],
+      n_object0: [
+        ["dummy", "b"],
+        ["dummy", "c"],
+        ["dummy", "a"],
+      ],
       n_string0: "a",
       n_string3: "a",
       n_string4: "A",
@@ -110,6 +119,43 @@ const record1: Item<Record> = {
     ],
   },
 };
+
+const nString1Meta: FieldMetadata = {
+  id: "n_string1",
+  number: {
+    type: "NUMBER",
+    count: 1,
+  },
+  type: "STRING",
+  description: "n_string1 description",
+};
+
+const nString2Meta: FieldMetadata = {
+  id: "n_string2",
+  number: {
+    type: "NUMBER",
+    count: 1,
+  },
+  type: "STRING",
+  description: "n_string2 description",
+};
+
+const nObject0Meta: FieldMetadata = {
+  id: "n_object0",
+  number: {
+    type: "OTHER",
+  },
+  type: "STRING",
+  description: "n_object0 description",
+  nested: {
+    items: [],
+    separator: ",",
+  },
+};
+
+nString1Meta.parent = nObject0Meta;
+nString2Meta.parent = nObject0Meta;
+nObject0Meta.nested?.items.push(nString1Meta, nString2Meta);
 
 beforeEach(() => {
   const reportData = {
@@ -626,42 +672,6 @@ test("get - all records sorted on n.n_string0", async () => {
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
-test("get - all records sorted on n.n_string1", async () => {
-  const params: Params = {
-    sort: {
-      property: {
-        id: "n_string1",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "n_string1 description",
-      },
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_string2", async () => {
-  const params: Params = {
-    sort: {
-      property: {
-        id: "n_string2",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "n_string2 description",
-      },
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
 test("get - all records sorted on n.n_string3", async () => {
   const params: Params = {
     sort: {
@@ -698,7 +708,7 @@ test("get - all records sorted on n.n_string4", async () => {
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
-test("get - all records sorted on n.n_array0 throws an error", async () => {
+test("get - all records sorted on n.n_array0", async () => {
   const params: Params = {
     sort: {
       property: {
@@ -706,15 +716,24 @@ test("get - all records sorted on n.n_array0 throws an error", async () => {
         number: {
           type: "OTHER",
         },
-        type: "INTEGER",
+        type: "STRING",
         description: "n_string0 description",
       },
+      compare: "asc",
     },
   };
-  // note: [] is an object
-  await expect(api.getRecords(params)).rejects.toThrow(
-    "can't compare values of type 'object'. consider providing a custom compare function."
-  );
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test("get - all records sorted on n.n_object0.n_string2", async () => {
+  const params: Params = {
+    sort: {
+      property: nString2Meta,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test("get - all records sorted on n.n_object0 throws an error", async () => {
@@ -723,8 +742,7 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
       property: {
         id: "n_object0",
         number: {
-          type: "NUMBER",
-          count: 1,
+          type: "OTHER",
         },
         type: "STRING",
         description: "n_object0 description",
@@ -737,31 +755,6 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
 });
 
 test("get - all records sorted on n.n_array0 throws an error for invalid path", async () => {
-  const fieldMeta: FieldMetadata = {
-    id: "invalid",
-    number: {
-      type: "NUMBER",
-      count: 1,
-    },
-    type: "STRING",
-    description: "invalid description",
-  };
-  const parentFieldMeta: FieldMetadata = {
-    id: "n_array0",
-    number: {
-      type: "NUMBER",
-      count: 1,
-    },
-    type: "STRING",
-    description: "n_array0 description",
-    nested: {
-      items: [],
-      separator: ",",
-    },
-  };
-  parentFieldMeta.nested?.items.push(fieldMeta);
-  fieldMeta.parent = parentFieldMeta;
-
   const params: Params = {
     sort: {
       property: {
@@ -775,8 +768,7 @@ test("get - all records sorted on n.n_array0 throws an error for invalid path", 
         parent: {
           id: "n_array0",
           number: {
-            type: "NUMBER",
-            count: 1,
+            type: "OTHER",
           },
           type: "STRING",
           description: "n_array0 description",
