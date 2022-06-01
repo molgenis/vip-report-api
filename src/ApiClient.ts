@@ -2,6 +2,7 @@ import {
   Api,
   AppMetadata,
   CompareFn,
+  CompareValue,
   ComposedQuery,
   DecisionTree,
   HtsFileMetadata,
@@ -210,60 +211,6 @@ export class ApiClient implements Api {
   }
 }
 
-function getSingleNestedValue(
-  sort: SortOrder | null,
-  valueAtDepth: boolean[] | number[] | string[],
-  path: string[],
-  i: number,
-  value: object | null | undefined
-) {
-  if (sort !== null) {
-    let values: boolean[] | number[] | string[] = [];
-    valueAtDepth.forEach((nestedValues) => {
-      const nestedValue = nestedValues[path[i + 1] as keyof typeof value];
-      if (nestedValue !== undefined && nestedValue != null) {
-        values.push(nestedValue);
-      }
-    });
-    values = values.sort((a, b) => getCompareFn(sort)(a, b));
-    return values.length > 0 ? values[0] : null;
-  } else {
-    throw new Error(`Cannot get a single value for an array without a sort.`);
-  }
-}
-
-function getSingleValue(
-  value: object | null | undefined,
-  path: string[],
-  sort: SortOrder | null
-): boolean | boolean[] | number | number[] | string | string[] | null {
-  let valueAtDepth: boolean | boolean[] | number | number[] | string | string[] | null = value as
-    | boolean
-    | boolean[]
-    | number
-    | number[]
-    | string
-    | string[]
-    | null;
-  if (valueAtDepth === undefined || valueAtDepth === null) {
-    return null;
-  }
-
-  for (let i = 0; i < path.length; i++) {
-    const token = path[i];
-    if (typeof valueAtDepth !== "object") {
-      throw new Error(`invalid path ${path.join("/")}`);
-    } else {
-      if (Array.isArray(valueAtDepth) && token === "*") {
-        return getSingleNestedValue(sort, valueAtDepth, path, i, value);
-      } else {
-        valueAtDepth = valueAtDepth[token as keyof typeof value];
-      }
-    }
-  }
-  return valueAtDepth === undefined ? null : valueAtDepth;
-}
-
 function compareAsc(a: unknown, b: unknown): number {
   if (a === null) {
     return b === null ? 0 : -1;
@@ -348,46 +295,69 @@ class CompareTypeError extends Error {
   }
 }
 
-function getNestedPath(sortOrder: SortOrder, path: string[]) {
-  if (typeof sortOrder.property === "string") {
-    throw new Error("Cannot create a nested path for a string value.");
+class UnknownFieldError extends Error {
+  constructor(fieldId: string, path: Path) {
+    super(`unknown field '${fieldId}' in path '[${path.join(",")}]'`);
+    this.name = "UnknownFieldError";
   }
-  const fieldMetadata: FieldMetadata = sortOrder.property;
-  path = [];
+}
+
+type Path = (string | number)[];
+
+function getPath(property: string | FieldMetadata): Path {
+  if (typeof property === "string") {
+    return [property];
+  }
+
+  const path = [];
+  let field: FieldMetadata = property;
+  do {
+    const parent = field.parent;
+    if (parent && parent.number.count !== 1) {
+      const index = (parent.nested as NestedFieldMetadata).items.findIndex((item) => field.id === item.id);
+      if (index === -1) {
+        throw new UnknownFieldError(field.id, path);
+      }
+      path.push(index);
+    } else {
+      path.push(field.id);
+    }
+
+    if (parent) field = parent;
+    else break;
+  } while (true);
   path.push("n");
-  if (fieldMetadata.parent) {
-    path.push(fieldMetadata.parent.id);
-    if (fieldMetadata.parent.number.type !== "NUMBER" || fieldMetadata.parent.number.count !== 1) {
-      path.push("*");
-    }
-    const nested: NestedFieldMetadata = fieldMetadata.parent.nested as NestedFieldMetadata;
-    const idx = nested.items.indexOf(fieldMetadata);
-    if (idx === -1) {
-      throw new Error(`unknown field '${fieldMetadata.id}'`);
-    }
-    //TODO index is a number and should be treated as such
-    path.push(idx as unknown as string);
-  } else {
-    path.push(fieldMetadata.id);
-  }
+  path.reverse();
+
   return path;
+}
+
+function getValue(item: Item<Resource>, path: Path): CompareValue {
+  let value: unknown = item.data;
+  for (const token of path) {
+    if (typeof token === "string") {
+      value = (value as { [key: string]: unknown })[token];
+    } else {
+      value = (value as unknown[][]).map((item) => item[token]);
+    }
+
+    if (value === null || value === undefined) {
+      value = null;
+      break;
+    }
+  }
+  return value as CompareValue;
 }
 
 function sort<T extends Resource>(resources: Item<T>[], sortOrders: SortOrder[]) {
   resources.sort((a, b) => {
     let val = 0;
     for (const sortOrder of sortOrders) {
-      let path: string[] = [];
-      if (typeof sortOrder.property === "string") {
-        path = [sortOrder.property] as string[];
-      } else {
-        path = getNestedPath(sortOrder, path);
-      }
-      const left = getSingleValue(a.data, path, sortOrder);
-      const right = getSingleValue(b.data, path, sortOrder);
+      const path = getPath(sortOrder.property);
+      const valueA = getValue(a, path);
+      const valueB = getValue(b, path);
 
-      val = getCompareFn(sortOrder)(left, right);
-      if (val !== 0) {
+      if ((val = getCompareFn(sortOrder)(valueA, valueB)) !== 0) {
         break;
       }
     }

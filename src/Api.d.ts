@@ -43,10 +43,18 @@ export interface SortOrder {
   compare?: "asc" | "desc" | CompareFn;
 }
 
-export type CompareFn = (
-  a: boolean | boolean[] | string | string[] | number | number[] | null,
-  b: boolean | boolean[] | string | string[] | number | number[] | null
-) => number;
+export type CompareValueBoolean = boolean | null;
+export type CompareValueNumber = number | null;
+export type CompareValueString = string | null;
+export type CompareValue =
+  | CompareValueBoolean
+  | CompareValueBoolean[]
+  | CompareValueNumber
+  | CompareValueNumber[]
+  | CompareValueString
+  | CompareValueString[];
+
+export type CompareFn = (a: CompareValue, b: CompareValue) => number;
 
 export interface Sample extends Resource {
   person: Person;

@@ -754,45 +754,6 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
   );
 });
 
-test("get - all records sorted on n.n_array0 throws an error for invalid path", async () => {
-  const params: Params = {
-    sort: {
-      property: {
-        id: "invalid",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "invalid description",
-        parent: {
-          id: "n_array0",
-          number: {
-            type: "OTHER",
-          },
-          type: "STRING",
-          description: "n_array0 description",
-          nested: {
-            items: [
-              {
-                id: "invalid",
-                number: {
-                  type: "NUMBER",
-                  count: 1,
-                },
-                type: "STRING",
-                description: "invalid description",
-              },
-            ],
-            separator: ",",
-          },
-        },
-      },
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("unknown field 'invalid'");
-});
-
 test("get - all records sorted ascending on position implicitly", async () => {
   const params: Params = {
     sort: { property: "p" },
