@@ -38,7 +38,7 @@ export interface Params {
 }
 
 export interface SortOrder {
-  property: string | string[];
+  property: string | (string | number)[];
   compare?: "asc" | "desc" | CompareFn;
 }
 
