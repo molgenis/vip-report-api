@@ -507,7 +507,7 @@ test("get - all records sorted on n.n_bool3", async () => {
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test("get - all records sorted on n.n_bool4", async () => {
@@ -561,7 +561,7 @@ test("get - all records sorted on n.n_bool6", async () => {
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test("get - all records sorted on n.n_bool7", async () => {
@@ -579,7 +579,7 @@ test("get - all records sorted on n.n_bool7", async () => {
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
 test("get - all records sorted on n.n_bool8", async () => {
@@ -726,14 +726,26 @@ test("get - all records sorted on n.n_array0", async () => {
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
-test("get - all records sorted on n.n_object0.n_string2", async () => {
+test("get - all records sorted on n.n_object0.n_string2 ascending", async () => {
   const params: Params = {
     sort: {
       property: nString2Meta,
+      compare: "asc",
     },
   };
   const records = await api.getRecords(params);
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test("get - all records sorted on n.n_object0.n_string2 descending", async () => {
+  const params: Params = {
+    sort: {
+      property: nString2Meta,
+      compare: "desc",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_object0 throws an error", async () => {
@@ -749,9 +761,7 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
       },
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow(
-    "can't compare values of type 'object'. consider providing a custom compare function."
-  );
+  await expect(api.getRecords(params)).rejects.toThrow("can't compare values of type 'object'.");
 });
 
 test("get - all records sorted ascending on position implicitly", async () => {
