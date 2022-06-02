@@ -21,7 +21,6 @@ import {
   SortOrder,
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { FieldMetadata, NestedFieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
 import { compareAsc, compareDesc } from "./compare";
 
 export interface ReportData {
@@ -231,42 +230,7 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
   return compareFn;
 }
 
-class UnknownFieldError extends Error {
-  constructor(fieldId: string, path: Path) {
-    super(`unknown field '${fieldId}' in path '[${path.join(",")}]'`);
-    this.name = "UnknownFieldError";
-  }
-}
-
 type Path = (string | number)[];
-
-function getPath(property: string | FieldMetadata): Path {
-  if (typeof property === "string") {
-    return [property];
-  }
-
-  const path = [];
-  let field: FieldMetadata = property;
-  do {
-    const parent = field.parent;
-    if (parent && parent.number.count !== 1) {
-      const index = (parent.nested as NestedFieldMetadata).items.findIndex((item) => field.id === item.id);
-      if (index === -1) {
-        throw new UnknownFieldError(field.id, path);
-      }
-      path.push(index);
-    } else {
-      path.push(field.id);
-    }
-
-    if (parent) field = parent;
-    else break;
-  } while (true);
-  path.push("n");
-  path.reverse();
-
-  return path;
-}
 
 function getValue(item: Item<Resource>, path: Path): CompareValue {
   let value: unknown = item.data;
@@ -289,7 +253,7 @@ function sort<T extends Resource>(resources: Item<T>[], sortOrders: SortOrder[])
   resources.sort((a, b) => {
     let val = 0;
     for (const sortOrder of sortOrders) {
-      const path = getPath(sortOrder.property);
+      const path = typeof sortOrder.property === "string" ? [sortOrder.property] : sortOrder.property;
       const valueA = getValue(a, path);
       const valueB = getValue(b, path);
 
