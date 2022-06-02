@@ -22,6 +22,7 @@ import {
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
 import { FieldMetadata, NestedFieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
+import { compareAsc, compareDesc } from "./compare";
 
 export interface ReportData {
   metadata: Metadata;
@@ -211,64 +212,6 @@ export class ApiClient implements Api {
   }
 }
 
-function compareAsc(a: unknown, b: unknown): number {
-  if (a === null) {
-    return b === null ? 0 : -1;
-  } else if (b === null) {
-    return 1;
-  } else if (typeof a === "number" && typeof b === "number") {
-    return compareAscNumber(a, b);
-  } else if (typeof a === "string" && typeof b === "string") {
-    return compareAscString(a, b);
-  } else if (typeof a === "boolean" && typeof b === "boolean") {
-    return compareAscBoolean(a, b);
-  } else if (Array.isArray(a) && Array.isArray(b)) {
-    return compareAscArray(a, b);
-  } else {
-    throw new CompareTypeError(a);
-  }
-}
-
-function compareAscNumber(a: number, b: number): number {
-  return a - b;
-}
-
-function compareAscString(a: string, b: string): number {
-  return a.toUpperCase().localeCompare(b.toUpperCase());
-}
-
-function compareAscBoolean(a: boolean, b: boolean): number {
-  if (a === b) {
-    return 0;
-  } else {
-    return a ? -1 : 1;
-  }
-}
-
-function compareAscArray(a: unknown[], b: unknown[]): number {
-  if (a.length === 0) {
-    return b.length === 0 ? 0 : -1;
-  } else if (b.length === 0) {
-    return 1;
-  } else {
-    const firstA = a.find((value) => value !== null);
-    if (firstA !== undefined && typeof firstA !== "number" && typeof firstA !== "string")
-      throw new CompareTypeError(firstA);
-    const firstB = b.find((value) => value !== null);
-    if (firstB !== undefined && typeof firstB !== "number" && typeof firstB !== "string")
-      throw new CompareTypeError(firstB);
-
-    // sort on first array item
-    const sortedA = a.slice().sort();
-    const sortedB = b.slice().sort();
-    return compareAsc(sortedA[0], sortedB[0]);
-  }
-}
-
-function compareDesc(a: unknown, b: unknown) {
-  return compareAsc(b, a);
-}
-
 function getCompareFn(sortOrder: SortOrder): CompareFn {
   let compareFn;
   if (sortOrder.compare === "asc" || sortOrder.compare === null || sortOrder.compare === undefined) {
@@ -286,13 +229,6 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
     );
   }
   return compareFn;
-}
-
-class CompareTypeError extends Error {
-  constructor(value: unknown) {
-    super(`can't compare values of type '${typeof value}'. consider providing a custom compare function.`);
-    this.name = "CompareTypeError";
-  }
 }
 
 class UnknownFieldError extends Error {
