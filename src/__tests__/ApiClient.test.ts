@@ -6,7 +6,6 @@ import { readFileSync } from "fs";
 import { Record } from "@molgenis/vip-report-vcf/src/Vcf";
 import path from "path";
 import { parseVcf } from "@molgenis/vip-report-vcf/src/VcfParser";
-import { FieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
 
 let api: ApiClient;
 
@@ -119,43 +118,6 @@ const record1: Item<Record> = {
     ],
   },
 };
-
-const nString1Meta: FieldMetadata = {
-  id: "n_string1",
-  number: {
-    type: "NUMBER",
-    count: 1,
-  },
-  type: "STRING",
-  description: "n_string1 description",
-};
-
-const nString2Meta: FieldMetadata = {
-  id: "n_string2",
-  number: {
-    type: "NUMBER",
-    count: 1,
-  },
-  type: "STRING",
-  description: "n_string2 description",
-};
-
-const nObject0Meta: FieldMetadata = {
-  id: "n_object0",
-  number: {
-    type: "OTHER",
-  },
-  type: "STRING",
-  description: "n_object0 description",
-  nested: {
-    items: [],
-    separator: ",",
-  },
-};
-
-nString1Meta.parent = nObject0Meta;
-nString2Meta.parent = nObject0Meta;
-nObject0Meta.nested?.items.push(nString1Meta, nString2Meta);
 
 beforeEach(() => {
   const reportData = {
@@ -441,15 +403,7 @@ test("get - one record using composed and query", async () => {
 test("get - all records sorted on n.n_bool0", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool0",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool0 description",
-      },
+      property: ["n", "n_bool0"],
     },
   };
   const records = await api.getRecords(params);
@@ -459,15 +413,7 @@ test("get - all records sorted on n.n_bool0", async () => {
 test("get - all records sorted on n.n_bool1", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool1",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool1 description",
-      },
+      property: ["n", "n_bool1"],
     },
   };
   const records = await api.getRecords(params);
@@ -477,15 +423,7 @@ test("get - all records sorted on n.n_bool1", async () => {
 test("get - all records sorted on n.n_bool2", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool2",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool2 description",
-      },
+      property: ["n", "n_bool2"],
     },
   };
   const records = await api.getRecords(params);
@@ -495,15 +433,7 @@ test("get - all records sorted on n.n_bool2", async () => {
 test("get - all records sorted on n.n_bool3", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool3",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool3 description",
-      },
+      property: ["n", "n_bool3"],
     },
   };
   const records = await api.getRecords(params);
@@ -513,15 +443,7 @@ test("get - all records sorted on n.n_bool3", async () => {
 test("get - all records sorted on n.n_bool4", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool4",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool4 description",
-      },
+      property: ["n", "n_bool4"],
     },
   };
   const records = await api.getRecords(params);
@@ -531,15 +453,7 @@ test("get - all records sorted on n.n_bool4", async () => {
 test("get - all records sorted on n.n_bool5", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool5",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool5 description",
-      },
+      property: ["n", "n_bool5"],
     },
   };
   const records = await api.getRecords(params);
@@ -549,15 +463,7 @@ test("get - all records sorted on n.n_bool5", async () => {
 test("get - all records sorted on n.n_bool6", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool6",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool6 description",
-      },
+      property: ["n", "n_bool6"],
     },
   };
   const records = await api.getRecords(params);
@@ -567,15 +473,7 @@ test("get - all records sorted on n.n_bool6", async () => {
 test("get - all records sorted on n.n_bool7", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool7",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool7 description",
-      },
+      property: ["n", "n_bool7"],
     },
   };
   const records = await api.getRecords(params);
@@ -585,15 +483,7 @@ test("get - all records sorted on n.n_bool7", async () => {
 test("get - all records sorted on n.n_bool8", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_bool8",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "FLAG",
-        description: "n_bool8 description",
-      },
+      property: ["n", "n_bool8"],
     },
   };
   const records = await api.getRecords(params);
@@ -603,15 +493,7 @@ test("get - all records sorted on n.n_bool8", async () => {
 test("get - all records sorted on n.n_number0", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_number0",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "INTEGER",
-        description: "n_number0 description",
-      },
+      property: ["n", "n_number0"],
     },
   };
   const records = await api.getRecords(params);
@@ -621,15 +503,7 @@ test("get - all records sorted on n.n_number0", async () => {
 test("get - all records sorted on n.n_number1", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_number1",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "INTEGER",
-        description: "n_number1 description",
-      },
+      property: ["n", "n_number1"],
     },
   };
   const records = await api.getRecords(params);
@@ -639,15 +513,7 @@ test("get - all records sorted on n.n_number1", async () => {
 test("get - all records sorted on n.n_number2", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_number2",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "INTEGER",
-        description: "n_number2 description",
-      },
+      property: ["n", "n_number2"],
     },
   };
   const records = await api.getRecords(params);
@@ -657,15 +523,7 @@ test("get - all records sorted on n.n_number2", async () => {
 test("get - all records sorted on n.n_string0", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_string0",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "n_string0 description",
-      },
+      property: ["n", "n_string0"],
     },
   };
   const records = await api.getRecords(params);
@@ -675,15 +533,7 @@ test("get - all records sorted on n.n_string0", async () => {
 test("get - all records sorted on n.n_string3", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_string3",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "n_string3 description",
-      },
+      property: ["n", "n_string3"],
     },
   };
   const records = await api.getRecords(params);
@@ -693,15 +543,7 @@ test("get - all records sorted on n.n_string3", async () => {
 test("get - all records sorted on n.n_string4", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_string4",
-        number: {
-          type: "NUMBER",
-          count: 1,
-        },
-        type: "STRING",
-        description: "n_string4 description",
-      },
+      property: ["n", "n_string4"],
     },
   };
   const records = await api.getRecords(params);
@@ -711,14 +553,7 @@ test("get - all records sorted on n.n_string4", async () => {
 test("get - all records sorted on n.n_array0", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_array0",
-        number: {
-          type: "OTHER",
-        },
-        type: "STRING",
-        description: "n_string0 description",
-      },
+      property: ["n", "n_array0"],
       compare: "asc",
     },
   };
@@ -729,7 +564,7 @@ test("get - all records sorted on n.n_array0", async () => {
 test("get - all records sorted on n.n_object0.n_string2 ascending", async () => {
   const params: Params = {
     sort: {
-      property: nString2Meta,
+      property: ["n", "n_object0", "1"],
       compare: "asc",
     },
   };
@@ -740,7 +575,7 @@ test("get - all records sorted on n.n_object0.n_string2 ascending", async () => 
 test("get - all records sorted on n.n_object0.n_string2 descending", async () => {
   const params: Params = {
     sort: {
-      property: nString2Meta,
+      property: ["n", "n_object0", "1"],
       compare: "desc",
     },
   };
@@ -751,14 +586,7 @@ test("get - all records sorted on n.n_object0.n_string2 descending", async () =>
 test("get - all records sorted on n.n_object0 throws an error", async () => {
   const params: Params = {
     sort: {
-      property: {
-        id: "n_object0",
-        number: {
-          type: "OTHER",
-        },
-        type: "STRING",
-        description: "n_object0 description",
-      },
+      property: ["n", "n_object0"],
     },
   };
   await expect(api.getRecords(params)).rejects.toThrow("can't compare values of type 'object'.");

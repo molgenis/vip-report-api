@@ -1,5 +1,4 @@
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { FieldMetadata } from "@molgenis/vip-report-vcf/src/MetadataParser";
 
 export interface Api {
   getRecordsMeta(): Promise<RecordMetadata>;
@@ -39,7 +38,7 @@ export interface Params {
 }
 
 export interface SortOrder {
-  property: string | FieldMetadata;
+  property: string | string[];
   compare?: "asc" | "desc" | CompareFn;
 }
 
