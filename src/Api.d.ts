@@ -37,8 +37,10 @@ export interface Params {
   size?: number;
 }
 
+export type SortPath = (string | number)[];
+
 export interface SortOrder {
-  property: string | (string | number)[];
+  property: string | SortPath;
   compare?: "asc" | "desc" | CompareFn;
 }
 
