@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@molgenis/vip-report-vcf': ^1.2.1
+  '@molgenis/vip-report-vcf': ^1.2.2
   '@types/node': ^17.0.42
   '@typescript-eslint/eslint-plugin': ^5.28.0
   '@typescript-eslint/parser': ^5.28.0
@@ -15,7 +15,7 @@ specifiers:
   vitest: ^0.14.2
 
 dependencies:
-  '@molgenis/vip-report-vcf': 1.2.1
+  '@molgenis/vip-report-vcf': 1.2.2
 
 devDependencies:
   '@types/node': 17.0.42
@@ -89,8 +89,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.13
     dev: true
 
-  /@molgenis/vip-report-vcf/1.2.1:
-    resolution: {integrity: sha512-1XFdTIOgMDHKIoc+hp0yc2gNjOBhjOOEk/+zfqdqOfzyMv5LYtQESevcMdwrE//i93/WDkv3k+aUZNcT1NnL5A==}
+  /@molgenis/vip-report-vcf/1.2.2:
+    resolution: {integrity: sha512-MLpEScbR+gUuivJ8EKNn3ENFfnBWn3+jfb5tKXrF1S9MIrIiNBPH/0LhXdbawV4uaH5o8q6otI7B2HlSOeCUOQ==}
     dev: false
 
   /@nodelib/fs.scandir/2.1.5:
