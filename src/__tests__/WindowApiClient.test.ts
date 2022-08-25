@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
 import { WindowApiClient } from "../WindowApiClient";
+import { Metadata } from "../Api";
 
 describe("window api client", () => {
   vi.stubGlobal("window", {});
@@ -19,7 +20,7 @@ describe("window api client", () => {
           uri: "file://file0.vcf.gz",
           genomeAssembly: "GRCh38",
         },
-      },
+      } as unknown as Metadata,
       data: {
         samples: [
           {
