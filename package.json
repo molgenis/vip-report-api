@@ -1,6 +1,6 @@
 {
   "name": "@molgenis/vip-report-api",
-  "version": "3.5.3",
+  "version": "3.5.4",
   "description": "TypeScript Report API for Variant Call Format (VCF) Report Templates",
   "scripts": {
     "build": "tsc --build",
@@ -33,6 +33,7 @@
     "@types/node": "^18.7.13",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@typescript-eslint/parser": "^5.35.1",
+    "@vitest/coverage-c8": "^0.22.1",
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -42,7 +43,6 @@
     "vitest": "^0.22.1"
   },
   "dependencies": {
-    "@molgenis/vip-report-vcf": "^1.2.3",
-    "@vitest/coverage-c8": "^0.22.1"
+    "@molgenis/vip-report-vcf": "^1.2.3"
   }
 }
