@@ -9,7 +9,7 @@ export interface Api {
   getPhenotypes(params: Params): Promise<PagedItems<Phenotype>>;
   getFastaGz(contig: string, pos: number): Promise<Uint8Array | null>;
   getGenesGz(): Promise<Uint8Array | null>;
-  getBam(sampleId: string): Promise<Uint8Array | null>;
+  getCram(sampleId: string): Promise<Cram | null>;
   getHtsFileMetadata(): Promise<HtsFileMetadata>;
   getAppMetadata(): Promise<AppMetadata>;
   getDecisionTree(): Promise<DecisionTree | null>;
@@ -251,3 +251,8 @@ export type Type = "BOOL" | "BOOL_MULTI" | "CATEGORICAL" | "EXISTS" | "LEAF";
 export type NodeType = "DECISION" | "LEAF";
 
 export type DecisionType = "BOOL" | "BOOL_MULTI" | "CATEGORICAL" | "EXISTS";
+
+export type Cram = {
+  cram: Uint8Array;
+  crai: Uint8Array;
+};

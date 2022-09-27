@@ -154,7 +154,12 @@ beforeEach(() => {
         "2:47637200-47637300": readFileSync(path.join(__dirname, "interval1.fasta")),
       },
       genesGz: readFileSync(path.join(__dirname, "example.gff")),
-      bam: { Patient: readFileSync(path.join(__dirname, "alignment.bam")) },
+      bam: {
+        Patient: {
+          cram: readFileSync(path.join(__dirname, "alignment.cram")),
+          crai: readFileSync(path.join(__dirname, "alignment.crai")),
+        },
+      },
     },
     decisionTree: JSON.parse(readFileSync(path.join(__dirname, "decisionTree.json"), "utf8")) as DecisionTree,
   };
@@ -796,13 +801,13 @@ test("getGenesGz", async () => {
   expect(genesGz).not.toBe(null);
 });
 
-test("getBam", async () => {
-  const bam = await api.getBam("Patient");
+test("getCram", async () => {
+  const bam = await api.getCram("Patient");
   expect(bam).not.toBe(null);
 });
 
-test("getBam - unknown sample identifier", async () => {
-  const bam = await api.getBam("Father");
+test("getCram - unknown sample identifier", async () => {
+  const bam = await api.getCram("Father");
   expect(bam).toBeNull();
 });
 
