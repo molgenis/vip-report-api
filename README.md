@@ -15,7 +15,7 @@ export interface Api {
   getPhenotypes(params: Params): Promise<PagedItems<Phenotype>>;
   getFastaGz(contig: string, pos: number): Promise<Uint8Array | null>;
   getGenesGz(): Promise<Uint8Array | null>;
-  getBam(sampleId: string): Promise<Uint8Array | null>;
+  getCram(sampleId: string): Promise<Cram | null>;
   getHtsFileMetadata(): Promise<HtsFileMetadata>;
   getAppMetadata(): Promise<AppMetadata>;
   getDecisionTree(): Promise<DecisionTree | null>;

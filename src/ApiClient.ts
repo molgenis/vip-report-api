@@ -4,6 +4,7 @@ import {
   CompareFn,
   CompareValue,
   ComposedQuery,
+  Cram,
   DecisionTree,
   HtsFileMetadata,
   Item,
@@ -38,7 +39,7 @@ export interface BinaryReportData {
   vcf?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
-  bam?: { [key: string]: Uint8Array };
+  cram?: { [key: string]: Cram };
   decisionTree?: DecisionTree;
 }
 
@@ -105,10 +106,10 @@ export class ApiClient implements Api {
     return Promise.resolve(genesGz ? genesGz : null);
   }
 
-  getBam(sampleId: string): Promise<Uint8Array | null> {
-    const bam = this.reportData.binary.bam;
-    const sampleBam = bam ? (bam[sampleId] ? bam[sampleId] : null) : null;
-    return Promise.resolve(sampleBam);
+  getCram(sampleId: string): Promise<Cram | null> {
+    const cram = this.reportData.binary.cram;
+    const sampleCram = cram ? (cram[sampleId] ? cram[sampleId] : null) : null;
+    return Promise.resolve(sampleCram);
   }
 
   getDecisionTree(): Promise<DecisionTree | null> {
