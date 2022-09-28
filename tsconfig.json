@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "noEmit": true,
     "isolatedModules": true,
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*"
