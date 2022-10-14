@@ -319,6 +319,22 @@ test("get - records with less than query", async () => {
   });
 });
 
+test("get - records with equals null query", async () => {
+  const params: Params = {
+    query: {
+      selector: ["s", 1, "TEST"],
+      operator: "==",
+      args: undefined,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
 test("get - records with less than or equal query", async () => {
   const params: Params = {
     query: {
