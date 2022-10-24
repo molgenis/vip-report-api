@@ -124,7 +124,7 @@ export type QueryOperator =
 export interface QueryClause {
   operator: QueryOperator;
   selector: Selector;
-  args: string | number | boolean | string[] | (string | null)[] | number[] | (number | null)[] | null;
+  args: string | number | boolean | string[] | (string | null)[] | number[] | (number | null)[] | null | undefined;
 }
 
 export type Query = QueryClause | ComposedQuery;
