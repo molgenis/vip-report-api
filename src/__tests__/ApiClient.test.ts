@@ -45,6 +45,8 @@ const record0: Item<Record> = {
           p: true,
         },
         DP: "50",
+        AD: [45, 5],
+        VIAB: 0.9,
       },
       {
         GT: {
@@ -53,6 +55,8 @@ const record0: Item<Record> = {
           p: true,
         },
         DP: "10",
+        AD: [10, 0],
+        VIAB: 1,
       },
       {
         GT: {
@@ -61,6 +65,8 @@ const record0: Item<Record> = {
           p: true,
         },
         DP: "10",
+        AD: [10, 0],
+        VIAB: 1,
       },
     ],
   },
@@ -98,6 +104,8 @@ const record1: Item<Record> = {
           p: true,
         },
         DP: "10",
+        AD: [0, 0],
+        VIAB: null,
       },
       {
         GT: {
@@ -106,6 +114,8 @@ const record1: Item<Record> = {
           p: true,
         },
         DP: "11",
+        AD: [11, 0],
+        VIAB: 1,
       },
       {
         GT: {
@@ -114,6 +124,8 @@ const record1: Item<Record> = {
           p: true,
         },
         DP: "11",
+        AD: [11, 0],
+        VIAB: 1,
       },
     ],
   },
@@ -314,6 +326,38 @@ test("get - records with less than query", async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with equals null query", async () => {
+  const params: Params = {
+    query: {
+      selector: ["s", 0, "VIAB"],
+      operator: "==",
+      args: null,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with equals not null query", async () => {
+  const params: Params = {
+    query: {
+      selector: ["s", 0, "VIAB"],
+      operator: "!=",
+      args: null,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
     page: { number: 0, size: 10, totalElements: 1 },
     total: 2,
   });
