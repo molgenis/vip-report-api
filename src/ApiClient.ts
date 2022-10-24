@@ -496,8 +496,8 @@ function matchesGreaterThan(query: QueryClause, resource: Item<Resource>): boole
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === undefined) {
-    throw new Error(`Undefined values are not supported for > queries`);
+  if (typeof query.args === null) {
+    throw new Error(`Null values are not supported for > queries`);
   }
 
   return value > (query.args as number);
@@ -513,8 +513,8 @@ function matchesGreaterThanOrEqual(query: QueryClause, resource: Item<Resource>)
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === undefined) {
-    throw new Error(`Undefined values are not supported for >= queries`);
+  if (typeof query.args === null) {
+    throw new Error(`Null values are not supported for >= queries`);
   }
 
   return value >= (query.args as number);
@@ -530,8 +530,8 @@ function matchesLesserThan(query: QueryClause, resource: Item<Resource>): boolea
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === undefined) {
-    throw new Error(`Undefined values are not supported for < queries`);
+  if (typeof query.args === null) {
+    throw new Error(`Null values are not supported for < queries`);
   }
 
   return value < (query.args as number);
@@ -547,8 +547,8 @@ function matchesLesserThanOrEqual(query: QueryClause, resource: Item<Resource>):
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === undefined) {
-    throw new Error(`Undefined values are not supported for <= queries`);
+  if (typeof query.args === null) {
+    throw new Error(`Null values are not supported for <= queries`);
   }
 
   return value <= (query.args as number);
