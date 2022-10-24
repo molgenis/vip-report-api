@@ -363,6 +363,38 @@ test("get - records with equals not null query", async () => {
   });
 });
 
+test("get - records with equals undefined query", async () => {
+  const params: Params = {
+    query: {
+      selector: ["s", 0, "TEST"],
+      operator: "==",
+      args: undefined,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
+test("get - records with equals not undefined query", async () => {
+  const params: Params = {
+    query: {
+      selector: ["s", 0, "TEST"],
+      operator: "!=",
+      args: undefined,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [],
+    page: { number: 0, size: 10, totalElements: 0 },
+    total: 2,
+  });
+});
+
 test("get - records with less than or equal query", async () => {
   const params: Params = {
     query: {
