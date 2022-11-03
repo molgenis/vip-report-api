@@ -35,5 +35,3 @@ import { Api } from './Api';
 
 const apiClient: Api = WindowApiClient(); 
 ```
-
-.
