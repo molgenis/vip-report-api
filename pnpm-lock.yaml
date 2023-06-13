@@ -2,8 +2,8 @@ lockfileVersion: '6.0'
 
 dependencies:
   '@molgenis/vip-report-vcf':
-    specifier: ^1.3.5
-    version: 1.3.5
+    specifier: ^1.3.6
+    version: 1.3.6
 
 devDependencies:
   '@types/node':
@@ -326,8 +326,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
 
-  /@molgenis/vip-report-vcf@1.3.5:
-    resolution: {integrity: sha512-Mjnt3tkE3a+MoSpgjy8YXdk0kwMHSmETsQMGdo2+Mvy7gfE6FubO1K2kBne6dX/Rd9jDs9nnGGYf14i7opr6GQ==}
+  /@molgenis/vip-report-vcf@1.3.6:
+    resolution: {integrity: sha512-AdVwaa3BQfkKBnN4O/MDjzw4Cp3CsWix43NdTcEob3cKxi5QQE1ImotwQTyl4OjxrQpDjOEcgx7kzpKnWQUBlQ==}
     requiresBuild: true
     dev: false
 
