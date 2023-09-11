@@ -62,7 +62,7 @@ describe("compare functions", () => {
 
   test("sort arrays throws an error", () => {
     expect(() => [[{ x: 0, y: 1 }], [{ x: 1, y: 2 }]].sort(compareAsc)).toThrowError(
-      "can't compare values of type 'object'."
+      "can't compare values of type 'object'.",
     );
   });
 
@@ -71,7 +71,7 @@ describe("compare functions", () => {
       [
         { x: 0, y: 1 },
         { x: 1, y: 2 },
-      ].sort(compareAsc)
+      ].sort(compareAsc),
     ).toThrowError("can't compare values of type 'object'.");
   });
 });
