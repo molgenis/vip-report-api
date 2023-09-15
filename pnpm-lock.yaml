@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@molgenis/vip-report-vcf':
-    specifier: ^1.4.3
-    version: 1.4.3
+    specifier: ^1.4.4
+    version: 1.4.4
 
 devDependencies:
   '@types/node':
@@ -360,8 +360,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@molgenis/vip-report-vcf@1.4.3:
-    resolution: {integrity: sha512-LJRU0TWgFyQUotzIfRfWFZcKLQoc4CzzqXd+yu5Nobynt1qhQIQR/85IpyJQbzQJlvH+1qz3N/GvA/cuDToMtA==}
+  /@molgenis/vip-report-vcf@1.4.4:
+    resolution: {integrity: sha512-P4oT13xT2G90i5bDE/f+zfAe3soF/CgCt9Oi1YJnR7BL6FWFE7ceLtG4JxcnxOMcXjnN3F9JvhODaZRwpoeE/g==}
     requiresBuild: true
     dev: false
 
