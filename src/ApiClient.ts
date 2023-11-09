@@ -225,7 +225,7 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
     throw new Error(
       `illegal sort compare value '${
         sortOrder.compare as string
-      }'. valid values are 'asc', 'desc' or a function (a, b) => number`
+      }'. valid values are 'asc', 'desc' or a function (a, b) => number`,
     );
   }
   return compareFn;
@@ -360,7 +360,7 @@ function matches(query: Query, resource: Item<Resource>): boolean {
 }
 
 function matchesEquals(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
   return value === query.args;
 }
 
@@ -373,7 +373,7 @@ function searchEquals(token: unknown, search: unknown): boolean {
 }
 
 function matchesSearch(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
   if (typeof value === "string" && typeof query.args === "string") {
     return searchEquals(value, query.args);
   } else {
@@ -382,7 +382,7 @@ function matchesSearch(query: QueryClause, resource: Item<Resource>): boolean {
 }
 
 function matchesSearchAny(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined) {
     return false;
@@ -403,7 +403,7 @@ function matchesSearchAny(query: QueryClause, resource: Item<Resource>): boolean
 }
 
 function matchesAnySearchAny(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined) {
     return false;
@@ -426,7 +426,7 @@ function matchesAnySearchAny(query: QueryClause, resource: Item<Resource>): bool
 }
 
 function matchesIn(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   let match = false;
   if (Array.isArray(query.args)) {
@@ -441,7 +441,7 @@ function matchesIn(query: QueryClause, resource: Item<Resource>): boolean {
 }
 
 function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined) {
     return false;
@@ -466,7 +466,7 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
 }
 
 function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined) {
     return false;
@@ -487,7 +487,7 @@ function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
 }
 
 function matchesGreaterThan(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
@@ -504,7 +504,7 @@ function matchesGreaterThan(query: QueryClause, resource: Item<Resource>): boole
 }
 
 function matchesGreaterThanOrEqual(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;
@@ -521,7 +521,7 @@ function matchesGreaterThanOrEqual(query: QueryClause, resource: Item<Resource>)
 }
 
 function matchesLesserThan(query: QueryClause, resource: Item<Resource>): boolean {
-  const value: any = select(query.selector, resource);
+  const value: unknown = select(query.selector, resource);
 
   if (value === undefined || value === null) {
     return false;

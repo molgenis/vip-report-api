@@ -190,7 +190,7 @@ test("getAppMeta", async () => {
       name: "vcf-report",
       version: "0.0.1",
       args: "-i test.vcf -d",
-    })
+    }),
   );
 });
 
@@ -201,7 +201,7 @@ test("getHtsFileMetadata", async () => {
       genomeAssembly: "GRCh38",
       htsFormat: "VCF",
       uri: "file://file0.vcf.gz",
-    })
+    }),
   );
 });
 
