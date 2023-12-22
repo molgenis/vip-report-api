@@ -39,6 +39,7 @@ export interface BinaryReportData {
   vcf?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
+  bedmethyl?: { [key: string]: Uint8Array };
   cram?: { [key: string]: Cram };
   decisionTree?: DecisionTree;
 }
@@ -104,6 +105,12 @@ export class ApiClient implements Api {
   getGenesGz(): Promise<Uint8Array | null> {
     const genesGz = this.reportData.binary.genesGz;
     return Promise.resolve(genesGz ? genesGz : null);
+  }
+
+  getBedmethyl(sampleId: string): Promise<Uint8Array | null> {
+    const bedmethyl = this.reportData.binary.bedmethyl;
+    const sampleBedmethyl = bedmethyl ? (bedmethyl[sampleId] ? bedmethyl[sampleId] : null) : null;
+    return Promise.resolve(sampleBedmethyl);
   }
 
   getCram(sampleId: string): Promise<Cram | null> {
