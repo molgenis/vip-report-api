@@ -43,6 +43,6 @@
     "vitest": "^1.0.1"
   },
   "dependencies": {
-    "@molgenis/vip-report-vcf": "^1.7.0"
+    "@molgenis/vip-report-vcf": "^1.8.0"
   }
 }

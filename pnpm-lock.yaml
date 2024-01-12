@@ -1,13 +1,9 @@
 lockfileVersion: '6.0'
 
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
-
 dependencies:
   '@molgenis/vip-report-vcf':
-    specifier: ^1.7.0
-    version: 1.7.0
+    specifier: ^1.8.0
+    version: 1.8.0
 
 devDependencies:
   '@types/node':
@@ -387,8 +383,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@molgenis/vip-report-vcf@1.7.0:
-    resolution: {integrity: sha512-tQj4EFHpu6GpCVKlBps4EHlvxbktIG3xHjVyksdOM3qS0xxhEvxD5CdaujAh2mgd1lQ+1zo0cEIE5aoTG399NA==}
+  /@molgenis/vip-report-vcf@1.8.0:
+    resolution: {integrity: sha512-gAQr8hC8WYd5pYuVzSdA/gi9x2cJBAkpa2C8aiYk1as5IsumDpBafJ7C8a83FW3vW3MRhQeoBtKmdfRSJeHOBg==}
     requiresBuild: true
     dev: false
 
@@ -2199,3 +2195,7 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
     dev: true
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
