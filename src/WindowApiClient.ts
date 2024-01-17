@@ -9,7 +9,7 @@ export type EncodedReportData = {
   vcfGz: string;
   fastaGz?: { [key: string]: string };
   genesGz?: string;
-  bedmethyl?: { [key: string]: [bedmethyl: string] };
+  bedmethyl?: { [key: string]: { bedmethyl: string } };
   cram?: { [key: string]: { cram: string; crai: string } };
   decisionTreeGz?: string;
 };
