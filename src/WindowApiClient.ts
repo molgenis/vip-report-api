@@ -36,6 +36,7 @@ export class WindowApiClient extends ApiClient {
     reportData.metadata.records = vcf.metadata;
     reportData.data.records = vcf.data;
     delete reportData.binary.vcf;
+    delete reportData.binary.vcfMeta;
     super(reportData);
   }
 }
