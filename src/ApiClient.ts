@@ -37,6 +37,7 @@ interface Data {
 
 export interface BinaryReportData {
   vcf?: Uint8Array;
+  vcfMeta?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   cram?: { [key: string]: Cram };
