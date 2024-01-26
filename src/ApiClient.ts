@@ -30,6 +30,7 @@ export interface ReportData {
   data: Data;
   binary: BinaryReportData;
   decisionTree?: DecisionTree;
+  vcfMeta?: ExternalMetadata;
 }
 
 interface Data {
@@ -38,11 +39,9 @@ interface Data {
 
 export interface BinaryReportData {
   vcf?: Uint8Array;
-  vcfMeta?: ExternalMetadata;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   cram?: { [key: string]: Cram };
-  decisionTree?: DecisionTree;
 }
 
 export class ApiClient implements Api {

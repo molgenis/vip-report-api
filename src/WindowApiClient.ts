@@ -10,7 +10,6 @@ export type EncodedReportData = {
   fastaGz?: { [key: string]: string };
   genesGz?: string;
   cram?: { [key: string]: { cram: string; crai: string } };
-  decisionTreeGz?: string;
 };
 
 declare global {
@@ -28,12 +27,12 @@ export class WindowApiClient extends ApiClient {
     if (reportData === undefined) {
       alert("This is a report template. Use the vip-report tool to create reports using this template and data.");
     }
-    const vcfMeta = reportData.binary.vcfMeta ? reportData.binary.vcfMeta : undefined;
+    const vcfMeta = reportData.vcfMeta ? reportData.vcfMeta : undefined;
     const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf), vcfMeta);
     reportData.metadata.records = vcf.metadata;
     reportData.data.records = vcf.data;
     delete reportData.binary.vcf;
-    delete reportData.binary.vcfMeta;
+    delete reportData.vcfMeta;
     super(reportData);
   }
 }
