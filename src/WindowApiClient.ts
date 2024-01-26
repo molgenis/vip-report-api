@@ -1,6 +1,5 @@
 import { parseVcf } from "@molgenis/vip-report-vcf/src/VcfParser";
 import { ApiClient, ReportData } from "./ApiClient";
-import { Metadata } from "@molgenis/vip-report-vcf/src/FieldMetadata";
 
 export type EncodedReport = ReportData & {
   base85?: EncodedReportData;
@@ -29,9 +28,7 @@ export class WindowApiClient extends ApiClient {
     if (reportData === undefined) {
       alert("This is a report template. Use the vip-report tool to create reports using this template and data.");
     }
-    const vcfMeta = reportData.binary.vcfMeta
-      ? (JSON.parse(new TextDecoder().decode(reportData.binary.vcfMeta)) as Metadata)
-      : undefined;
+    const vcfMeta = reportData.binary.vcfMeta ? reportData.binary.vcfMeta : undefined;
     const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf), vcfMeta);
     reportData.metadata.records = vcf.metadata;
     reportData.data.records = vcf.data;

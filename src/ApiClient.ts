@@ -22,6 +22,7 @@ import {
   SortOrder,
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
+import { Metadata as ExternalMetadata } from "@molgenis/vip-report-vcf/src/FieldMetadata";
 import { compareAsc, compareDesc } from "./compare";
 
 export interface ReportData {
@@ -37,7 +38,7 @@ interface Data {
 
 export interface BinaryReportData {
   vcf?: Uint8Array;
-  vcfMeta?: Uint8Array;
+  vcfMeta?: ExternalMetadata;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   cram?: { [key: string]: Cram };
