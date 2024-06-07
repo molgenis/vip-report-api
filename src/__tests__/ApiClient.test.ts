@@ -174,6 +174,7 @@ beforeEach(() => {
       },
     },
     decisionTree: JSON.parse(readFileSync(path.join(__dirname, "decisionTree.json"), "utf8")) as DecisionTree,
+    sampleTree: JSON.parse(readFileSync(path.join(__dirname, "sampleTree.json"), "utf8")) as DecisionTree,
   };
 
   const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf));
@@ -889,5 +890,10 @@ test("getCram - unknown sample identifier", async () => {
 
 test("getDecisionTree", async () => {
   const decisionTree = await api.getDecisionTree();
+  expect(decisionTree).not.toBe(null);
+});
+
+test("getSampleTree", async () => {
+  const decisionTree = await api.getSampleTree();
   expect(decisionTree).not.toBe(null);
 });

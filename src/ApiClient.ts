@@ -30,6 +30,7 @@ export interface ReportData {
   data: Data;
   binary: BinaryReportData;
   decisionTree?: DecisionTree;
+  sampleTree?: DecisionTree;
   vcfMeta?: ExternalMetadata;
 }
 
@@ -116,6 +117,11 @@ export class ApiClient implements Api {
   getDecisionTree(): Promise<DecisionTree | null> {
     const decisionTree = this.reportData.decisionTree;
     return Promise.resolve(decisionTree ? decisionTree : null);
+  }
+
+  getSampleTree(): Promise<DecisionTree | null> {
+    const sampleTree = this.reportData.sampleTree;
+    return Promise.resolve(sampleTree ? sampleTree : null);
   }
 
   isDatasetSupport(): boolean {

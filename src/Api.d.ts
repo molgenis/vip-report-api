@@ -13,6 +13,7 @@ export interface Api {
   getHtsFileMetadata(): Promise<HtsFileMetadata>;
   getAppMetadata(): Promise<AppMetadata>;
   getDecisionTree(): Promise<DecisionTree | null>;
+  getSampleTree(): Promise<DecisionTree | null>;
 
   // testing purposes only
   isDatasetSupport(): boolean;
