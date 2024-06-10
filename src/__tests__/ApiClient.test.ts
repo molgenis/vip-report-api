@@ -166,6 +166,9 @@ beforeEach(() => {
         "2:47637200-47637300": readFileSync(path.join(__dirname, "interval1.fasta")),
       },
       genesGz: readFileSync(path.join(__dirname, "example.gff")),
+      bedmethyl: {
+        Patient: readFileSync(path.join(__dirname, "alignment_WDR45.bedmethyl")),
+      },
       cram: {
         Patient: {
           cram: readFileSync(path.join(__dirname, "alignment.cram")),
@@ -878,6 +881,11 @@ test("getGenesGz", async () => {
   expect(genesGz).not.toBe(null);
 });
 
+test("getBedmethyl", async () => {
+  const bedmethyl = await api.getBedmethyl("Patient");
+  expect(bedmethyl).not.toBe(null);
+});
+
 test("getCram", async () => {
   const cram = await api.getCram("Patient");
   expect(cram).not.toBe(null);
@@ -886,6 +894,11 @@ test("getCram", async () => {
 test("getCram - unknown sample identifier", async () => {
   const cram = await api.getCram("Father");
   expect(cram).toBeNull();
+});
+
+test("getBedmethyl - unknown sample identifier", async () => {
+  const bedmethyl = await api.getBedmethyl("Father");
+  expect(bedmethyl).toBeNull();
 });
 
 test("getDecisionTree", async () => {
