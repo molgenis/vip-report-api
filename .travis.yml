@@ -25,4 +25,4 @@ deploy:
   on:
     tags: true
   edge:
-    branch: v2.0.3-beta.4 # workaround for https://travis-ci.community/t/builds-suddenly-fail-with-error-installing-dpl/14270/3
+    branch: true
