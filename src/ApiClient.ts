@@ -228,7 +228,6 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
   } else if (typeof sortOrder.compare === "function") {
     compareFn = sortOrder.compare;
   } else {
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     throw new Error(
       `illegal sort compare value '${
         sortOrder.compare as string
@@ -301,7 +300,6 @@ function matchesComposed(composedQuery: ComposedQuery, resource: Item<Resource>)
       match = matchesOr(composedQuery.args, resource);
       break;
     default:
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`invalid operator '${composedQuery.operator}'`);
   }
   return match;
@@ -359,7 +357,6 @@ function matches(query: Query, resource: Item<Resource>): boolean {
         match = matchesLesserThanOrEqual(query, resource);
         break;
       default:
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         throw new Error(`unexpected query operator ${query.operator}`);
     }
     return match;
@@ -503,7 +500,7 @@ function matchesGreaterThan(query: QueryClause, resource: Item<Resource>): boole
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === null || typeof query.args === undefined) {
+  if (query.args === null || query.args === undefined) {
     throw new Error(`Null values are not supported for > queries`);
   }
 
@@ -520,7 +517,7 @@ function matchesGreaterThanOrEqual(query: QueryClause, resource: Item<Resource>)
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === null || typeof query.args === undefined) {
+  if (query.args === null || query.args === undefined) {
     throw new Error(`Null values are not supported for >= queries`);
   }
 
@@ -537,7 +534,7 @@ function matchesLesserThan(query: QueryClause, resource: Item<Resource>): boolea
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === null || typeof query.args === undefined) {
+  if (query.args === null || query.args === undefined) {
     throw new Error(`Null and undefined values are not supported for < queries`);
   }
 
@@ -554,7 +551,7 @@ function matchesLesserThanOrEqual(query: QueryClause, resource: Item<Resource>):
   if (typeof value !== "number") {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'number'`);
   }
-  if (typeof query.args === null || typeof query.args === undefined) {
+  if (query.args === null || query.args === undefined) {
     throw new Error(`Null values are not supported for <= queries`);
   }
 
