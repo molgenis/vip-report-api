@@ -2,23 +2,30 @@ import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src
 
 export interface Api {
   getRecordsMeta(): Promise<RecordMetadata>;
-  getRecords(params: Params): Promise<PagedItems<Record>>;
-  getRecordById(id: number): Promise<Item<Record>>;
-  getSamples(params: Params): Promise<PagedItems<Sample>>;
-  getSampleById(id: number): Promise<Item<Sample>>;
-  getPhenotypes(params: Params): Promise<PagedItems<Phenotype>>;
-  getFastaGz(contig: string, pos: number): Promise<Uint8Array | null>;
-  getGenesGz(): Promise<Uint8Array | null>;
-  getCram(sampleId: string): Promise<Cram | null>;
-  getHtsFileMetadata(): Promise<HtsFileMetadata>;
-  getAppMetadata(): Promise<AppMetadata>;
-  getDecisionTree(): Promise<DecisionTree | null>;
-  getSampleTree(): Promise<DecisionTree | null>;
 
-  // testing purposes only
-  isDatasetSupport(): boolean;
-  getDatasetIds(): string[];
-  selectDataset(id: string): void;
+  getRecords(params: Params): Promise<PagedItems<Record>>;
+
+  getRecordById(id: number): Promise<Item<Record>>;
+
+  getSamples(params: Params): Promise<PagedItems<Sample>>;
+
+  getSampleById(id: number): Promise<Item<Sample>>;
+
+  getPhenotypes(params: Params): Promise<PagedItems<Phenotype>>;
+
+  getFastaGz(contig: string, pos: number): Promise<Uint8Array | null>;
+
+  getGenesGz(): Promise<Uint8Array | null>;
+
+  getCram(sampleId: string): Promise<Cram | null>;
+
+  getHtsFileMetadata(): Promise<HtsFileMetadata>;
+
+  getAppMetadata(): Promise<AppMetadata>;
+
+  getDecisionTree(): Promise<DecisionTree | null>;
+
+  getSampleTree(): Promise<DecisionTree | null>;
 }
 
 export interface Metadata {

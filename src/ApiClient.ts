@@ -22,8 +22,9 @@ import {
   SortOrder,
 } from "./Api";
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { Metadata as ExternalMetadata } from "@molgenis/vip-report-vcf/src/FieldMetadata";
+import { SupplementaryMetadata } from "@molgenis/vip-report-vcf/src/types/SupplementaryMetadata";
 import { compareAsc, compareDesc } from "./compare";
+import { CategoryRecord } from "@molgenis/vip-report-vcf/src/types/Metadata";
 
 export interface ReportData {
   metadata: Metadata;
@@ -31,7 +32,7 @@ export interface ReportData {
   binary: BinaryReportData;
   decisionTree?: DecisionTree;
   sampleTree?: DecisionTree;
-  vcfMeta?: ExternalMetadata;
+  vcfMeta?: SupplementaryMetadata;
 }
 
 interface Data {
@@ -124,18 +125,6 @@ export class ApiClient implements Api {
     return Promise.resolve(sampleTree ? sampleTree : null);
   }
 
-  isDatasetSupport(): boolean {
-    return false;
-  }
-
-  getDatasetIds(): string[] {
-    throw new Error("unsupported");
-  }
-
-  selectDataset(id: string): void {
-    throw new Error(`unknown id ${id}`);
-  }
-
   private postProcessReportData(reportData: ReportData): ReportData {
     if (!reportData.decisionTree) {
       return reportData;
@@ -151,7 +140,14 @@ export class ApiClient implements Api {
       csqItem.type = "CATEGORICAL";
       csqItem.categories = Object.values(reportData.decisionTree.nodes)
         .filter((node) => node.type === "LEAF")
-        .map((node) => (node as LeafNode).class);
+        .map((node) => node as LeafNode)
+        .reduce(
+          (acc, node) => ({
+            ...acc,
+            [node.class]: { label: node.class, description: node.description },
+          }),
+          {},
+        );
       csqItem.required = true;
     }
 
@@ -167,11 +163,24 @@ export class ApiClient implements Api {
         : [];
       if (categories.length > 0) {
         hpoItem.type = "CATEGORICAL";
-        hpoItem.categories = (reportData.data.phenotypes as Phenotype[])
+        const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
           .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-          .map((phenotype) => phenotype.type.id)
-          .filter((v, i, a) => a.indexOf(v) === i)
-          .sort();
+          .reduce(
+            (acc, phenotype) => ({
+              ...acc,
+              [phenotype.type.id]: { label: phenotype.type.label },
+            }),
+            {},
+          );
+        hpoItem.categories = Object.keys(categories)
+          .sort()
+          .reduce(
+            (acc, categoryId) => ({
+              ...acc,
+              [categoryId]: categories[categoryId],
+            }),
+            {},
+          );
       }
     }
 
