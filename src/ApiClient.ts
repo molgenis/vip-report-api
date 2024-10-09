@@ -24,6 +24,7 @@ import {
 import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
 import { Metadata as ExternalMetadata } from "@molgenis/vip-report-vcf/src/FieldMetadata";
 import { compareAsc, compareDesc } from "./compare";
+import { CategoryRecord } from "../../vip-report-vcf/src/MetadataParser";
 
 export interface ReportData {
   metadata: Metadata;
@@ -151,7 +152,14 @@ export class ApiClient implements Api {
       csqItem.type = "CATEGORICAL";
       csqItem.categories = Object.values(reportData.decisionTree.nodes)
         .filter((node) => node.type === "LEAF")
-        .map((node) => (node as LeafNode).class);
+        .map((node) => node as LeafNode)
+        .reduce(
+          (acc, node) => ({
+            ...acc,
+            [node.class]: { label: node.class, description: node.description },
+          }),
+          {},
+        );
       csqItem.required = true;
     }
 
@@ -167,11 +175,24 @@ export class ApiClient implements Api {
         : [];
       if (categories.length > 0) {
         hpoItem.type = "CATEGORICAL";
-        hpoItem.categories = (reportData.data.phenotypes as Phenotype[])
+        const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
           .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-          .map((phenotype) => phenotype.type.id)
-          .filter((v, i, a) => a.indexOf(v) === i)
-          .sort();
+          .reduce(
+            (acc, phenotype) => ({
+              ...acc,
+              [phenotype.type.id]: { label: phenotype.type.label },
+            }),
+            {},
+          );
+        hpoItem.categories = Object.keys(categories)
+          .sort()
+          .reduce(
+            (acc, categoryId) => ({
+              ...acc,
+              [categoryId]: categories[categoryId],
+            }),
+            {},
+          );
       }
     }
 
