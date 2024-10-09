@@ -151,7 +151,8 @@ export class ApiClient implements Api {
       csqItem.type = "CATEGORICAL";
       csqItem.categories = Object.values(reportData.decisionTree.nodes)
         .filter((node) => node.type === "LEAF")
-        .map((node) => (node as LeafNode).class);
+        .map((node) => node as LeafNode)
+        .map((node) => ({ id: node.class, description: node.description }));
       csqItem.required = true;
     }
 
@@ -169,8 +170,8 @@ export class ApiClient implements Api {
         hpoItem.type = "CATEGORICAL";
         hpoItem.categories = (reportData.data.phenotypes as Phenotype[])
           .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-          .map((phenotype) => phenotype.type.id)
-          .filter((v, i, a) => a.indexOf(v) === i)
+          .map((phenotype) => ({ id: phenotype.type.id, label: phenotype.type.label }))
+          .filter((v, i, a) => a.findIndex((category) => category.id === v.id) === i)
           .sort();
       }
     }
