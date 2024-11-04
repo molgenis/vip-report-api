@@ -1,11 +1,13 @@
-import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
+import { Metadata as RecordMetadata, Record as VcfRecord } from "@molgenis/vip-report-vcf/src/Vcf";
 
 export interface Api {
+  getConfig(): Promise<Json | null>;
+
   getRecordsMeta(): Promise<RecordMetadata>;
 
-  getRecords(params: Params): Promise<PagedItems<Record>>;
+  getRecords(params: Params): Promise<PagedItems<VcfRecord>>;
 
-  getRecordById(id: number): Promise<Item<Record>>;
+  getRecordById(id: number): Promise<Item<VcfRecord>>;
 
   getSamples(params: Params): Promise<PagedItems<Sample>>;
 
@@ -27,6 +29,8 @@ export interface Api {
 
   getSampleTree(): Promise<DecisionTree | null>;
 }
+
+export type Json = string | number | boolean | null | { [property: string]: Json } | Json[];
 
 export interface Metadata {
   app: AppMetadata;

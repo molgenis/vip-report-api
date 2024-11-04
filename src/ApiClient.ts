@@ -8,6 +8,7 @@ import {
   DecisionTree,
   HtsFileMetadata,
   Item,
+  Json,
   LeafNode,
   Metadata,
   PagedItems,
@@ -27,6 +28,7 @@ import { compareAsc, compareDesc } from "./compare";
 import { CategoryRecord } from "@molgenis/vip-report-vcf/src/types/Metadata";
 
 export interface ReportData {
+  config?: Json;
   metadata: Metadata;
   data: Data;
   binary: BinaryReportData;
@@ -51,6 +53,11 @@ export class ApiClient implements Api {
 
   constructor(reportData: ReportData) {
     this.reportData = this.postProcessReportData(reportData);
+  }
+
+  getConfig(): Promise<Json | null> {
+    const config = this.reportData.config;
+    return Promise.resolve(config ? config : null);
   }
 
   getRecordsMeta(): Promise<RecordMetadata> {
