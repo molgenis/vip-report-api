@@ -2,7 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
 import { WindowApiClient } from "../WindowApiClient";
-import { Metadata } from "../Api";
+
+import { Metadata } from "../index";
 
 describe("window api client", () => {
   vi.stubGlobal("window", {});

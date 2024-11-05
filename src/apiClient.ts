@@ -1,3 +1,5 @@
+import { CategoryRecord, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { compareAsc, compareDesc } from "./compare";
 import {
   Api,
   AppMetadata,
@@ -10,43 +12,18 @@ import {
   Item,
   Json,
   LeafNode,
-  Metadata,
   PagedItems,
   Params,
   Phenotype,
   Query,
   QueryClause,
+  ReportData,
   Resource,
   Sample,
   Selector,
   SelectorPart,
   SortOrder,
-} from "./Api";
-import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { SupplementaryMetadata } from "@molgenis/vip-report-vcf/src/types/SupplementaryMetadata";
-import { compareAsc, compareDesc } from "./compare";
-import { CategoryRecord } from "@molgenis/vip-report-vcf/src/types/Metadata";
-
-export interface ReportData {
-  config?: Json;
-  metadata: Metadata;
-  data: Data;
-  binary: BinaryReportData;
-  decisionTree?: DecisionTree;
-  sampleTree?: DecisionTree;
-  vcfMeta?: SupplementaryMetadata;
-}
-
-interface Data {
-  [key: string]: Resource[];
-}
-
-export interface BinaryReportData {
-  vcf?: Uint8Array;
-  fastaGz?: { [key: string]: Uint8Array };
-  genesGz?: Uint8Array;
-  cram?: { [key: string]: Cram };
-}
+} from "./index";
 
 export class ApiClient implements Api {
   private reportData: ReportData;
@@ -60,15 +37,15 @@ export class ApiClient implements Api {
     return Promise.resolve(config ? config : null);
   }
 
-  getRecordsMeta(): Promise<RecordMetadata> {
+  getRecordsMeta(): Promise<VcfMetadata> {
     return Promise.resolve(this.reportData.metadata.records);
   }
 
-  getRecords(params: Params = {}): Promise<PagedItems<Record>> {
+  getRecords(params: Params = {}): Promise<PagedItems<VcfRecord>> {
     return this.get("records", params);
   }
 
-  getRecordById(id: number): Promise<Item<Record>> {
+  getRecordById(id: number): Promise<Item<VcfRecord>> {
     return this.getById("records", id);
   }
 
@@ -253,9 +230,9 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
   return compareFn;
 }
 
-type Path = (string | number)[];
+type ResourcePath = (string | number)[];
 
-function getValue(item: Item<Resource>, path: Path): CompareValue {
+function getValue(item: Item<Resource>, path: ResourcePath): CompareValue {
   let value: unknown = item.data;
   for (const token of path) {
     if (typeof token === "string") {
