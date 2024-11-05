@@ -1,5 +1,6 @@
-import { parseVcf } from "@molgenis/vip-report-vcf/src/VcfParser";
-import { ApiClient, ReportData } from "./ApiClient";
+import { parseVcf } from "@molgenis/vip-report-vcf";
+import { ReportData } from "./index";
+import { ApiClient } from "./apiClient";
 
 export type EncodedReport = ReportData & {
   base85?: EncodedReportData;

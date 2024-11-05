@@ -1,3 +1,5 @@
+import { CategoryRecord, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { compareAsc, compareDesc } from "./compare";
 import {
   Api,
   AppMetadata,
@@ -8,42 +10,20 @@ import {
   DecisionTree,
   HtsFileMetadata,
   Item,
+  Json,
   LeafNode,
-  Metadata,
   PagedItems,
   Params,
   Phenotype,
   Query,
   QueryClause,
+  ReportData,
   Resource,
   Sample,
   Selector,
   SelectorPart,
   SortOrder,
-} from "./Api";
-import { Metadata as RecordMetadata, Record } from "@molgenis/vip-report-vcf/src/Vcf";
-import { Metadata as ExternalMetadata } from "@molgenis/vip-report-vcf/src/FieldMetadata";
-import { compareAsc, compareDesc } from "./compare";
-
-export interface ReportData {
-  metadata: Metadata;
-  data: Data;
-  binary: BinaryReportData;
-  decisionTree?: DecisionTree;
-  sampleTree?: DecisionTree;
-  vcfMeta?: ExternalMetadata;
-}
-
-interface Data {
-  [key: string]: Resource[];
-}
-
-export interface BinaryReportData {
-  vcf?: Uint8Array;
-  fastaGz?: { [key: string]: Uint8Array };
-  genesGz?: Uint8Array;
-  cram?: { [key: string]: Cram };
-}
+} from "./index";
 
 export class ApiClient implements Api {
   private reportData: ReportData;
@@ -52,15 +32,20 @@ export class ApiClient implements Api {
     this.reportData = this.postProcessReportData(reportData);
   }
 
-  getRecordsMeta(): Promise<RecordMetadata> {
+  getConfig(): Promise<Json | null> {
+    const config = this.reportData.config;
+    return Promise.resolve(config ? config : null);
+  }
+
+  getRecordsMeta(): Promise<VcfMetadata> {
     return Promise.resolve(this.reportData.metadata.records);
   }
 
-  getRecords(params: Params = {}): Promise<PagedItems<Record>> {
+  getRecords(params: Params = {}): Promise<PagedItems<VcfRecord>> {
     return this.get("records", params);
   }
 
-  getRecordById(id: number): Promise<Item<Record>> {
+  getRecordById(id: number): Promise<Item<VcfRecord>> {
     return this.getById("records", id);
   }
 
@@ -124,18 +109,6 @@ export class ApiClient implements Api {
     return Promise.resolve(sampleTree ? sampleTree : null);
   }
 
-  isDatasetSupport(): boolean {
-    return false;
-  }
-
-  getDatasetIds(): string[] {
-    throw new Error("unsupported");
-  }
-
-  selectDataset(id: string): void {
-    throw new Error(`unknown id ${id}`);
-  }
-
   private postProcessReportData(reportData: ReportData): ReportData {
     if (!reportData.decisionTree) {
       return reportData;
@@ -151,7 +124,14 @@ export class ApiClient implements Api {
       csqItem.type = "CATEGORICAL";
       csqItem.categories = Object.values(reportData.decisionTree.nodes)
         .filter((node) => node.type === "LEAF")
-        .map((node) => (node as LeafNode).class);
+        .map((node) => node as LeafNode)
+        .reduce(
+          (acc, node) => ({
+            ...acc,
+            [node.class]: { label: node.class, description: node.description },
+          }),
+          {},
+        );
       csqItem.required = true;
     }
 
@@ -167,11 +147,24 @@ export class ApiClient implements Api {
         : [];
       if (categories.length > 0) {
         hpoItem.type = "CATEGORICAL";
-        hpoItem.categories = (reportData.data.phenotypes as Phenotype[])
+        const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
           .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-          .map((phenotype) => phenotype.type.id)
-          .filter((v, i, a) => a.indexOf(v) === i)
-          .sort();
+          .reduce(
+            (acc, phenotype) => ({
+              ...acc,
+              [phenotype.type.id]: { label: phenotype.type.label },
+            }),
+            {},
+          );
+        hpoItem.categories = Object.keys(categories)
+          .sort()
+          .reduce(
+            (acc, categoryId) => ({
+              ...acc,
+              [categoryId]: categories[categoryId],
+            }),
+            {},
+          );
       }
     }
 
@@ -237,9 +230,9 @@ function getCompareFn(sortOrder: SortOrder): CompareFn {
   return compareFn;
 }
 
-type Path = (string | number)[];
+type ResourcePath = (string | number)[];
 
-function getValue(item: Item<Resource>, path: Path): CompareValue {
+function getValue(item: Item<Resource>, path: ResourcePath): CompareValue {
   let value: unknown = item.data;
   for (const token of path) {
     if (typeof token === "string") {
