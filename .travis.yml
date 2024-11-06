@@ -20,9 +20,7 @@ script:
   - pnpm run coverage
   - pnpm run build
 deploy:
-  provider: npm
-  api_token:
-    secure: BIHzAolT3PcAzlgDgBQ29R6Gs3dSQj0QlRtdRzAPrPHXGZ6nnO6QfDFW2ylOM9/2dZ9gPWyZEROaPijCYvhB8wQJE7QlGf9Rg/H2gLY5ErhNdnjwqv5nigWas27UeDqOnTczRHlhQOethpJZYb2xx2l91LsPoYjpFMO6j3W5HDJM5mpVBeXuji/DJMcctQgdYwW97QYqO5eHXqDfKo9sRmrVEfpMJUkeaTou06t1MCTBnSIBRLMuSPZWZm0sWjZBTJZ3l1YjrjuTDzW7XRt6pBD8SfTPiHV7mH+31HlnWkYT8WJOA/j3Mv4fDlVHSbLbMx+Yxd/YFUu0u7qXyo9VOXYKUdjsb7FVHjs2tgE3WvWI+8kYsJey4WROVFgs2RcwwClXiYa03atOiLDV5BUaUR7mPELircDk4ghjxjkddOcdnb2L/IAddCCu3LVPTajFVcteY/ClW/s24+hP6sf0EJmJJwgCcJuqC4UobAvzQIpXpR5nroHkbL1ws6FOY2AoHx8VEZB5x1WKF3UvkgAuhm8D0bX75gv2ma3pmeiJW08+2gdtAhISoeggbyQlxtZRNGdjVyuHAuTjbpo8+9dOj/Qx8zzJEEthQFByXxEEVqmAgdMn+sTKEf030mY2xm/xLfkJZZkzzl2yQRBZ/4teHK4n+2EivNbfxEtARXOWwls=
+  provider: script
+  script: bash scripts/deploy_npm_registry.sh
   on:
     tags: true
-  edge: true
