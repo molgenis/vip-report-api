@@ -67,8 +67,8 @@ export class ApiClient implements Api {
       for (const [key, value] of Object.entries(this.reportData.binary.fastaGz)) {
         const pair = key.split(":");
         if (pair[0] === contig) {
-          const interval = pair[1].split("-");
-          if (pos >= parseInt(interval[0], 10) && pos <= parseInt(interval[1], 10)) {
+          const interval = pair[1]!.split("-");
+          if (pos >= parseInt(interval[0]!, 10) && pos <= parseInt(interval[1]!, 10)) {
             buffer = value;
             break;
           }
@@ -177,7 +177,7 @@ export class ApiClient implements Api {
         reject(`unknown resource '${resource}'`);
       }
 
-      let resources = this.reportData.data[resource].map((resource, i) => ({ id: i, data: resource })) as Item<T>[];
+      let resources = this.reportData.data[resource]!.map((resource, i) => ({ id: i, data: resource })) as Item<T>[];
 
       const query = params.query;
       if (query) {
@@ -198,7 +198,7 @@ export class ApiClient implements Api {
           size,
           totalElements,
         },
-        total: this.reportData.data[resource].length,
+        total: this.reportData.data[resource]!.length,
       };
       resolve(response);
     });
