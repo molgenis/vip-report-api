@@ -15,4 +15,4 @@
 ##FORMAT=<ID=VIPC_S,Number=.,Type=String,Description="VIP decision tree classification.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Patient	Mother	Father
 1	10042538	.	C	T	.	PASS	n_array0=c,,d,b;n_number2=1;n_object0=dummy|c,dummy|,dummy|d,dummy|b;n_string0=a;n_string3=b;n_string4=b	GT:DP:AD	1|0:50:45,5	0|0:10:10,0	0|0:10:10,0
-1	16376412	.	G	A	.	PASS	n_array0=b,c,a;n_bool3;n_bool6;n_bool7;n_number2=0;n_object0=dummy|b,dummy|c,dummy|a;n_string0=a;n_string3=a;n_string4=A	GT:DP:AD:VIPC_S	0|1:10:0,0	1|0:11:11,0	1|0:11:11,0
+1	16376412	.	G	A	.	PASS	n_array0=b,c,a;n_bool3;n_bool6;n_bool7;n_number2=0;n_object0=dummy|b,dummy|c,dummy|a;n_string0=a;n_string3=a;n_string4=A	GT:DP:AD	0|1:10:0,0	1|0:11:11,0	1|0:11:11,0
