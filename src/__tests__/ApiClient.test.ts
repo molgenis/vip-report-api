@@ -184,6 +184,51 @@ beforeEach(() => {
   api = new ApiClient(reportData as unknown as EncodedReport);
 });
 
+test("postProcess - sample tree categories", async () => {
+  const metadata = await api.getRecordsMeta();
+  expect(metadata.format["VIPC_S"].categories).toEqual({
+    U1: {
+      description: "Usable: probably",
+      label: "U1",
+    },
+    U2: {
+      description: "Usable: maybe",
+      label: "U2",
+    },
+    U3: {
+      description: "Usable: probably not",
+      label: "U3",
+    },
+  });
+});
+
+test("postProcess - decision tree categories", async () => {
+  const metadata = await api.getRecordsMeta();
+  const csqItems = metadata.info.CSQ?.nested?.items;
+  const csqItem = csqItems.find((item) => item.id === "VIPC");
+  expect(csqItem.categories).toEqual({
+    B: {
+      label: "B",
+    },
+    LB: {
+      label: "LB",
+    },
+    LP: {
+      label: "LP",
+    },
+    LQ: {
+      description: "Low quality variants.",
+      label: "LQ",
+    },
+    P: {
+      label: "P",
+    },
+    VUS: {
+      label: "VUS",
+    },
+  });
+});
+
 test("getAppMeta", async () => {
   const metadata = await api.getAppMetadata();
   expect(metadata).toEqual(

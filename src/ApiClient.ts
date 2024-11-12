@@ -133,19 +133,10 @@ export class ApiClient implements Api {
   }
 
   private postProcessReportData(reportData: ReportData): ReportData {
-    if (!reportData.decisionTree) {
-      return reportData;
-    }
-    const csqItems = reportData.metadata.records.info.CSQ?.nested?.items;
-    if (!csqItems) {
-      return reportData;
-    }
-
-    // make VIPC categorical with categories based on tree exit nodes
-    const csqItem = csqItems.find((item) => item.id === "VIPC");
-    if (csqItem) {
-      csqItem.type = "CATEGORICAL";
-      csqItem.categories = Object.values(reportData.decisionTree.nodes)
+    // make VIPC_S categorical with categories based on sample tree exit nodes
+    const vipc_s = reportData.metadata.records.format["VIPC_S"];
+    if (vipc_s && reportData.sampleTree !== undefined) {
+      vipc_s.categories = Object.values(reportData.sampleTree.nodes)
         .filter((node) => node.type === "LEAF")
         .map((node) => node as LeafNode)
         .reduce(
@@ -155,39 +146,64 @@ export class ApiClient implements Api {
           }),
           {},
         );
-      csqItem.required = true;
+
+      vipc_s.type = "CATEGORICAL";
     }
 
-    // make HPO categorical with categories based on phenotypes
-    const hpoItem = csqItems.find((item) => item.id === "HPO");
-    if (hpoItem) {
-      const categories = reportData.data.phenotypes
-        ? (reportData.data.phenotypes as Phenotype[])
+    const csqItems = reportData.metadata.records.info.CSQ?.nested?.items;
+    if (!csqItems) {
+      return reportData;
+    }
+
+    // make VIPC categorical with categories based on tree exit nodes
+    const csqItem = csqItems.find((item) => item.id === "VIPC");
+    if (csqItem) {
+      if (reportData.decisionTree) {
+        csqItem.type = "CATEGORICAL";
+        csqItem.categories = Object.values(reportData.decisionTree.nodes)
+          .filter((node) => node.type === "LEAF")
+          .map((node) => node as LeafNode)
+          .reduce(
+            (acc, node) => ({
+              ...acc,
+              [node.class]: { label: node.class, description: node.description },
+            }),
+            {},
+          );
+        csqItem.required = true;
+      }
+
+      // make HPO categorical with categories based on phenotypes
+      const hpoItem = csqItems.find((item) => item.id === "HPO");
+      if (hpoItem) {
+        const categories = reportData.data.phenotypes
+          ? (reportData.data.phenotypes as Phenotype[])
+              .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
+              .map((phenotype) => phenotype.type.id)
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .sort()
+          : [];
+        if (categories.length > 0) {
+          hpoItem.type = "CATEGORICAL";
+          const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
             .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-            .map((phenotype) => phenotype.type.id)
-            .filter((v, i, a) => a.indexOf(v) === i)
+            .reduce(
+              (acc, phenotype) => ({
+                ...acc,
+                [phenotype.type.id]: { label: phenotype.type.label },
+              }),
+              {},
+            );
+          hpoItem.categories = Object.keys(categories)
             .sort()
-        : [];
-      if (categories.length > 0) {
-        hpoItem.type = "CATEGORICAL";
-        const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
-          .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-          .reduce(
-            (acc, phenotype) => ({
-              ...acc,
-              [phenotype.type.id]: { label: phenotype.type.label },
-            }),
-            {},
-          );
-        hpoItem.categories = Object.keys(categories)
-          .sort()
-          .reduce(
-            (acc, categoryId) => ({
-              ...acc,
-              [categoryId]: categories[categoryId],
-            }),
-            {},
-          );
+            .reduce(
+              (acc, categoryId) => ({
+                ...acc,
+                [categoryId]: categories[categoryId],
+              }),
+              {},
+            );
+        }
       }
     }
 
