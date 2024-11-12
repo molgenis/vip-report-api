@@ -1,9 +1,16 @@
-import { Metadata as RecordMetadata, Record as VcfRecord } from "@molgenis/vip-report-vcf/src/Vcf";
+import { SupplementaryMetadata, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { ApiClient as ApiClientAlias } from "./apiClient";
+import { WindowApiClient as WindowApiClientAlias } from "./WindowApiClient";
 
+// export API implementations
+export const ApiClient = ApiClientAlias;
+export const WindowApiClient = WindowApiClientAlias;
+
+// export API interface and types
 export interface Api {
   getConfig(): Promise<Json | null>;
 
-  getRecordsMeta(): Promise<RecordMetadata>;
+  getRecordsMeta(): Promise<VcfMetadata>;
 
   getRecords(params: Params): Promise<PagedItems<VcfRecord>>;
 
@@ -35,7 +42,7 @@ export type Json = string | number | boolean | null | { [property: string]: Json
 export interface Metadata {
   app: AppMetadata;
   htsFile: HtsFileMetadata;
-  records: RecordMetadata;
+  records: VcfMetadata;
 }
 
 export interface Resource {
@@ -66,7 +73,6 @@ export type CompareValue =
   | CompareValueNumber[]
   | CompareValueString
   | CompareValueString[];
-
 export type CompareFn = (a: CompareValue, b: CompareValue) => number;
 
 export interface Sample extends Resource {
@@ -108,7 +114,6 @@ export interface HtsFileMetadata {
 }
 
 export type SelectorPart = string | number;
-
 export type Selector = SelectorPart | SelectorPart[];
 
 export interface ComposedQuery {
@@ -242,7 +247,6 @@ export interface Path {
 }
 
 export type ClauseOperator = "AND" | "OR";
-
 export type Operator =
   | "=="
   | "!="
@@ -257,14 +261,31 @@ export type Operator =
   | "contains_any"
   | "contains_all"
   | "contains_none";
-
 export type Type = "BOOL" | "BOOL_MULTI" | "CATEGORICAL" | "EXISTS" | "LEAF";
-
 export type NodeType = "DECISION" | "LEAF";
-
 export type DecisionType = "BOOL" | "BOOL_MULTI" | "CATEGORICAL" | "EXISTS";
-
 export type Cram = {
   cram: Uint8Array;
   crai: Uint8Array;
 };
+
+export interface ReportData {
+  config?: Json;
+  metadata: Metadata;
+  data: Data;
+  binary: BinaryReportData;
+  decisionTree?: DecisionTree;
+  sampleTree?: DecisionTree;
+  vcfMeta?: SupplementaryMetadata;
+}
+
+interface Data {
+  [key: string]: Resource[];
+}
+
+export interface BinaryReportData {
+  vcf?: Uint8Array;
+  fastaGz?: { [key: string]: Uint8Array };
+  genesGz?: Uint8Array;
+  cram?: { [key: string]: Cram };
+}

@@ -1,11 +1,10 @@
 import { beforeEach, expect, test } from "vitest";
-import { ApiClient } from "../ApiClient";
-import { DecisionTree, Item, Params } from "../Api";
 import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
-import { Record } from "@molgenis/vip-report-vcf/src/Vcf";
+import { parseVcf, VcfRecord } from "@molgenis/vip-report-vcf";
 import path from "path";
-import { parseVcf } from "@molgenis/vip-report-vcf/src/VcfParser";
+import { DecisionTree, Item, Params } from "../index";
+import { ApiClient } from "../apiClient";
 
 let api: ApiClient;
 
@@ -14,7 +13,7 @@ const sortAllExpected = {
   total: 2,
 };
 
-const record0: Item<Record> = {
+const record0: Item<VcfRecord> = {
   id: 0,
   data: {
     c: "1",
@@ -71,7 +70,7 @@ const record0: Item<Record> = {
     ],
   },
 };
-const record1: Item<Record> = {
+const record1: Item<VcfRecord> = {
   id: 1,
   data: {
     c: "1",

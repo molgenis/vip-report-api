@@ -1,16 +1,21 @@
 {
   "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
     "strict": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "noEmit": true,
     "isolatedModules": true,
+    "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true
   },
   "include": [
     "src/**/*"
+  ],
+  "exclude": [
+    "src/__tests__"
   ]
 }
