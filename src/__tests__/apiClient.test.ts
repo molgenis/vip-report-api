@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from "vitest";
 import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
-import { parseVcf, VcfRecord } from "@molgenis/vip-report-vcf";
+import { parseVcf, SupplementaryMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import path from "path";
 import { DecisionTree, Item, Params } from "../index";
 import { ApiClient } from "../apiClient";
@@ -27,10 +27,10 @@ const record0: Item<VcfRecord> = {
       n_array0: ["c", null, "d", "b"],
       n_number2: 1,
       n_object0: [
-        ["dummy", "c"],
-        ["dummy", null],
-        ["dummy", "d"],
-        ["dummy", "b"],
+        ["dummy5", "c", [1, 2]],
+        ["dummy7", null, [1, 2]],
+        ["dummy1", "d", [1, 2]],
+        ["dummy4", "b", [1, 2]],
       ],
       n_string0: "a",
       n_string3: "b",
@@ -87,9 +87,9 @@ const record1: Item<VcfRecord> = {
       n_bool7: true,
       n_number2: 0,
       n_object0: [
-        ["dummy", "b"],
-        ["dummy", "c"],
-        ["dummy", "a"],
+        ["dummy3", "b", [1, 2, 3]],
+        ["dummy2", "c", [1, 2, 3]],
+        ["dummy6", "a", []],
       ],
       n_string0: "a",
       n_string3: "a",
@@ -176,8 +176,24 @@ beforeEach(() => {
     sampleTree: JSON.parse(readFileSync(path.join(__dirname, "sampleTree.json"), "utf8")) as DecisionTree,
   };
 
-  const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf));
+  const supplementaryMeta = {
+    info: {
+      n_object0: {
+        nestedFields: {
+          n_array1: {
+            label: "Array",
+            description: "Test array",
+            numberType: "OTHER",
+            separator: "&",
+            type: "INTEGER",
+          },
+        },
+      },
+    },
+    format: {},
+  } as SupplementaryMetadata;
 
+  const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf), supplementaryMeta);
   (reportData as unknown as EncodedReport).metadata.records = vcf.metadata;
   (reportData as unknown as EncodedReport).data.records = vcf.data;
   api = new ApiClient(reportData as unknown as EncodedReport);
@@ -687,10 +703,10 @@ test("get - all records sorted on n.n_array0", async () => {
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
-test("get - all records sorted on n.n_object0.n_string2 ascending", async () => {
+test("get - all records sorted on n.n_object0.n_string1 ascending", async () => {
   const params: Params = {
     sort: {
-      property: ["n", "n_object0", "1"],
+      property: ["n", "n_object0", 1],
       compare: "asc",
     },
   };
@@ -698,10 +714,10 @@ test("get - all records sorted on n.n_object0.n_string2 ascending", async () => 
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
 });
 
-test("get - all records sorted on n.n_object0.n_string2 descending", async () => {
+test("get - all records sorted on n.n_object0.n_string1 descending", async () => {
   const params: Params = {
     sort: {
-      property: ["n", "n_object0", "1"],
+      property: ["n", "n_object0", 1],
       compare: "desc",
     },
   };
@@ -829,6 +845,38 @@ test("get - some records using wildcard selector part with has_any", async () =>
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - some records using has_any null", async () => {
+  const params: Params = {
+    query: {
+      selector: ["n", "n_object0", "*", "1"],
+      operator: "has_any",
+      args: null,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - some records using empty any_has_any", async () => {
+  const params: Params = {
+    query: {
+      selector: ["n", "n_object0", "*", "2"],
+      operator: "any_has_any",
+      args: null,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
     page: { number: 0, size: 10, totalElements: 1 },
     total: 2,
   });

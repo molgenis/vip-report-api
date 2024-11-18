@@ -465,12 +465,22 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
   }
 
   let match = false;
-  for (const item of value as unknown[]) {
-    if (item !== null) {
-      for (const arg of query.args as unknown[]) {
-        if ((item as unknown[]).includes(arg)) {
-          match = true;
-          break;
+
+  if (query.args === null || (query.args as unknown[]).length === 0) {
+    for (const item of value as unknown[]) {
+      if ((item as unknown[]).length === 0) {
+        match = true;
+        break;
+      }
+    }
+  } else {
+    for (const item of value as unknown[]) {
+      if (item !== null) {
+        for (const arg of query.args as unknown[]) {
+          if ((item as unknown[]).includes(arg)) {
+            match = true;
+            break;
+          }
         }
       }
     }
@@ -490,10 +500,20 @@ function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
   }
 
   let match = false;
-  for (const arg of query.args as unknown[]) {
-    if ((value as unknown[]).includes(arg)) {
-      match = true;
-      break;
+
+  if (query.args === null || (query.args as unknown[]).length === 0) {
+    for (const item of value as unknown[]) {
+      if (item === null) {
+        match = true;
+        break;
+      }
+    }
+  } else {
+    for (const arg of query.args as unknown[]) {
+      if ((value as unknown[]).includes(arg)) {
+        match = true;
+        break;
+      }
     }
   }
   return match;
