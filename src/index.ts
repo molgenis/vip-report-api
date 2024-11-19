@@ -117,9 +117,11 @@ export type SelectorPart = string | number;
 export type Selector = SelectorPart | SelectorPart[];
 
 export interface ComposedQuery {
-  operator: "and" | "or";
+  operator: ComposedQueryOperator;
   args: (QueryClause | ComposedQuery)[];
 }
+
+export type ComposedQueryOperator = "and" | "or";
 
 export type QueryOperator =
   | "=="
