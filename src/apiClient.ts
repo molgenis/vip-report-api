@@ -456,21 +456,38 @@ function matchesIn(query: QueryClause, resource: Item<Resource>): boolean {
 function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean {
   const value: unknown = select(query.selector, resource);
 
-  if (value === undefined) {
-    return false;
-  }
-
-  if (!Array.isArray(value)) {
+  if (value !== undefined && !Array.isArray(value)) {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
-  for (const item of value as unknown[]) {
-    if (item !== null) {
-      for (const arg of query.args as unknown[]) {
-        if ((item as unknown[]).includes(arg)) {
+
+  if (query.args === undefined) {
+    if (value === undefined) {
+      match = true;
+    } else {
+      for (const item of value) {
+        if (item === undefined) {
           match = true;
           break;
+        }
+      }
+    }
+  } else if ((query.args as unknown[]).length === 0) {
+    for (const item of value as unknown[]) {
+      if ((item as unknown[]).length === 0) {
+        match = true;
+        break;
+      }
+    }
+  } else {
+    for (const item of value as unknown[]) {
+      if (item !== null) {
+        for (const arg of query.args as unknown[]) {
+          if ((item as unknown[]).includes(arg)) {
+            match = true;
+            break;
+          }
         }
       }
     }
@@ -481,19 +498,27 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
 function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
   const value: unknown = select(query.selector, resource);
 
-  if (value === undefined) {
-    return false;
-  }
-
-  if (!Array.isArray(value)) {
+  if (value !== undefined && !Array.isArray(value)) {
     throw new Error(`value '${value as string}' is of type '${typeof value}' instead of 'array'`);
   }
 
   let match = false;
-  for (const arg of query.args as unknown[]) {
-    if ((value as unknown[]).includes(arg)) {
-      match = true;
-      break;
+
+  if (query.args === undefined) {
+    match = value === undefined;
+  } else if (query.args === null) {
+    for (const item of value as unknown[]) {
+      if (item === null) {
+        match = true;
+        break;
+      }
+    }
+  } else {
+    for (const arg of query.args as unknown[]) {
+      if ((value as unknown[]).includes(arg)) {
+        match = true;
+        break;
+      }
     }
   }
   return match;
