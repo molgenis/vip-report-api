@@ -82,6 +82,7 @@ const record1: Item<VcfRecord> = {
     f: ["PASS"],
     n: {
       n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
       n_bool3: true,
       n_bool6: true,
       n_bool7: true,
@@ -850,6 +851,22 @@ test("get - some records using wildcard selector part with has_any", async () =>
   });
 });
 
+test("get - some records using has_any undefined", async () => {
+  const params: Params = {
+    query: {
+      selector: ["n", "n_array1"],
+      operator: "has_any",
+      args: undefined,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
 test("get - some records using has_any null", async () => {
   const params: Params = {
     query: {
@@ -871,7 +888,7 @@ test("get - some records using empty any_has_any", async () => {
     query: {
       selector: ["n", "n_object0", "*", "2"],
       operator: "any_has_any",
-      args: null,
+      args: [],
     },
   };
   const records = await api.getRecords(params);
