@@ -21,7 +21,7 @@ const record0: Item<VcfRecord> = {
     i: [],
     r: "C",
     a: ["T"],
-    q: null,
+    q: 80,
     f: ["PASS"],
     n: {
       n_array0: ["c", null, "d", "b"],
@@ -79,7 +79,7 @@ const record1: Item<VcfRecord> = {
     r: "G",
     a: ["A"],
     q: null,
-    f: ["PASS"],
+    f: [],
     n: {
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
@@ -383,6 +383,38 @@ test("get - records with less than query", async () => {
       selector: ["n", "n_number2"],
       operator: "<",
       args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with equals null query on qual", async () => {
+  const params: Params = {
+    query: {
+      selector: ["q"],
+      operator: "==",
+      args: null,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with equals empty filter", async () => {
+  const params: Params = {
+    query: {
+      selector: ["f"],
+      operator: "==",
+      args: [],
     },
   };
   const records = await api.getRecords(params);

@@ -374,6 +374,16 @@ function matches(query: Query, resource: Item<Resource>): boolean {
 
 function matchesEquals(query: QueryClause, resource: Item<Resource>): boolean {
   const value: unknown = select(query.selector, resource);
+  if (Array.isArray(query.args)) {
+    if (value === undefined || value === null) {
+      return false;
+    }
+    if ((query.args as unknown[]).length === 0) {
+      return (value as unknown[]).length === 0;
+    } else {
+      throw new Error(`Equals query with an array is only supported with an empty array.`);
+    }
+  }
   return value === query.args;
 }
 
