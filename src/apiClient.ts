@@ -374,6 +374,16 @@ function matches(query: Query, resource: Item<Resource>): boolean {
 
 function matchesEquals(query: QueryClause, resource: Item<Resource>): boolean {
   const value: unknown = select(query.selector, resource);
+  if (Array.isArray(query.args)) {
+    if (value === undefined || value === null) {
+      return false;
+    }
+    if ((query.args as unknown[]).length === 0) {
+      return (value as unknown[]).length === 0;
+    } else {
+      throw new Error(`Equals query with an array is only supported with an empty array.`);
+    }
+  }
   return value === query.args;
 }
 
@@ -473,20 +483,25 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
         }
       }
     }
-  } else if ((query.args as unknown[]).length === 0) {
-    for (const item of value as unknown[]) {
-      if ((item as unknown[]).length === 0) {
-        match = true;
-        break;
-      }
-    }
   } else {
-    for (const item of value as unknown[]) {
-      if (item !== null) {
-        for (const arg of query.args as unknown[]) {
-          if ((item as unknown[]).includes(arg)) {
-            match = true;
-            break;
+    if (value === undefined) {
+      return false;
+    }
+    if ((query.args as unknown[]).length === 0) {
+      for (const item of value as unknown[]) {
+        if ((item as unknown[]).length === 0) {
+          match = true;
+          break;
+        }
+      }
+    } else {
+      for (const item of value as unknown[]) {
+        if (item !== null) {
+          for (const arg of query.args as unknown[]) {
+            if (item !== undefined && (item as unknown[]).includes(arg)) {
+              match = true;
+              break;
+            }
           }
         }
       }
@@ -514,6 +529,9 @@ function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
       }
     }
   } else {
+    if (value === undefined) {
+      return false;
+    }
     for (const arg of query.args as unknown[]) {
       if ((value as unknown[]).includes(arg)) {
         match = true;
