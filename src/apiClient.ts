@@ -521,21 +521,23 @@ function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
 
   if (query.args === undefined) {
     match = value === undefined;
-  } else if (query.args === null) {
-    for (const item of value as unknown[]) {
-      if (item === null) {
-        match = true;
-        break;
-      }
-    }
   } else {
     if (value === undefined) {
       return false;
     }
-    for (const arg of query.args as unknown[]) {
-      if ((value as unknown[]).includes(arg)) {
-        match = true;
-        break;
+    if (query.args === null) {
+      for (const item of value as unknown[]) {
+        if (item === null) {
+          match = true;
+          break;
+        }
+      }
+    } else {
+      for (const arg of query.args as unknown[]) {
+        if ((value as unknown[]).includes(arg)) {
+          match = true;
+          break;
+        }
       }
     }
   }
