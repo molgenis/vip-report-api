@@ -473,20 +473,25 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
         }
       }
     }
-  } else if ((query.args as unknown[]).length === 0) {
-    for (const item of value as unknown[]) {
-      if ((item as unknown[]).length === 0) {
-        match = true;
-        break;
-      }
-    }
   } else {
-    for (const item of value as unknown[]) {
-      if (item !== null) {
-        for (const arg of query.args as unknown[]) {
-          if ((item as unknown[]).includes(arg)) {
-            match = true;
-            break;
+    if (value === undefined) {
+      return false;
+    }
+    if ((query.args as unknown[]).length === 0) {
+      for (const item of value as unknown[]) {
+        if ((item as unknown[]).length === 0) {
+          match = true;
+          break;
+        }
+      }
+    } else {
+      for (const item of value as unknown[]) {
+        if (item !== null) {
+          for (const arg of query.args as unknown[]) {
+            if ((item as unknown[]).includes(arg)) {
+              match = true;
+              break;
+            }
           }
         }
       }
@@ -514,6 +519,9 @@ function matchesHasAny(query: QueryClause, resource: Item<Resource>): boolean {
       }
     }
   } else {
+    if (value === undefined) {
+      return false;
+    }
     for (const arg of query.args as unknown[]) {
       if ((value as unknown[]).includes(arg)) {
         match = true;
