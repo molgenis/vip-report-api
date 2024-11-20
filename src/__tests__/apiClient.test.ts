@@ -867,7 +867,7 @@ test("get - some records using has_any undefined", async () => {
   });
 });
 
-test("get - some records using has_any undefined", async () => {
+test("get - some records using has_any with undefined values", async () => {
   const params: Params = {
     query: {
       selector: ["n", "n_array1"],
