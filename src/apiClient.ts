@@ -488,7 +488,7 @@ function matchesAnyHasAny(query: QueryClause, resource: Item<Resource>): boolean
       for (const item of value as unknown[]) {
         if (item !== null) {
           for (const arg of query.args as unknown[]) {
-            if ((item as unknown[]).includes(arg)) {
+            if (item !== undefined && (item as unknown[]).includes(arg)) {
               match = true;
               break;
             }
