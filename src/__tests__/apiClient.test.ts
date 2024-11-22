@@ -205,15 +205,15 @@ test("postProcess - sample tree categories", async () => {
   expect(metadata.format["VIPC_S"].categories).toEqual({
     U1: {
       description: "Usable: probably",
-      label: "U1",
+      label: "probably",
     },
     U2: {
       description: "Usable: maybe",
-      label: "U2",
+      label: "maybe",
     },
     U3: {
       description: "Usable: probably not",
-      label: "U3",
+      label: "probably not",
     },
   });
 });
@@ -224,23 +224,23 @@ test("postProcess - decision tree categories", async () => {
   const csqItem = csqItems.find((item) => item.id === "VIPC");
   expect(csqItem.categories).toEqual({
     B: {
-      label: "B",
+      label: "Benign",
     },
     LB: {
-      label: "LB",
+      label: "Likely Benign",
     },
     LP: {
-      label: "LP",
+      label: "Likely Pathogenic",
     },
     LQ: {
       description: "Low quality variants.",
-      label: "LQ",
+      label: "LowQual",
     },
     P: {
-      label: "P",
+      label: "Pathogenic",
     },
     VUS: {
-      label: "VUS",
+      label: "Unknown Significance",
     },
   });
 });
