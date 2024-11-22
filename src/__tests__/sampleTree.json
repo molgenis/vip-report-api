@@ -105,16 +105,19 @@
       }
     },
     "exit_u1": {
+      "label": "probably",
       "description": "Usable: probably",
       "type": "LEAF",
       "class": "U1"
     },
     "exit_u2": {
+      "label": "maybe",
       "description": "Usable: maybe",
       "type": "LEAF",
       "class": "U2"
     },
     "exit_u3": {
+      "label": "probably not",
       "description": "Usable: probably not",
       "type": "LEAF",
       "class": "U3"

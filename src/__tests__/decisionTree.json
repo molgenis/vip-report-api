@@ -326,27 +326,33 @@
       }
     },
     "exit_lq": {
+      "label": "LowQual",
       "description": "Low quality variants.",
       "type": "LEAF",
       "class": "LQ"
     },
     "exit_b": {
+      "label": "Benign",
       "type": "LEAF",
       "class": "B"
     },
     "exit_lb": {
+      "label": "Likely Benign",
       "type": "LEAF",
       "class": "LB"
     },
     "exit_vus": {
+      "label": "Unknown Significance",
       "type": "LEAF",
       "class": "VUS"
     },
     "exit_lp": {
+      "label": "Likely Pathogenic",
       "type": "LEAF",
       "class": "LP"
     },
     "exit_p": {
+      "label": "Pathogenic",
       "type": "LEAF",
       "class": "P"
     }

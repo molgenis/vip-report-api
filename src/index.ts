@@ -236,6 +236,7 @@ export interface LeafNode extends Node {
 
 export interface Node {
   type: Type;
+  label: string;
   description: string;
 }
 

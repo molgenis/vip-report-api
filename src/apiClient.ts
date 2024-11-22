@@ -119,7 +119,7 @@ export class ApiClient implements Api {
         .reduce(
           (acc, node) => ({
             ...acc,
-            [node.class]: { label: node.class, description: node.description },
+            [node.class]: { label: node.label, description: node.description },
           }),
           {},
         );
@@ -143,7 +143,7 @@ export class ApiClient implements Api {
           .reduce(
             (acc, node) => ({
               ...acc,
-              [node.class]: { label: node.class, description: node.description },
+              [node.class]: { label: node.label, description: node.description },
             }),
             {},
           );
