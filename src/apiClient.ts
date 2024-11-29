@@ -112,7 +112,7 @@ export class ApiClient implements Api {
   private postProcessReportData(reportData: ReportData): ReportData {
     // make VIPC_S categorical with categories based on sample tree exit nodes
     const vipc_s = reportData.metadata.records.format["VIPC_S"];
-    if (vipc_s && reportData.sampleTree !== undefined) {
+    if (vipc_s && reportData.sampleTree) {
       vipc_s.categories = Object.values(reportData.sampleTree.nodes)
         .filter((node) => node.type === "LEAF")
         .map((node) => node as LeafNode)
