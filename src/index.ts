@@ -28,6 +28,8 @@ export interface Api {
 
   getCram(sampleId: string): Promise<Cram | null>;
 
+  getRna(sampleId: string): Promise<Rna | null>;
+
   getHtsFileMetadata(): Promise<HtsFileMetadata>;
 
   getAppMetadata(): Promise<AppMetadata>;
@@ -272,6 +274,11 @@ export type Cram = {
   crai: Uint8Array;
 };
 
+export type Rna = {
+  bw: Uint8Array;
+  bed: Uint8Array;
+};
+
 export interface ReportData {
   config?: Json;
   metadata: Metadata;
@@ -291,4 +298,5 @@ export interface BinaryReportData {
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   cram?: { [key: string]: Cram };
+  rna?: { [key: string]: Rna };
 }

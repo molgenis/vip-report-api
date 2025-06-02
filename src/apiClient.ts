@@ -19,6 +19,7 @@ import {
   QueryClause,
   ReportData,
   Resource,
+  Rna,
   Sample,
   Selector,
   SelectorPart,
@@ -97,6 +98,12 @@ export class ApiClient implements Api {
     const cram = this.reportData.binary.cram;
     const sampleCram = cram ? (cram[sampleId] ? cram[sampleId] : null) : null;
     return Promise.resolve(sampleCram);
+  }
+
+  getRna(sampleId: string): Promise<Rna | null> {
+    const rna = this.reportData.binary.rna;
+    const sampleRna = rna ? (rna[sampleId] ? rna[sampleId] : null) : null;
+    return Promise.resolve(sampleRna);
   }
 
   getDecisionTree(): Promise<DecisionTree | null> {

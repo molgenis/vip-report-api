@@ -11,6 +11,7 @@ export type EncodedReportData = {
   fastaGz?: { [key: string]: string };
   genesGz?: string;
   cram?: { [key: string]: { cram: string; crai: string } };
+  rna?: { [key: string]: { bw: string; bed: string } };
 };
 
 declare global {
