@@ -1,5 +1,5 @@
-import { CategoryRecord, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
-import { compareAsc, compareDesc } from "./compare";
+import {CategoryRecord, VcfMetadata, VcfRecord} from "@molgenis/vip-report-vcf";
+import {compareAsc, compareDesc} from "./compare";
 import {
   Api,
   AppMetadata,
@@ -24,12 +24,29 @@ import {
   SelectorPart,
   SortOrder,
 } from "./index";
+import {SqlLoader} from "./loader";
+import {Database} from "sql.js";
+
+declare global {
+  interface Window {
+    sqlite: Database;
+    reportData: object;
+  }
+}
 
 export class ApiClient implements Api {
   private reportData: ReportData;
+  private loader: Promise<SqlLoader> | undefined;
 
   constructor(reportData: ReportData) {
     this.reportData = this.postProcessReportData(reportData);
+    this.initLoader();
+  }
+
+  initLoader(){
+      if(this.loader === undefined) {
+        this.loader = new SqlLoader(this.reportData).init();
+      }
   }
 
   getConfig(): Promise<Json | null> {
@@ -41,15 +58,49 @@ export class ApiClient implements Api {
     return Promise.resolve(this.reportData.metadata.records);
   }
 
-  getRecords(params: Params = {}): Promise<PagedItems<VcfRecord>> {
-    return this.get("records", params);
+  async getRecords(params: Params = {}): Promise<PagedItems<VcfRecord>> {
+    const loader = await this.loader;
+    if (!loader) throw new Error("Loader was not initialized.");
+    const page = params.page !== undefined ? params.page : 0;
+    const size = params.size !== undefined ? params.size : 10;
+
+    const totalItems = loader.countRows("vcf");
+    const variants: VcfRecord[] = loader.loadVcfRecords(this.reportData.metadata.records, page, size);
+    return this.toPagedItems(variants, page, size, totalItems);
   }
 
-  getRecordById(id: number): Promise<Item<VcfRecord>> {
-    return this.getById("records", id);
+  toPagedItems<T extends Resource>(
+      resources: T[],
+      page: number,
+      size: number,
+      totalElements: number,
+  ): PagedItems<T> {
+    const start = (page) * size;
+    const items = resources.map((data, idx) => ({
+      id: start + idx + 1, // or data.id if present
+      data,
+    }));
+    return {
+      items,
+      total: totalElements,
+      page: {
+        number: page,
+        size,
+        totalElements,
+      },
+    };
+  }
+
+  async getRecordById(id: number): Promise<Item<VcfRecord>> {
+    console.log("getRecordById");
+    const loader = await this.loader;
+    if (!loader) throw new Error("Loader was not initialized.");
+    const record: VcfRecord = loader.loadVcfRecordById(this.reportData.metadata.records, id);
+    return {data: record, id: id}
   }
 
   getSamples(params = {}): Promise<PagedItems<Sample>> {
+    console.log("getSamples");
     return this.get("samples", params);
   }
 
@@ -110,8 +161,9 @@ export class ApiClient implements Api {
   }
 
   private postProcessReportData(reportData: ReportData): ReportData {
-    // make VIPC_S categorical with categories based on sample tree exit nodes
+     // make VIPC_S categorical with categories based on sample tree exit nodes
     const vipc_s = reportData.metadata.records.format["VIPC_S"];
+    console.log(reportData);
     if (vipc_s && reportData.sampleTree) {
       vipc_s.categories = Object.values(reportData.sampleTree.nodes)
         .filter((node) => node.type === "LEAF")
@@ -183,7 +235,6 @@ export class ApiClient implements Api {
         }
       }
     }
-
     return reportData;
   }
 

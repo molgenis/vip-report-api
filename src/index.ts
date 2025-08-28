@@ -276,6 +276,7 @@ export interface ReportData {
   config?: Json;
   metadata: Metadata;
   data: Data;
+  database: Uint8Array;
   binary: BinaryReportData;
   decisionTree?: DecisionTree;
   sampleTree?: DecisionTree;
