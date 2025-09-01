@@ -60,7 +60,7 @@ export type SortPath = (string | number)[];
 
 export interface SortOrder {
   property: string | SortPath;
-  compare?: "asc" | "desc" | CompareFn;
+  compare?: "asc" | "desc";
 }
 
 export type CompareValueBoolean = boolean | null;

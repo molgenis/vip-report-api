@@ -29,7 +29,7 @@ export function parseTypedValue(token: string, type: ValueType): Value {
 
 export function parseCharacterValue(token: string | null): string | null {
   let value;
-  if(token === ".."){
+  if (token === "..") {
     token = null; //FIXME RNC hack
   }
   if (token === null || token.length === 0) {
@@ -121,9 +121,9 @@ export function parseFloatValue(token: string): number | null {
 
 export function parseFlagValue(token: string): boolean {
   let value;
-  if (token === true.toString()) {
+  if (token === "1") {
     value = true;
-  } else if (token === false.toString()) {
+  } else if (token === "0") {
     value = false;
   } else {
     throw new Error(`invalid flag '${token}'`);
