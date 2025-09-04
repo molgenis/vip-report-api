@@ -28,8 +28,6 @@ export interface Api {
 
   getCram(sampleId: string): Promise<Cram | null>;
 
-  getHtsFileMetadata(): Promise<HtsFileMetadata>;
-
   getAppMetadata(): Promise<AppMetadata>;
 
   getDecisionTree(): Promise<DecisionTree | null>;
@@ -41,8 +39,6 @@ export type Json = string | number | boolean | null | { [property: string]: Json
 
 export interface Metadata {
   app: AppMetadata;
-  htsFile: HtsFileMetadata;
-  records: VcfMetadata;
 }
 
 export interface Resource {

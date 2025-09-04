@@ -1,4 +1,4 @@
-import { CategoryRecord, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { compareAsc, compareDesc } from "./compare";
 import {
   Api,
@@ -8,10 +8,8 @@ import {
   ComposedQuery,
   Cram,
   DecisionTree,
-  HtsFileMetadata,
   Item,
   Json,
-  LeafNode,
   PagedItems,
   Params,
   Phenotype,
@@ -39,7 +37,7 @@ export class ApiClient implements Api {
   private loader: Promise<SqlLoader> | undefined;
 
   constructor(reportData: ReportData) {
-    this.reportData = this.postProcessReportData(reportData);
+    this.reportData = reportData;
     this.initLoader();
   }
 
@@ -54,8 +52,12 @@ export class ApiClient implements Api {
     return Promise.resolve(config ? config : null);
   }
 
-  getRecordsMeta(): Promise<VcfMetadata> {
-    return Promise.resolve(this.reportData.metadata.records);
+  async getRecordsMeta(): Promise<VcfMetadata> {
+    const loader = await this.loader;
+    if (!loader) throw new Error("Loader was not initialized.");
+    const meta = loader.loadMetadata();
+    if (!meta) throw new Error("Metadata not loaded.");
+    return meta;
   }
 
   async getRecords(params: Params = {}): Promise<PagedItems<VcfRecord>> {
@@ -64,14 +66,9 @@ export class ApiClient implements Api {
     const page = params.page !== undefined ? params.page : 0;
     const size = params.size !== undefined ? params.size : 10;
 
-    const totalItems = loader.countMatchingVariants(this.reportData.metadata.records, params.query);
-    const variants: VcfRecord[] = loader.loadVcfRecords(
-      this.reportData.metadata.records,
-      page,
-      size,
-      params.sort,
-      params.query,
-    );
+    const meta = (await loader).loadMetadata() as VcfMetadata;
+    const totalItems = loader.countMatchingVariants(meta, params.query);
+    const variants: VcfRecord[] = loader.loadVcfRecords(meta, page, size, params.sort, params.query);
     return this.toPagedItems(variants, page, size, totalItems);
   }
 
@@ -96,7 +93,7 @@ export class ApiClient implements Api {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const record: VcfRecord = loader.loadVcfRecordById(this.reportData.metadata.records, id);
+    const record: VcfRecord = loader.loadVcfRecordById((await loader).loadMetadata() as VcfMetadata, id);
     return { data: record, id: id };
   }
 
@@ -130,11 +127,6 @@ export class ApiClient implements Api {
     return Promise.resolve(buffer);
   }
 
-  getHtsFileMetadata(): Promise<HtsFileMetadata> {
-    const htsFile = this.reportData.metadata.htsFile;
-    return Promise.resolve(htsFile);
-  }
-
   getAppMetadata(): Promise<AppMetadata> {
     const appMeta = this.reportData.metadata.app;
     return Promise.resolve(appMeta);
@@ -159,84 +151,6 @@ export class ApiClient implements Api {
   getSampleTree(): Promise<DecisionTree | null> {
     const sampleTree = this.reportData.sampleTree;
     return Promise.resolve(sampleTree ? sampleTree : null);
-  }
-
-  private postProcessReportData(reportData: ReportData): ReportData {
-    // make VIPC_S categorical with categories based on sample tree exit nodes
-    const vipc_s = reportData.metadata.records.format["VIPC_S"];
-    console.log(reportData);
-    if (vipc_s && reportData.sampleTree) {
-      vipc_s.categories = Object.values(reportData.sampleTree.nodes)
-        .filter((node) => node.type === "LEAF")
-        .map((node) => node as LeafNode)
-        .reduce(
-          (acc, node) => ({
-            ...acc,
-            [node.class]: { label: node.label, description: node.description },
-          }),
-          {},
-        );
-
-      vipc_s.type = "CATEGORICAL";
-    }
-
-    const csqItems = reportData.metadata.records.info.CSQ?.nested?.items;
-    if (!csqItems) {
-      return reportData;
-    }
-
-    // make VIPC categorical with categories based on tree exit nodes
-    const csqItem = csqItems.find((item) => item.id === "VIPC");
-    if (csqItem) {
-      if (reportData.decisionTree) {
-        csqItem.type = "CATEGORICAL";
-        csqItem.categories = Object.values(reportData.decisionTree.nodes)
-          .filter((node) => node.type === "LEAF")
-          .map((node) => node as LeafNode)
-          .reduce(
-            (acc, node) => ({
-              ...acc,
-              [node.class]: { label: node.label, description: node.description },
-            }),
-            {},
-          );
-        csqItem.required = true;
-      }
-
-      // make HPO categorical with categories based on phenotypes
-      const hpoItem = csqItems.find((item) => item.id === "HPO");
-      if (hpoItem) {
-        const categories = reportData.data.phenotypes
-          ? (reportData.data.phenotypes as Phenotype[])
-              .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-              .map((phenotype) => phenotype.type.id)
-              .filter((v, i, a) => a.indexOf(v) === i)
-              .sort()
-          : [];
-        if (categories.length > 0) {
-          hpoItem.type = "CATEGORICAL";
-          const categories: CategoryRecord = (reportData.data.phenotypes as Phenotype[])
-            .flatMap((phenotype) => phenotype.phenotypicFeaturesList)
-            .reduce(
-              (acc, phenotype) => ({
-                ...acc,
-                [phenotype.type.id]: { label: phenotype.type.label },
-              }),
-              {},
-            );
-          hpoItem.categories = Object.keys(categories)
-            .sort()
-            .reduce(
-              (acc, categoryId) => ({
-                ...acc,
-                [categoryId]: categories[categoryId],
-              }),
-              {},
-            );
-        }
-      }
-    }
-    return reportData;
   }
 
   private get<T extends Resource>(resource: string, params: Params = {}): Promise<PagedItems<T>> {
