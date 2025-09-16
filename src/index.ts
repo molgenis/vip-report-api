@@ -1,4 +1,4 @@
-import { SupplementaryMetadata, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { RecordSampleType, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { ApiClient as ApiClientAlias } from "./apiClient";
 import { WindowApiClient as WindowApiClientAlias } from "./WindowApiClient";
 
@@ -69,11 +69,10 @@ export type CompareValue =
   | CompareValueNumber[]
   | CompareValueString
   | CompareValueString[];
-export type CompareFn = (a: CompareValue, b: CompareValue) => number;
 
 export interface Sample extends Resource {
   person: Person;
-  index: number;
+  id: number;
   proband: boolean;
 }
 
@@ -103,18 +102,20 @@ export interface AppMetadata {
   args: string;
 }
 
-export interface HtsFileMetadata {
-  htsFormat: string;
-  uri: string;
-  genomeAssembly: string;
-}
-
 export type SelectorPart = string | number;
 export type Selector = SelectorPart | SelectorPart[];
 
 export interface ComposedQuery {
   operator: ComposedQueryOperator;
   args: (QueryClause | ComposedQuery)[];
+}
+
+export interface RecordSamples {
+  [id: number]: RecordSample;
+}
+
+export interface RecordSample {
+  [index: string]: RecordSampleType;
 }
 
 export type ComposedQueryOperator = "and" | "or";
@@ -127,10 +128,6 @@ export type QueryOperator =
   | "!="
   | "in"
   | "!in"
-  | "has_any"
-  | "!has_any"
-  | "any_has_any"
-  | "!any_has_any"
   | ">"
   | ">="
   | "<"
@@ -269,22 +266,11 @@ export type Cram = {
 };
 
 export interface ReportData {
-  config?: Json;
-  metadata: Metadata;
-  data: Data;
   database: Uint8Array;
   binary: BinaryReportData;
-  decisionTree?: DecisionTree;
-  sampleTree?: DecisionTree;
-  vcfMeta?: SupplementaryMetadata;
-}
-
-interface Data {
-  [key: string]: Resource[];
 }
 
 export interface BinaryReportData {
-  vcf?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   cram?: { [key: string]: Cram };

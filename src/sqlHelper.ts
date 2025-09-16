@@ -2,8 +2,9 @@
 import { Database } from "sql.js";
 
 type SqlRow = { [column: string]: string | number | boolean | null | undefined };
-// Value escaping for SQL values
-import { ComposedQueryOperator, Query, QueryClause, SelectorPart } from "./index";
+import { Query, QueryClause, SelectorPart } from "./index";
+import {Categories, FieldCategories} from "./loader";
+import {Value, VcfMetadata} from "@molgenis/vip-report-vcf";
 
 export function executeSql(db: Database, sql: string): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
@@ -21,13 +22,11 @@ export function sqlEscape(val: unknown): string {
   if (val === null || val === undefined) return "NULL";
   if (typeof val === "number") return String(val);
   if (typeof val === "boolean") return val ? "1" : "0";
-  // For strings: single quote escape for SQL
   return "'" + String(val).replace(/'/g, "''") + "'";
 }
 
-// Transform any (array or scalar) argument to an SQL list (for IN)
 export function toSqlList(
-  arg: string | number | boolean | string[] | (string | null)[] | number[] | (number | null)[] | null | undefined,
+  arg: Value,
 ): string {
   return Array.isArray(arg) ? arg.map(sqlEscape).join(", ") : sqlEscape(arg);
 }
@@ -49,52 +48,223 @@ export function mapField(part: SelectorPart) {
     case "f":
       return `v.filter`;
     default:
-      throw new Error(`Unsupported op for none nested column: ${part.toString()}`);
+      return part.toString();
   }
 }
 
-// Compose a CSQ aggregate SQL snippet to MAX/MIN within a JSON array field (used for ordering)
-export function csqAggregateOrderSql(csqJsonCol: string, csqField: string, direction: "max" | "min"): string {
-  // Cast as NUMERIC for numbers; for strings remove the CAST.
-  return `(SELECT ${direction.toUpperCase()}(CAST(json_extract(csq_item.value, '$.${csqField}') AS NUMERIC)) FROM json_each(${csqJsonCol}) csq_item)`;
-}
-
-export function splitCsqQuery(query: Query | undefined): {
-  rest?: Query | undefined;
-  csq?: Query | undefined;
-  fmt?: Query | undefined;
-} {
-  if (!query) return { rest: undefined, csq: undefined, fmt: undefined };
-  if ("args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
-    const rest: Query[] = [],
-      csq: Query[] = [],
-      fmt: Query[] = [];
-    for (const arg of query.args) {
-      const split = splitCsqQuery(arg);
-      if (split.rest) rest.push(split.rest);
-      if (split.csq) csq.push(split.csq);
-      if (split.fmt) fmt.push(split.fmt);
+function mapCategories(categories: Map<string, FieldCategories>, field: string | number, clause: QueryClause): QueryClause {
+  //FIXME: Error on unmappable categories
+  const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
+  let args;
+  if (Array.isArray(clause.args)) {
+    const newArgs: (number | null)[] = [];
+    for (const [number, category] of fieldCategories.entries()) {
+      for (const argument of clause.args) {
+        if (category === argument) {
+          newArgs.push(number);
+        } else if(argument === null){
+          newArgs.push(null);
+        }
+      }
     }
-    return {
-      rest: rest.length ? { operator: query.operator, args: rest } : undefined,
-      csq: csq.length ? { operator: query.operator, args: csq } : undefined,
-      fmt: fmt.length ? { operator: query.operator, args: fmt } : undefined,
-    };
+    args = newArgs;
   } else {
-    const clause = query as QueryClause;
-    if (Array.isArray(clause.selector) && clause.selector.length > 2) {
-      if (clause.selector[1] === "CSQ") return { rest: undefined, csq: clause, fmt: undefined };
-      if (clause.selector[0] === "s") return { rest: undefined, csq: undefined, fmt: clause };
+    for (const [number, category] of fieldCategories.entries()) {
+      if (category === clause.args) {
+        args = number;
+      }
     }
-    return { rest: clause, csq: undefined, fmt: undefined };
+  }
+  return {args: args, operator: clause.operator, selector: clause.selector};
+}
+
+export function complexQueryToSql(query: Query, categories: Categories): string {
+  // 1. Helper to find referenced tables
+  function usedTables(query: Query, tables = new Set<string>()): Set<string> {
+    if (query && typeof query === "object" && "args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
+      for (const subQuery of query.args) usedTables(subQuery as Query, tables);
+      return tables;
+    }
+    const clause = query as QueryClause;
+    let parts: SelectorPart[];
+    if (Array.isArray(clause.selector)) {
+      parts = clause.selector.slice();
+    } else {
+      parts = [clause.selector];
+    }
+    if (parts.length === 3) {
+      if (parts[1] === "CSQ") {
+        tables.add("c");
+      } else if (parts[0] === "s") {
+        tables.add("s");
+      } else {
+        tables.add(parts[0] as string);
+      }
+    }
+    else {
+      tables.add(parts[0] as string);
+    }
+    return tables;
+  }
+
+  // 2. Helper: recursively extract only the CSQ portions of the query
+  function extractCSQQuery(query: Query): Query | undefined {
+    if (query && typeof query === "object" && "args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
+      const subCSQs = query.args.map(q => extractCSQQuery(q as Query)).filter(Boolean) as Query[];
+      if (subCSQs.length === 0) return undefined;
+      if (subCSQs.length === 1) return subCSQs[0];
+      return { operator: query.operator, args: subCSQs as Query[] } as Query;
+    }
+    const clause = query as QueryClause;
+    const parts = Array.isArray(clause.selector) ? clause.selector : [clause.selector];
+    if (parts.length === 3 && parts[1] === "CSQ") return query;
+    return undefined;
+  }
+
+  // 3. Your existing WHERE clause generator with alias handling
+  function queryToSql(query: Query, categories: Categories): string {
+    if (query && typeof query === "object" && "args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
+      const joinWord = query.operator.toUpperCase();
+      return "(" + query.args.map(subQuery => queryToSql(subQuery, categories)).join(` ${joinWord} `) + ")";
+    }
+    const clause = query as QueryClause;
+    let parts: SelectorPart[];
+    if (Array.isArray(clause.selector)) {
+      parts = clause.selector.slice();
+    } else {
+      parts = [clause.selector];
+    }
+    if (parts.length === 1) {
+      const sqlCol = mapField(parts[0] as SelectorPart);
+      return mapOperatorToSql(clause, sqlCol);
+    }
+    if (parts.length === 2) {
+      const prefix = parts[0];
+      const field = parts[1];
+      let newClause = clause;
+      if (categories.has(field as string)) {
+        newClause = mapCategories(categories, field as string, clause);
+      }
+      const sqlCol = `${prefix}_inner.${field}`;
+      return mapOperatorToSql(newClause, sqlCol);
+    }
+    if (parts.length === 3) {
+      const prefix = parts[1] === "CSQ" ? "c_inner" : parts[0] === "s" ? "f_inner" : parts[0] + "_inner";
+      const field = parts[2];
+      let newClause = clause;
+      if (categories.has(field as string)) {
+        newClause = mapCategories(categories, field as string, clause);
+      }
+      const sqlCol = `${prefix}.${field}`;
+      return mapOperatorToSql(newClause, sqlCol);
+    }
+    throw new Error("Can't convert selector to flat SQL: " + JSON.stringify(parts));
+  }
+
+  // 4. Gather tables referenced
+  const tables = usedTables(query);
+  let joins = "vcf v_inner";
+  if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
+  if (tables.has("c")) joins += " JOIN variant_CSQ c_inner ON c_inner.variant_id = v_inner.id";
+  if (tables.has("n")) joins += " JOIN info n_inner ON n_inner.variant_id = v_inner.id";
+
+  // 5. Build only-CSQ WHERE portion for main join
+  const csqQuery = extractCSQQuery(query);
+  let csqFilter = "";
+  if (csqQuery) {
+    // Use queryToSql but adapt alias for the main query (c. instead of c_inner.)
+    csqFilter = "AND " + queryToSql(csqQuery, categories)
+        .replace(/c_inner\./g, "c.")
+        .replace(/CSQ_inner\./g, "CSQ."); // In case other variations
+  }
+
+  // 6. Return WHERE clause for use in outer SELECT
+  return `
+v.id IN (
+  SELECT v_inner.id
+  FROM ${joins}
+  WHERE ${queryToSql(query, categories)}
+)
+${csqFilter}`.trim();
+}
+
+function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
+  // Helper for proper escaping/list creation, assumed defined elsewhere
+  const {args, operator} = clause;
+
+  // Handle NULL/no args
+  if (args === null || args === undefined) {
+    switch (operator) {
+      case "==":
+        return `${sqlCol} IS NULL`;
+      case "!=":
+        return `${sqlCol} IS NOT NULL`;
+      default:
+        throw new Error("Unsupported op: " + operator + " for NULL arg");
+    }
+    }
+
+  if ((operator === "in" || operator === "!in") && Array.isArray(args)) {
+    const nonNulls = args.filter(v => v !== null && v !== undefined);
+    const hasNull = args.some(v => v === null || v === undefined);
+
+    // Compose value list for SQL
+    let sqlFrag = "";
+    if (nonNulls.length > 0) {
+      const valueList = toSqlList(nonNulls);
+      const existsClause = `
+        EXISTS (
+          SELECT 1
+          FROM json_each(${sqlCol})
+          WHERE CAST(json_each.value as TEXT) IN (${valueList})
+        )
+      `;
+      sqlFrag = operator === "in"
+          ? existsClause
+          : `NOT ${existsClause}`;
+    }
+
+    // NULL handling for the array column itself
+    if (hasNull) {
+      const nullCheck = operator === "in"
+          ? `${sqlCol} IS NULL`
+          : `${sqlCol} IS NOT NULL`;
+      if (sqlFrag.trim()) {
+        sqlFrag = operator === "in"
+            ? `(${sqlFrag} OR ${nullCheck})`
+            : `(${sqlFrag} AND ${nullCheck})`;
+      } else {
+        sqlFrag = nullCheck;
+      }
+    }
+    return sqlFrag;
+  }
+
+  // Scalar cases
+  switch (operator) {
+    case "==":
+      return `${sqlCol} = ${sqlEscape(args)}`;
+    case "!=":
+      return `${sqlCol} != ${sqlEscape(args)}`;
+    case ">":
+      return `${sqlCol} > ${sqlEscape(args)}`;
+    case ">=":
+      return `${sqlCol} >= ${sqlEscape(args)}`;
+    case "<":
+      return `${sqlCol} < ${sqlEscape(args)}`;
+    case "<=":
+      return `${sqlCol} <= ${sqlEscape(args)}`;
+    default:
+      throw new Error("Unsupported op: " + operator);
   }
 }
 
-export function queryToSql(query: Query): string {
+export function simpleQueryToSql(query: Query, categories: Categories): string {
   if ("args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
     const joinWord = query.operator.toUpperCase();
-    return "(" + query.args.map(queryToSql).join(` ${joinWord} `) + ")";
+    return "(" + query.args.map(subQuery => simpleQueryToSql(subQuery ,categories)).join(` ${joinWord} `) + ")";
   }
+
   // Single clause (LEAF)
   const clause = query as QueryClause;
   let parts: SelectorPart[];
@@ -110,125 +280,39 @@ export function queryToSql(query: Query): string {
     return mapOperatorToSql(clause, sqlCol);
   }
   // info/format or two-segment
-  if (parts.length === 2) {
+  else if (parts.length === 2) {
     const prefix = parts[0];
     const field = parts[1];
+    if(categories.has(field as string)) {
+      //FIXME: Error on unmappable categories
+      const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
+      if (Array.isArray(clause.args)) {
+        const newArgs: number[] = [];
+        for(const [number, category] of fieldCategories.entries()){
+          for(const argument of clause.args) {
+            if (category === argument) {
+              newArgs.push(number);
+            }
+          }
+        }
+        clause.args = newArgs;
+      }else{
+        for(const [number, category] of fieldCategories.entries()){
+          if(category === clause.args) {
+            clause.args = number;
+          }
+        }
+      }
+    }
     const sqlCol = `${prefix}.${field}`;
     return mapOperatorToSql(clause, sqlCol);
   }
-  // If more than 2, this is a nested array/JSON thing and belongs in nestedQueryToSql
-  throw new Error("Can't convert triple/complex selector to flat SQL: " + JSON.stringify(parts));
+
+  throw new Error("Unsupported query:" + JSON.stringify(parts));
 }
 
-function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
-  if (clause.args === null || clause.args === undefined) {
-    switch (clause.operator) {
-      case "==":
-        return `${sqlCol} IS NULL`;
-      case "!=":
-        return `${sqlCol} IS NOT NULL`;
-      default:
-        throw new Error("Unsupported op: " + clause.operator + "for NULL arg");
-    }
-  }
-  switch (clause.operator) {
-    case "in":
-      return `${sqlCol} IN (${toSqlList(clause.args)})`;
-    case "!in":
-      return `${sqlCol} NOT IN (${toSqlList(clause.args)})`;
-    case "==":
-      return `${sqlCol} = ${sqlEscape(clause.args)}`;
-    case "!=":
-      return `${sqlCol} != ${sqlEscape(clause.args)}`;
-    case ">":
-      return `${sqlCol} > ${sqlEscape(clause.args)}`;
-    case ">=":
-      return `${sqlCol} >= ${sqlEscape(clause.args)}`;
-    case "<":
-      return `${sqlCol} < ${sqlEscape(clause.args)}`;
-    case "<=":
-      return `${sqlCol} <= ${sqlEscape(clause.args)}`;
-    default:
-      throw new Error("Unsupported op: " + clause.operator);
-  }
-}
-
-export function nestedQueryToSql(query: Query, prefix: string): string {
-  if (
-    "args" in query &&
-    Array.isArray(query.args) &&
-    ((query.operator as ComposedQueryOperator) === "and" || query.operator === "or")
-  ) {
-    const joinWord = query.operator.toUpperCase();
-    return "(" + query.args.map((arg) => nestedQueryToSql(arg as Query, prefix)).join(` ${joinWord} `) + ")";
-  }
-  // leaf
-  const clause = query as QueryClause;
-  let parts: SelectorPart[];
-  if (Array.isArray(clause.selector)) {
-    parts = clause.selector.slice();
-  } else {
-    parts = [clause.selector];
-  }
-  const field = parts[parts.length - 1];
-  const sqlCol = `${prefix}.${field}`;
-  switch (clause.operator) {
-    case "in":
-      return `${sqlCol} IN (${toSqlList(clause.args)})`;
-    case "!in":
-      return `${sqlCol} NOT IN (${toSqlList(clause.args)})`;
-    case "has_any":
-    case "any_has_any":
-      return `EXISTS (
-        SELECT 1 FROM json_each(${sqlCol})
-        WHERE json_each.value IN (${toSqlList(clause.args)})
-      )`;
-    case "!has_any":
-    case "!any_has_any":
-      return `EXISTS (
-        SELECT 1 FROM json_each(${sqlCol})
-        WHERE json_each.value NOT IN (${toSqlList(clause.args)})
-      )`;
-    case "==":
-      return `${sqlCol} = ${sqlEscape(clause.args)}`;
-    case "!=":
-      return `${sqlCol} != ${sqlEscape(clause.args)}`;
-    case ">":
-      return `${sqlCol} > ${sqlEscape(clause.args)}`;
-    case ">=":
-      return `${sqlCol} >= ${sqlEscape(clause.args)}`;
-    case "<":
-      return `${sqlCol} < ${sqlEscape(clause.args)}`;
-    case "<=":
-      return `${sqlCol} <= ${sqlEscape(clause.args)}`;
-    default:
-      throw new Error(`Unsupported operator for nested subquery: ${clause.operator}`);
-  }
-}
-
-export function buildJsonPatchSql(db: Database, table: string, handle: string): string | undefined {
-  const batchSize = 20; // 20 columns per json_object (40 args)
-  const columnChunks = chunkArray(getColumnNames(db, table), batchSize);
-
-  const jsonObjects = columnChunks.map(
-    (chunk) => `json_object(${chunk.map((col) => `'${col}', ${handle}.${col}`).join(", ")})`,
-  );
-  return jsonObjects.length > 1
-    ? jsonObjects.reduce((acc, obj) => (acc ? `json_patch(${acc}, ${obj})` : obj), "")
-    : jsonObjects[0];
-}
-
-function chunkArray<T>(arr: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < arr.length; index += chunkSize) {
-    chunks.push(arr.slice(index, index + chunkSize));
-  }
-  return chunks;
-}
-
-function getColumnNames(db: Database, table: string): string[] {
+export function getColumnNames(db: Database, table: string): string[] {
   const rows = executeSql(db, `PRAGMA table_info(${table});`);
   return rows
-    .map((row) => row.name as string)
-    .filter((name) => name !== "id" && name !== "variant_id" && name !== "sample_id");
+    .map((row) => row.name as string);
 }

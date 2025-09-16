@@ -1,22 +1,35 @@
 import { parseTypedValue } from "./ValueParser";
 import { InfoMetadata, NestedFieldMetadata, Value, ValueArray } from "@molgenis/vip-report-vcf";
+import {Categories, FieldCategories} from "./loader";
 
-export function parseValue(token: string, infoMetadata: InfoMetadata): Value | ValueArray {
+export function parseValue(token: Value, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
   let value: Value | ValueArray;
   const type = infoMetadata.number.type;
   switch (type) {
     case "NUMBER":
       if (infoMetadata.number.count === 0 || infoMetadata.number.count === 1) {
-        value = parseSingleValue(token, infoMetadata);
+        if (token === null || token === undefined) {
+          value = null;
+        } else {
+          value = parseSingleValue(token.toString(), infoMetadata, categories);
+        }
       } else {
-        value = parseMultiValue(token, infoMetadata);
+        if (token === null || token === undefined) {
+          value = [];
+        } else {
+          value = parseMultiValue(token.toString(), infoMetadata, categories);
+        }
       }
       break;
     case "PER_ALT":
     case "PER_ALT_AND_REF":
     case "PER_GENOTYPE":
     case "OTHER":
-      value = parseMultiValue(token, infoMetadata);
+      if (token === null || token === undefined) {
+        value = [];
+      } else {
+        value = parseMultiValue(token.toString(), infoMetadata, categories);
+      }
       break;
     default:
       throw new Error("invalid number type");
@@ -25,17 +38,17 @@ export function parseValue(token: string, infoMetadata: InfoMetadata): Value | V
   return value;
 }
 
-export function parseSingleValue(token: string, infoMetadata: InfoMetadata): Value | ValueArray {
+export function parseSingleValue(token: string, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
   let value: Value | Value[];
   if (infoMetadata.nested) {
-    value = parseNestedValue(token, infoMetadata.nested);
+    value = parseNestedValue(token, infoMetadata.nested, categories);
   } else {
-    value = parseTypedValue(token, infoMetadata.type);
+    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories);//FIXME: undefined?
   }
   return value;
 }
 
-export function parseMultiValue(token: string, infoMetadata: InfoMetadata): ValueArray {
+export function parseMultiValue(token: string, infoMetadata: InfoMetadata, categories: Categories): ValueArray {
   const values: Value[] = [];
   let jsonValues;
   if (token !== null && token.length > 0) {
@@ -45,8 +58,8 @@ export function parseMultiValue(token: string, infoMetadata: InfoMetadata): Valu
         jsonValues = [jsonValues];
       }
       for (const jsonValue of jsonValues) {
-        const value = parseSingleValue(jsonValue.toString(), infoMetadata)
-        if(value != null && value !== undefined) {
+        const value = jsonValue !== null ? parseSingleValue(jsonValue.toString(), infoMetadata, categories) : null;
+        if (value !== null) {
           values.push(value);
         }
       }
@@ -59,12 +72,12 @@ function isIterable(obj: any): boolean {
   return obj != null && typeof obj[Symbol.iterator] === 'function';
 }
 
-export function parseNestedValue(token: string, nestedInfoMetadata: NestedFieldMetadata): ValueArray {
+export function parseNestedValue(token: string, nestedInfoMetadata: NestedFieldMetadata, categories: Categories): ValueArray {
   const infoValues: Value[] = [];
   const parts = token.split(nestedInfoMetadata.separator);
   if (parts.length !== nestedInfoMetadata.items.length) throw new Error(`invalid value '${token}'`);
   for (let i = 0; i < parts.length; ++i) {
-    infoValues.push(parseValue(parts[i]!, nestedInfoMetadata.items[i]!));
+    infoValues.push(parseValue(parts[i]!, nestedInfoMetadata.items[i]!, categories));
   }
   return infoValues;
 }

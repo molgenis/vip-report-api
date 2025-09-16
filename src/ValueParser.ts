@@ -1,30 +1,27 @@
-import { Value, ValueType } from "@molgenis/vip-report-vcf";
+import {Value, ValueType} from "@molgenis/vip-report-vcf";
+import { FieldCategories } from "./loader";
 
-export function parseTypedValue(token: string, type: ValueType): Value {
-  let value: Value;
-
+export function parseTypedValue(token: string, type: ValueType, categories: FieldCategories): Value {
   switch (type) {
     case "CHARACTER":
-      value = parseCharacterValue(token);
-      break;
+      return parseCharacterValue(token);
     case "CATEGORICAL":
+      {
+        const key = parseIntegerValue(token);
+        const category = categories.get(key as number);//FIXME null
+        return category === null ? null : category as string;
+      }
     case "STRING":
-      value = parseStringValue(token);
-      break;
+      return parseStringValue(token);
     case "INTEGER":
-      value = parseIntegerValue(token);
-      break;
+      return parseIntegerValue(token);
     case "FLAG":
-      value = parseFlagValue(token);
-      break;
+      return parseFlagValue(token);
     case "FLOAT":
-      value = parseFloatValue(token);
-      break;
+      return parseFloatValue(token);
     default:
       throw new Error(`invalid value type '${type}'`);
   }
-
-  return value;
 }
 
 export function parseCharacterValue(token: string | null): string | null {
@@ -58,14 +55,6 @@ export function parseStringValue(token: string, unescape = true): string | null 
       .replace(/%0D/g, "\r")
       .replace(/%0A/g, "\n")
       .replace(/%09/g, "\t");
-  }
-  return value;
-}
-
-export function parseStringValueNonNull(token: string): string {
-  const value = parseStringValue(token);
-  if (value === null) {
-    throw new Error(`invalid string '${token}'`);
   }
   return value;
 }

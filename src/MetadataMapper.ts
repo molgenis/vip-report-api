@@ -45,7 +45,7 @@ function parseCategories(raw: Value): CategoryRecord | undefined {
   }
 }
 
-export function mapSqlRowsToVcfMetadata(rows: SqlRow[]): VcfMetadata {
+export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], samples: string[]): VcfMetadata {
   const metaMap = new Map<string, FieldMetadata>();
   for (const row of rows) {
     const number: NumberMetadata = {
@@ -109,9 +109,9 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[]): VcfMetadata {
   }
 
   return {
-    lines: [],
+    lines: headerLines,
     info,
     format,
-    samples: [],
+    samples: samples,
   };
 }
