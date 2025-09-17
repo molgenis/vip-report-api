@@ -87,7 +87,7 @@ export class ApiClient implements Api {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const record: VcfRecord = loader.loadVcfRecordById((await loader).loadMetadata() as VcfMetadata, id);
+    const record: VcfRecord = loader.loadVcfRecordById(loader.loadMetadata() as VcfMetadata, id);
     return {data: record, id: id};
   }
 
@@ -95,18 +95,17 @@ export class ApiClient implements Api {
     console.log("getSamples");
     const page = params.page !== undefined ? params.page : 0;
     const size = params.size !== undefined ? params.size : 10;
-    const total = 2;//FIXME: hardcoded
-    //FIXME: handle Query
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    return this.toPagedItems((await loader).loadSamples(page, size, params.query), page, size, total);
+    const totalItems = loader.countMatchingSamples(params.query);
+    return this.toPagedItems(loader.loadSamples(page, size, params.query), page, size, totalItems);
   }
 
   async getSampleById(id: number): Promise<Item<Sample>> {
     console.log("getSampleById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const sample: Sample = (await loader).loadSampleById(id);
+    const sample: Sample = loader.loadSampleById(id);
     return {data: sample, id: id};
   }
 
@@ -117,7 +116,7 @@ export class ApiClient implements Api {
     //FIXME: handle sort ?
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    return this.toPagedItems((await loader).loadPhenotypes(page, size, params.query), page, size, total);
+    return this.toPagedItems(loader.loadPhenotypes(page, size, params.query), page, size, total);
   }
 
   getFastaGz(contig: string, pos: number): Promise<Uint8Array | null> {

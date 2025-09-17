@@ -9,7 +9,7 @@
 ##INFO=<ID=n_string5,Number=1,Type=String,Description="n_string5">
 ##INFO=<ID=n_array0,Number=.,Type=String,Description="n_array0">
 ##INFO=<ID=n_array1,Number=.,Type=String,Description="n_array1">
-##INFO=<ID=n_object0,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: n_string1|n_string2|n_array1">
+##INFO=<ID=n_object0,Number=.,Type=String,Description="Annotations from Object test. Format: n_string1|n_string2|n_array1">
 ##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|VIPC">
 ##FORMAT=<ID=DP,Number=1,Type=String,Description="Depth">
 ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">

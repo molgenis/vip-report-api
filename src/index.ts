@@ -100,6 +100,13 @@ export interface AppMetadata {
   name: string;
   version: string;
   args: string;
+  htsFile: HtsFileMetadata | undefined
+}
+
+export interface HtsFileMetadata {
+  htsFormat: string;
+  uri: string;
+  genomeAssembly: string;
 }
 
 export type SelectorPart = string | number;

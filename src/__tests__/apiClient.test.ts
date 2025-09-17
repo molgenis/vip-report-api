@@ -1,10 +1,10 @@
 import { beforeEach, expect, test } from "vitest";
 import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
-import { parseVcf, SupplementaryMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import path from "path";
-import { DecisionTree, Item, Params } from "../index";
+import { Item, Params } from "../index";
 import { ApiClient } from "../apiClient";
+import { VcfRecord } from "@molgenis/vip-report-vcf";
 
 let api: ApiClient;
 
@@ -16,6 +16,7 @@ const sortAllExpected = {
 const record0: Item<VcfRecord> = {
   id: 0,
   data: {
+    id: 0,
     c: "1",
     p: 10042538,
     i: [],
@@ -73,6 +74,7 @@ const record0: Item<VcfRecord> = {
 const record1: Item<VcfRecord> = {
   id: 1,
   data: {
+    id: 1,
     c: "1",
     p: 16376412,
     i: [],
@@ -133,34 +135,8 @@ const record1: Item<VcfRecord> = {
 
 beforeEach(() => {
   const reportData = {
-    metadata: {
-      app: {
-        name: "vcf-report",
-        version: "0.0.1",
-        args: "-i test.vcf -d",
-      },
-      htsFile: {
-        htsFormat: "VCF",
-        uri: "file://file0.vcf.gz",
-        genomeAssembly: "GRCh38",
-      },
-    },
-    data: {
-      samples: [
-        {
-          name: "Patient",
-        },
-        {
-          name: "Mother",
-        },
-        {
-          name: "Father",
-        },
-      ],
-      phenotypes: [],
-    },
+    database: readFileSync(path.join(__dirname, "/data/vip-report.db")),
     binary: {
-      vcf: readFileSync(path.join(__dirname, "trio.vcf")),
       fastaGz: {
         "1:17350500-17350600": readFileSync(path.join(__dirname, "interval0.fasta")),
         "2:47637200-47637300": readFileSync(path.join(__dirname, "interval1.fasta")),
@@ -173,76 +149,9 @@ beforeEach(() => {
         },
       },
     },
-    decisionTree: JSON.parse(readFileSync(path.join(__dirname, "decisionTree.json"), "utf8")) as DecisionTree,
-    sampleTree: JSON.parse(readFileSync(path.join(__dirname, "sampleTree.json"), "utf8")) as DecisionTree,
   };
 
-  const supplementaryMeta = {
-    info: {
-      n_object0: {
-        nestedFields: {
-          n_array1: {
-            label: "Array",
-            description: "Test array",
-            numberType: "OTHER",
-            separator: "&",
-            type: "INTEGER",
-          },
-        },
-      },
-    },
-    format: {},
-  } as SupplementaryMetadata;
-
-  const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf), supplementaryMeta);
-  (reportData as unknown as EncodedReport).metadata.records = vcf.metadata;
-  (reportData as unknown as EncodedReport).data.records = vcf.data;
   api = new ApiClient(reportData as unknown as EncodedReport);
-});
-
-test("postProcess - sample tree categories", async () => {
-  const metadata = await api.getRecordsMeta();
-  expect(metadata.format["VIPC_S"].categories).toEqual({
-    U1: {
-      description: "Usable: probably",
-      label: "probably",
-    },
-    U2: {
-      description: "Usable: maybe",
-      label: "maybe",
-    },
-    U3: {
-      description: "Usable: probably not",
-      label: "probably not",
-    },
-  });
-});
-
-test("postProcess - decision tree categories", async () => {
-  const metadata = await api.getRecordsMeta();
-  const csqItems = metadata.info.CSQ?.nested?.items;
-  const csqItem = csqItems.find((item) => item.id === "VIPC");
-  expect(csqItem.categories).toEqual({
-    B: {
-      label: "Benign",
-    },
-    LB: {
-      label: "Likely Benign",
-    },
-    LP: {
-      label: "Likely Pathogenic",
-    },
-    LQ: {
-      description: "Low quality variants.",
-      label: "LowQual",
-    },
-    P: {
-      label: "Pathogenic",
-    },
-    VUS: {
-      label: "Unknown Significance",
-    },
-  });
 });
 
 test("getAppMeta", async () => {
@@ -256,24 +165,55 @@ test("getAppMeta", async () => {
   );
 });
 
-test("getHtsFileMetadata", async () => {
-  const metadata = await api.getHtsFileMetadata();
-  expect(metadata).toEqual(
-    expect.objectContaining({
-      genomeAssembly: "GRCh38",
-      htsFormat: "VCF",
-      uri: "file://file0.vcf.gz",
-    }),
-  );
-});
-
 test("get - all samples", async () => {
   const samples = await api.getSamples();
   expect(samples).toEqual({
     items: [
-      { id: 0, data: { name: "Patient" } },
-      { id: 1, data: { name: "Mother" } },
-      { id: 2, data: { name: "Father" } },
+      {
+        data: {
+          id: 0,
+          person: {
+            affectedStatus: "MISSING",
+            familyId: "MISSING_0",
+            individualId: "Patient",
+            maternalId: "0",
+            paternalId: "0",
+            sex: "UNKNOWN_SEX",
+          },
+          proband: true,
+        },
+        id: 0,
+      },
+      {
+        data: {
+          id: 1,
+          person: {
+            affectedStatus: "MISSING",
+            familyId: "MISSING_1",
+            individualId: "Mother",
+            maternalId: "0",
+            paternalId: "0",
+            sex: "UNKNOWN_SEX",
+          },
+          proband: false,
+        },
+        id: 1,
+      },
+      {
+        data: {
+          id: 2,
+          person: {
+            affectedStatus: "MISSING",
+            familyId: "MISSING_2",
+            individualId: "Father",
+            maternalId: "0",
+            paternalId: "0",
+            sex: "UNKNOWN_SEX",
+          },
+          proband: false,
+        },
+        id: 2,
+      },
     ],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
@@ -865,118 +805,6 @@ test("get - some records with invalid selector", async () => {
     },
   };
   await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - some records using wildcard selector part with has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["s", "*", "GT", "t"],
-      operator: "has_any",
-      args: ["hom_a", "hom_r"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any undefined", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_array1"],
-      operator: "has_any",
-      args: undefined,
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any with undefined values", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_array1"],
-      operator: "has_any",
-      args: ["a"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any null", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "1"],
-      operator: "has_any",
-      args: null,
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using empty any_has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "2"],
-      operator: "any_has_any",
-      args: [],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using undefined any_has_any value", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "5"],
-      operator: "any_has_any",
-      args: ["a"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
-    total: 2,
-  });
-});
-
-test("get - some records using wildcard selector part with !has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["s", "*", "GT", "t"],
-      operator: "!has_any",
-      args: ["hom_a", "hom_r"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
 });
 
 test("get - some records using composed query", async () => {

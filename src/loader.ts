@@ -6,7 +6,7 @@ import { SQLBASE64 } from "./base64";
 
 import {
     AppMetadata,
-    DecisionTree,
+    DecisionTree, HtsFileMetadata,
     Json,
     Phenotype,
     Query,
@@ -78,17 +78,22 @@ export class SqlLoader {
         let args: string | undefined;
         let appName: string | undefined;
         let version: string | undefined;
+        let htsFile: HtsFileMetadata | undefined;
         for (const row of rows) {
             switch (row["id"] as string) {
                 case "appArguments":
                     args = row["value"] as string;
                     break;
                 case "name":
-                    version = row["value"] as string;
-                    break;
-                case "version":
                     appName = row["value"] as string;
                     break;
+                case "version":
+                    version = row["value"] as string;
+                    break;
+                case "htsFile":
+                    htsFile = JSON.parse(row["value"] as string) as HtsFileMetadata;
+                    break;
+                default:
                     throw Error("Unknown app metadata key " + row["key"]);
             }
         }
@@ -96,7 +101,7 @@ export class SqlLoader {
             throw Error("Incomplete AppMetadata in database.");
         }
         return {
-            args: args, name: appName, version: version
+            args: args, name: appName, version: version, htsFile: htsFile
         }
     }
 
@@ -219,9 +224,9 @@ export class SqlLoader {
                   SELECT v.*, v.id AS v_variant_id
                   ${orderCols.length ? ","+orderCols.join(", ") : ""}
                   FROM vcf v
-                  JOIN info n ON n.variant_id = v.id
-                  JOIN variant_CSQ c ON c.variant_id = v.id
-                  JOIN format f ON f.variant_id = v.id
+                           LEFT JOIN info n ON n.variant_id = v.id
+                           LEFT JOIN variant_CSQ c ON c.variant_id = v.id
+                           LEFT JOIN format f ON f.variant_id = v.id
                   ${whereClause}
                   GROUP BY v.id
                   ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
@@ -317,4 +322,14 @@ ${whereClause}
     if (!rows || rows.length === 0 || rows[0] === undefined) return 0;
         return (rows[0]["count"] ?? 0) as number;
   }
+
+
+    countMatchingSamples(query: Query | undefined): number {
+        const categories = this.getCategories();
+        const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
+        const sql = `SELECT COUNT(DISTINCT id) AS count from sample ${whereClause}`;
+        const rows = executeSql(this.db as Database, sql);
+        if (!rows || rows.length === 0 || rows[0] === undefined) return 0;
+        return (rows[0]["count"] ?? 0) as number;
+    }
 }

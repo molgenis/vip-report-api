@@ -1,10 +1,9 @@
-// sql-helpers.ts
 import { Database } from "sql.js";
 
 type SqlRow = { [column: string]: string | number | boolean | null | undefined };
 import { Query, QueryClause, SelectorPart } from "./index";
-import {Categories, FieldCategories} from "./loader";
-import {Value, VcfMetadata} from "@molgenis/vip-report-vcf";
+import { Categories, FieldCategories } from "./loader";
+import { Value } from "@molgenis/vip-report-vcf";
 
 export function executeSql(db: Database, sql: string): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
@@ -26,7 +25,7 @@ export function sqlEscape(val: unknown): string {
 }
 
 export function toSqlList(
-  arg: Value,
+    arg: Value,
 ): string {
   return Array.isArray(arg) ? arg.map(sqlEscape).join(", ") : sqlEscape(arg);
 }
@@ -156,7 +155,11 @@ export function complexQueryToSql(query: Query, categories: Categories): string 
         newClause = mapCategories(categories, field as string, clause);
       }
       const sqlCol = `${prefix}.${field}`;
-      return mapOperatorToSql(newClause, sqlCol);
+      let where = mapOperatorToSql(newClause, sqlCol);
+      if(parts[0] === "s" && parts[1] !== "*") {
+        where = `(${where} AND ${prefix}.sample_id = ${parts[1]})`
+      }
+      return where;
     }
     throw new Error("Can't convert selector to flat SQL: " + JSON.stringify(parts));
   }
@@ -202,7 +205,7 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
       default:
         throw new Error("Unsupported op: " + operator + " for NULL arg");
     }
-    }
+  }
 
   if ((operator === "in" || operator === "!in") && Array.isArray(args)) {
     const nonNulls = args.filter(v => v !== null && v !== undefined);
@@ -314,5 +317,5 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
 export function getColumnNames(db: Database, table: string): string[] {
   const rows = executeSql(db, `PRAGMA table_info(${table});`);
   return rows
-    .map((row) => row.name as string);
+      .map((row) => row.name as string);
 }

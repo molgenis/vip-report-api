@@ -1,0 +1,17 @@
+{
+  "format": {
+  },
+  "info": {
+    "n_object0": {
+      "nestedFields": {
+        "n_array1": {
+          "label": "Array",
+          "description": "Test array",
+          "numberType": "OTHER",
+          "separator": "&",
+          "type": "INTEGER"
+        }
+      }
+    }
+  }
+}
