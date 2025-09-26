@@ -59,17 +59,6 @@ export interface SortOrder {
   compare?: "asc" | "desc";
 }
 
-export type CompareValueBoolean = boolean | null;
-export type CompareValueNumber = number | null;
-export type CompareValueString = string | null;
-export type CompareValue =
-  | CompareValueBoolean
-  | CompareValueBoolean[]
-  | CompareValueNumber
-  | CompareValueNumber[]
-  | CompareValueString
-  | CompareValueString[];
-
 export interface Sample extends Resource {
   person: Person;
   id: number;

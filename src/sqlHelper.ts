@@ -55,8 +55,7 @@ function mapCategories(categories: Map<string, FieldCategories>, field: string |
   if (!categories.has(field as string)) {
     throw new Error(`No categorical values found for field '${field}'.`);
   }
-  const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
-  return fieldCategories;
+  return categories.get(field as string) as FieldCategories;
 }
 
 function mapQueryCategories(
