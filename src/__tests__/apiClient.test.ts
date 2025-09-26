@@ -14,74 +14,93 @@ const sortAllExpected = {
 };
 
 const record0: Item<VcfRecord> = {
-  id: 0,
   data: {
-    id: 0,
-    c: "1",
-    p: 10042538,
-    i: [],
-    r: "C",
     a: ["T"],
-    q: 80,
+    c: "1",
     f: ["PASS"],
+    i: [],
+    id: 1,
     n: {
       n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
       n_number2: 1,
       n_object0: [
-        ["dummy5", "c", [1, 2]],
-        ["dummy7", null, [1, 2]],
-        ["dummy1", "d", [1, 2]],
-        ["dummy4", "b", [1, 2]],
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat1: "AA",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat1: null,
+        },
       ],
       n_string0: "a",
       n_string3: "b",
       n_string4: "b",
     },
-    s: [
-      {
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: {
+      0: {
+        AD: [45, 5],
+        DP: 50,
         GT: {
           a: [1, 0],
-          t: "het",
           p: true,
+          t: "het",
         },
-        DP: "50",
-        AD: [45, 5],
         VIAB: 0.9,
       },
-      {
+      1: {
+        AD: [10, 0],
+        DP: 10,
         GT: {
           a: [0, 0],
-          t: "hom_r",
           p: true,
+          t: "hom_r",
         },
-        DP: "10",
-        AD: [10, 0],
         VIAB: 1,
       },
-      {
+      2: {
+        AD: [10, 0],
+        DP: 10,
         GT: {
           a: [0, 0],
-          t: "hom_r",
           p: true,
+          t: "hom_r",
         },
-        DP: "10",
-        AD: [10, 0],
         VIAB: 1,
       },
-    ],
+    },
   },
+  id: 1,
 };
 const record1: Item<VcfRecord> = {
-  id: 1,
   data: {
-    id: 1,
-    c: "1",
-    p: 16376412,
-    i: [],
-    r: "G",
     a: ["A"],
-    q: null,
+    c: "1",
     f: [],
+    i: [],
+    id: 2,
     n: {
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
@@ -90,47 +109,284 @@ const record1: Item<VcfRecord> = {
       n_bool7: true,
       n_number2: 0,
       n_object0: [
-        ["dummy3", "b", [1, 2, 3]],
-        ["dummy2", "c", [1, 2, 3]],
-        ["dummy6", "a", []],
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat1: null,
+        },
       ],
       n_string0: "a",
       n_string3: "a",
       n_string4: "A",
     },
-    s: [
-      {
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: {
+      0: {
+        AD: [0, 0],
+        DP: 10,
         GT: {
           a: [0, 1],
-          t: "het",
           p: true,
+          t: "het",
         },
-        DP: "10",
-        AD: [0, 0],
-        VIAB: null,
       },
-      {
+      1: {
+        AD: [11, 0],
+        DP: 11,
         GT: {
           a: [1, 0],
-          t: "het",
           p: true,
+          t: "het",
         },
-        DP: "11",
-        AD: [11, 0],
         VIAB: 1,
       },
-      {
+      2: {
+        AD: [11, 0],
+        DP: 11,
         GT: {
           a: [1, 0],
-          t: "het",
           p: true,
+          t: "het",
         },
-        DP: "11",
-        AD: [11, 0],
         VIAB: 1,
       },
-    ],
+    },
   },
+  id: 2,
+};
+const record0desc: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    id: 1,
+    n: {
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat1: "AA",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: {
+      0: {
+        AD: [45, 5],
+        DP: 50,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 0.9,
+      },
+      1: {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+      },
+      2: {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+      },
+    },
+  },
+  id: 1,
+};
+const record0catA: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    id: 1,
+    n: {
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat1: "AA",
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: {
+      0: {
+        AD: [45, 5],
+        DP: 50,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 0.9,
+      },
+      1: {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+      },
+      2: {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+      },
+    },
+  },
+  id: 1,
+};
+const record1desc: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    id: 2,
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      n_object0: [
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: {
+      0: {
+        AD: [0, 0],
+        DP: 10,
+        GT: {
+          a: [0, 1],
+          p: true,
+          t: "het",
+        },
+      },
+      1: {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 1,
+      },
+      2: {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 1,
+      },
+    },
+  },
+  id: 2,
 };
 
 beforeEach(() => {
@@ -161,6 +417,7 @@ test("getAppMeta", async () => {
       name: "vcf-report",
       version: "0.0.1",
       args: "-i test.vcf -d",
+      htsFile: { uri: "trio.vcf", htsFormat: "VCF", genomeAssembly: "GRCh38" },
     }),
   );
 });
@@ -256,33 +513,6 @@ test("get - one record", async () => {
     page: { number: 0, size: 10, totalElements: 1 },
     total: 2,
   });
-});
-
-test("get - one record array", async () => {
-  const params: Params = {
-    query: {
-      selector: ["a", 0],
-      operator: "==",
-      args: "T",
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
 });
 
 test("get - records with greater than query", async () => {
@@ -381,6 +611,22 @@ test("get - records with equals null query", async () => {
   });
 });
 
+test("get - records with categorical query on nested", async () => {
+  const params: Params = {
+    query: {
+      selector: ["n", "n_object0", "n_cat1"],
+      operator: "==",
+      args: "AA",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0catA],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
 test("get - records with equals not null query", async () => {
   const params: Params = {
     query: {
@@ -400,7 +646,7 @@ test("get - records with equals not null query", async () => {
 test("get - records with equals undefined query", async () => {
   const params: Params = {
     query: {
-      selector: ["s", 0, "TEST"],
+      selector: ["s", "0", "TEST"],
       operator: "==",
       args: undefined,
     },
@@ -453,7 +699,9 @@ test("get - records with less than or equal query invalid field", async () => {
       args: 1,
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value 'a' is of type 'string' instead of 'number'");
+  await expect(api.getRecords(params)).rejects.toThrow(
+    "Numerical operators are not allowed for values of type 'string'",
+  );
 });
 
 test("get - one record with invalid selector", async () => {
@@ -464,29 +712,7 @@ test("get - one record with invalid selector", async () => {
       args: 10042538,
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+  await expect(api.getRecords(params)).rejects.toThrow("Unknown field in selector: 'p,x,y,z'");
 });
 
 test("get - one record using composed and query", async () => {
@@ -521,54 +747,13 @@ test("get - all records sorted on n.n_bool0", async () => {
       property: ["n", "n_bool0"],
     },
   };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool1", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool1"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool2", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool2"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  await expect(api.getRecords(params)).rejects.toThrow("no such column: n.n_bool0");
 });
 
 test("get - all records sorted on n.n_bool3", async () => {
   const params: Params = {
     sort: {
       property: ["n", "n_bool3"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
-});
-
-test("get - all records sorted on n.n_bool4", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool4"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool5", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool5"],
     },
   };
   const records = await api.getRecords(params);
@@ -582,43 +767,13 @@ test("get - all records sorted on n.n_bool6", async () => {
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool7", async () => {
   const params: Params = {
     sort: {
       property: ["n", "n_bool7"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
-});
-
-test("get - all records sorted on n.n_bool8", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool8"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_number0", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_number0"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_number1", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_number1"],
     },
   };
   const records = await api.getRecords(params);
@@ -679,7 +834,7 @@ test("get - all records sorted on n.n_array0", async () => {
 test("get - all records sorted on n.n_object0.n_string1 ascending", async () => {
   const params: Params = {
     sort: {
-      property: ["n", "n_object0", 1],
+      property: ["n", "n_object0", "n_string1"],
       compare: "asc",
     },
   };
@@ -690,12 +845,12 @@ test("get - all records sorted on n.n_object0.n_string1 ascending", async () => 
 test("get - all records sorted on n.n_object0.n_string1 descending", async () => {
   const params: Params = {
     sort: {
-      property: ["n", "n_object0", 1],
+      property: ["n", "n_object0", "n_string1"],
       compare: "desc",
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0desc, record1desc] } });
 });
 
 test("get - all records sorted on n.n_object0 throws an error", async () => {
@@ -704,7 +859,7 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
       property: ["n", "n_object0"],
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("can't compare values of type 'object'.");
+  await expect(api.getRecords(params)).rejects.toThrow("no such column: n.n_object0");
 });
 
 test("get - all records sorted ascending on position implicitly", async () => {
@@ -804,7 +959,7 @@ test("get - some records with invalid selector", async () => {
       args: [10042537, 10042538, 10042539],
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+  await expect(api.getRecords(params)).rejects.toThrow("Unknown field in selector: 'p,x,y,z'");
 });
 
 test("get - some records using composed query", async () => {

@@ -1,6 +1,6 @@
 import { parseTypedValue } from "./ValueParser";
 import { InfoMetadata, NestedFieldMetadata, Value, ValueArray } from "@molgenis/vip-report-vcf";
-import {Categories, FieldCategories} from "./loader";
+import { Categories, FieldCategories } from "./loader";
 
 export function parseValue(token: Value, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
   let value: Value | ValueArray;
@@ -38,12 +38,16 @@ export function parseValue(token: Value, infoMetadata: InfoMetadata, categories:
   return value;
 }
 
-export function parseSingleValue(token: string, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
+export function parseSingleValue(
+  token: string,
+  infoMetadata: InfoMetadata,
+  categories: Categories,
+): Value | ValueArray {
   let value: Value | Value[];
   if (infoMetadata.nested) {
     value = parseNestedValue(token, infoMetadata.nested, categories);
   } else {
-    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories);//FIXME: undefined?
+    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories); //FIXME: undefined?
   }
   return value;
 }
@@ -52,27 +56,29 @@ export function parseMultiValue(token: string, infoMetadata: InfoMetadata, categ
   const values: Value[] = [];
   let jsonValues;
   if (token !== null && token.length > 0) {
-    jsonValues = JSON.parse(token);
-    if(jsonValues !== null && jsonValues.length > 0) {
+    jsonValues = JSON.parse(token) as object[];
+    if (jsonValues !== null && jsonValues.length > 0) {
       if (!isIterable(jsonValues)) {
         jsonValues = [jsonValues];
       }
       for (const jsonValue of jsonValues) {
         const value = jsonValue !== null ? parseSingleValue(jsonValue.toString(), infoMetadata, categories) : null;
-        if (value !== null) {
-          values.push(value);
-        }
+        values.push(value);
       }
     }
   }
   return values;
 }
 
-function isIterable(obj: any): boolean {
-  return obj != null && typeof obj[Symbol.iterator] === 'function';
+function isIterable(obj: object[]): boolean {
+  return obj != null && typeof obj[Symbol.iterator] === "function";
 }
 
-export function parseNestedValue(token: string, nestedInfoMetadata: NestedFieldMetadata, categories: Categories): ValueArray {
+export function parseNestedValue(
+  token: string,
+  nestedInfoMetadata: NestedFieldMetadata,
+  categories: Categories,
+): ValueArray {
   const infoValues: Value[] = [];
   const parts = token.split(nestedInfoMetadata.separator);
   if (parts.length !== nestedInfoMetadata.items.length) throw new Error(`invalid value '${token}'`);

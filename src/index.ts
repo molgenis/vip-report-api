@@ -100,7 +100,7 @@ export interface AppMetadata {
   name: string;
   version: string;
   args: string;
-  htsFile: HtsFileMetadata | undefined
+  htsFile: HtsFileMetadata | undefined;
 }
 
 export interface HtsFileMetadata {
@@ -127,18 +127,7 @@ export interface RecordSample {
 
 export type ComposedQueryOperator = "and" | "or";
 
-export type QueryOperator =
-  | "=="
-  | "~="
-  | "~=_any"
-  | "any_~=_any"
-  | "!="
-  | "in"
-  | "!in"
-  | ">"
-  | ">="
-  | "<"
-  | "<=";
+export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=";
 
 export interface QueryClause {
   operator: QueryOperator;

@@ -9,7 +9,42 @@
           "description": "Test array",
           "numberType": "OTHER",
           "separator": "&",
-          "type": "INTEGER"
+          "type": "STRING",
+          "index": 2
+        },
+        "n_string1": {
+          "label": "String",
+          "description": "Test string 1",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "STRING",
+          "index": 0
+        },
+        "n_string2": {
+          "label": "String",
+          "description": "Test string 2",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "STRING",
+          "index": 1
+        },
+        "n_cat1": {
+          "label": "Categorical",
+          "description": "Test categorical",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "CATEGORICAL",
+          "index": 3,
+          "categories": {
+            "AA": {
+              "label": "A",
+              "description": "A DESC"
+            },
+            "BB": {
+              "label": "B",
+              "description": "B DESC"
+            }
+          }
         }
       }
     }
