@@ -1,16 +1,15 @@
-import {Value, ValueType} from "@molgenis/vip-report-vcf";
+import { Value, ValueType } from "@molgenis/vip-report-vcf";
 import { FieldCategories } from "./loader";
 
 export function parseTypedValue(token: string, type: ValueType, categories: FieldCategories): Value {
   switch (type) {
     case "CHARACTER":
       return parseCharacterValue(token);
-    case "CATEGORICAL":
-      {
-        const key = parseIntegerValue(token);
-        const category = categories.get(key as number);//FIXME null
-        return category === null ? null : category as string;
-      }
+    case "CATEGORICAL": {
+      const key = parseIntegerValue(token);
+      const category = categories.get(key as number);
+      return category === null ? null : (category as string);
+    }
     case "STRING":
       return parseStringValue(token);
     case "INTEGER":
@@ -26,9 +25,6 @@ export function parseTypedValue(token: string, type: ValueType, categories: Fiel
 
 export function parseCharacterValue(token: string | null): string | null {
   let value;
-  if (token === "..") {
-    token = null; //FIXME RNC hack
-  }
   if (token === null || token.length === 0) {
     value = null;
   } else if (token.length === 1) {

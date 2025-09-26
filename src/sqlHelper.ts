@@ -51,13 +51,20 @@ export function mapField(part: string) {
   }
 }
 
-function mapCategories(
+function mapCategories(categories: Map<string, FieldCategories>, field: string | number) {
+  if (!categories.has(field as string)) {
+    throw new Error(`No categorical values found for field '${field}'.`);
+  }
+  const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
+  return fieldCategories;
+}
+
+function mapQueryCategories(
   categories: Map<string, FieldCategories>,
   field: string | number,
   clause: QueryClause,
 ): QueryClause {
-  //FIXME: Error on unmappable categories
-  const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
+  const fieldCategories = mapCategories(categories, field);
   let args;
   if (Array.isArray(clause.args)) {
     const newArgs: (number | null)[] = [];
@@ -161,7 +168,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
       const field = parts[1];
       let newClause = clause;
       if (categories.has(field as string)) {
-        newClause = mapCategories(categories, field as string, clause);
+        newClause = mapQueryCategories(categories, field as string, clause);
       }
       const sqlCol = `${prefix}_inner.${field}`;
       return mapOperatorToSql(newClause, sqlCol);
@@ -171,7 +178,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
       const field = parts[2];
       let newClause = clause;
       if (categories.has(field as string)) {
-        newClause = mapCategories(categories, field as string, clause);
+        newClause = mapQueryCategories(categories, field as string, clause);
       }
       const sqlCol = `${prefix}.${field}`;
       let where = mapOperatorToSql(newClause, sqlCol);
@@ -189,7 +196,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
   if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
-      joins += ` JOIN variant_${nestedTable} ${nestedTable}_inner ON ${nestedTable}_inner.variant_id = v_inner.id`; //FIXME
+      joins += ` JOIN variant_${nestedTable} ${nestedTable}_inner ON ${nestedTable}_inner.variant_id = v_inner.id`;
   }
   if (tables.has("n")) joins += " JOIN info n_inner ON n_inner.variant_id = v_inner.id";
 
@@ -311,31 +318,27 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
   else if (parts.length === 2) {
     const prefix = parts[0];
     const field = parts[1];
-    if (categories.has(field as string)) {
-      //FIXME: Error on unmappable categories
-      const fieldCategories: FieldCategories = categories.get(field as string) as FieldCategories;
-      if (Array.isArray(clause.args)) {
-        const newArgs: number[] = [];
-        for (const [number, category] of fieldCategories.entries()) {
-          for (const argument of clause.args) {
-            if (category === argument) {
-              newArgs.push(number);
-            }
+    const fieldCategories: FieldCategories = mapCategories(categories, field as string);
+    if (Array.isArray(clause.args)) {
+      const newArgs: number[] = [];
+      for (const [number, category] of fieldCategories.entries()) {
+        for (const argument of clause.args) {
+          if (category === argument) {
+            newArgs.push(number);
           }
         }
-        clause.args = newArgs;
-      } else {
-        for (const [number, category] of fieldCategories.entries()) {
-          if (category === clause.args) {
-            clause.args = number;
-          }
+      }
+      clause.args = newArgs;
+    } else {
+      for (const [number, category] of fieldCategories.entries()) {
+        if (category === clause.args) {
+          clause.args = number;
         }
       }
     }
     const sqlCol = `${prefix}.${field}`;
     return mapOperatorToSql(clause, sqlCol);
   }
-
   throw new Error("Unsupported query:" + JSON.stringify(parts));
 }
 

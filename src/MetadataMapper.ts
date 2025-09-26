@@ -8,6 +8,7 @@ import type {
   NumberMetadata,
   CategoryRecord,
   Value,
+  ValueDescription,
 } from "@molgenis/vip-report-vcf";
 
 type SqlRow = { [column: string]: string | number | boolean | null | undefined };
@@ -60,7 +61,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
       description: row.description as string | undefined,
       categories: row.categories ? parseCategories(row.categories) : undefined,
       required: !!row.required,
-      nullValue: undefined, // FIXME row.nullValue as (string | undefined),
+      nullValue: row.nullValue !== null ? (JSON.parse(row.nullValue as string) as ValueDescription) : undefined,
     };
     //Avoid name collision if field name is present both a CSQ child and INFO field
     if (row.parent) {

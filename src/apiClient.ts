@@ -93,7 +93,6 @@ function getFieldFromSelector(parts: SelectorPart[], meta: VcfMetadata): FieldMe
       const field = parts[2] as SelectorPart;
       fieldMeta = meta.format[field];
     } else {
-      //FIXME: check field exists
       const parent = parts[1] as SelectorPart;
       const parentMeta = meta.info[parent];
       const field = parts[2] as SelectorPart;

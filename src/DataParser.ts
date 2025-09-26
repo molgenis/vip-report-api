@@ -47,7 +47,7 @@ export function parseSingleValue(
   if (infoMetadata.nested) {
     value = parseNestedValue(token, infoMetadata.nested, categories);
   } else {
-    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories); //FIXME: undefined?
+    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories);
   }
   return value;
 }

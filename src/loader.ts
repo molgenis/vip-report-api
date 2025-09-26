@@ -55,7 +55,7 @@ export class SqlLoader {
     for (const row of headerLines) {
       headers.push(row["line"] as string);
     }
-    const samples = this.loadSamples(0, 10, undefined); //FIXME: hardcoded
+    const samples = this.loadSamples(-1, -1, undefined);
     const sampleNames: string[] = [];
     for (const row of samples) {
       sampleNames.push(row.person.individualId as string);
@@ -122,7 +122,8 @@ export class SqlLoader {
   loadSamples(page: number, size: number, query: Query | undefined): Sample[] {
     const categories = this.getCategories();
     const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
-    const sql = `SELECT * from sample ${whereClause} LIMIT ${size} OFFSET ${page * size}`;
+    const selectClause = `SELECT * from sample ${whereClause}`;
+    const sql = selectClause + (page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``);
     const rows = executeSql(this.db as Database, sql);
     return mapSamples(rows);
   }
@@ -268,7 +269,13 @@ export class SqlLoader {
                 `;
 
     const rows = executeSql(this.db as Database, sql);
-    return mapRows(rows, meta, this.getCategories(), nestedTables)[0] as VcfRecord; //FIXME
+    if (rows.length === 0) {
+      throw new Error(`No VCF Record returned for id ${id}`);
+    }
+    if (rows.length > 1) {
+      throw new Error(`More than 1 VCF Record returned for id ${id}`);
+    }
+    return mapRows(rows, meta, this.getCategories(), nestedTables)[0] as VcfRecord;
   }
 
   getCategories(): Categories {
