@@ -391,7 +391,7 @@ const record1desc: Item<VcfRecord> = {
 
 beforeEach(() => {
   const reportData = {
-    database: readFileSync(path.join(__dirname, "/data/vip-report.db")),
+    database: readFileSync(path.join(__dirname, "/data/trio.db")),
     binary: {
       fastaGz: {
         "1:17350500-17350600": readFileSync(path.join(__dirname, "interval0.fasta")),

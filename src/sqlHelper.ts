@@ -317,25 +317,10 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
   else if (parts.length === 2) {
     const prefix = parts[0];
     const field = parts[1];
-    const fieldCategories: FieldCategories = mapCategories(categories, field as string);
-    if (Array.isArray(clause.args)) {
-      const newArgs: number[] = [];
-      for (const [number, category] of fieldCategories.entries()) {
-        for (const argument of clause.args) {
-          if (category === argument) {
-            newArgs.push(number);
-          }
-        }
-      }
-      clause.args = newArgs;
-    } else {
-      for (const [number, category] of fieldCategories.entries()) {
-        if (category === clause.args) {
-          clause.args = number;
-        }
-      }
-    }
     const sqlCol = `${prefix}.${field}`;
+    if (categories.has(field as string)) {
+      mapQueryCategories(categories, sqlCol, clause);
+    }
     return mapOperatorToSql(clause, sqlCol);
   }
   throw new Error("Unsupported query:" + JSON.stringify(parts));

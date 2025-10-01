@@ -42,7 +42,7 @@ export class ApiClient implements Api {
     console.log("getRecordsMeta");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const meta = loader.loadMetadata();
+    const meta = loader.getMetadata();
     if (!meta) throw new Error("Metadata not loaded.");
     return meta;
   }
@@ -52,10 +52,9 @@ export class ApiClient implements Api {
     if (!loader) throw new Error("Loader was not initialized.");
     const page = params.page !== undefined ? params.page : 0;
     const size = params.size !== undefined ? params.size : 10;
-    const meta = (await loader).loadMetadata() as VcfMetadata;
-    validateQuery(meta, params.query);
-    const tableSize: TableSize = loader.countMatchingVariants(meta, params.query);
-    const variants: VcfRecord[] = loader.loadVcfRecords(meta, page, size, params.sort, params.query);
+    validateQuery(loader.getMetadata(), params.query);
+    const tableSize: TableSize = loader.countMatchingVariants(params.query);
+    const variants: VcfRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query);
     return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize);
   }
 
@@ -85,7 +84,7 @@ export class ApiClient implements Api {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const record: VcfRecord = loader.loadVcfRecordById(loader.loadMetadata() as VcfMetadata, id);
+    const record: VcfRecord = loader.loadVcfRecordById(id);
     return { data: record, id: id };
   }
 

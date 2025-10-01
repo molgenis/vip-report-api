@@ -25,6 +25,8 @@ export type TableSize = { size: number; totalSize: number };
 export class SqlLoader {
   private reportData: ReportData;
   private db: Database | undefined;
+  private meta: VcfMetadata | undefined;
+  private categories: Categories | undefined;
 
   constructor(reportData: ReportData) {
     this.reportData = reportData;
@@ -46,21 +48,24 @@ export class SqlLoader {
     return bytes;
   }
 
-  loadMetadata(): VcfMetadata {
-    const sql = "SELECT * FROM metadata";
-    const rows = executeSql(this.db as Database, sql);
-    const headerSql = "SELECT * FROM header";
-    const headerLines = executeSql(this.db as Database, headerSql);
-    const headers: string[] = [];
-    for (const row of headerLines) {
-      headers.push(row["line"] as string);
+  getMetadata(): VcfMetadata {
+    if (this.meta === undefined) {
+      const sql = "SELECT * FROM metadata";
+      const rows = executeSql(this.db as Database, sql);
+      const headerSql = "SELECT * FROM header";
+      const headerLines = executeSql(this.db as Database, headerSql);
+      const headers: string[] = [];
+      for (const row of headerLines) {
+        headers.push(row["line"] as string);
+      }
+      const samples = this.loadSamples(-1, -1, undefined);
+      const sampleNames: string[] = [];
+      for (const row of samples) {
+        sampleNames.push(row.person.individualId as string);
+      }
+      this.meta = mapSqlRowsToVcfMetadata(rows, headers, sampleNames);
     }
-    const samples = this.loadSamples(-1, -1, undefined);
-    const sampleNames: string[] = [];
-    for (const row of samples) {
-      sampleNames.push(row.person.individualId as string);
-    }
-    return mapSqlRowsToVcfMetadata(rows, headers, sampleNames);
+    return this.meta;
   }
 
   loadDecisionTree(id: string): DecisionTree {
@@ -71,7 +76,7 @@ export class SqlLoader {
   }
 
   loadAppMetadata(): AppMetadata {
-    const sql = `SELECT * from reportMetadata`;
+    const sql = `SELECT * from appMetadata`;
     const rows = executeSql(this.db as Database, sql);
     let args: string | undefined;
     let appName: string | undefined;
@@ -114,7 +119,7 @@ export class SqlLoader {
   }
 
   loadConfig(): Json {
-    const sql = `SELECT * from reportdata`;
+    const sql = `SELECT * from config`;
     const rows = executeSql(this.db as Database, sql);
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
@@ -164,12 +169,12 @@ export class SqlLoader {
   }
 
   loadVcfRecords(
-    meta: VcfMetadata,
     page: number,
     size: number,
     sort: SortOrder | SortOrder[] | undefined,
     query: Query | undefined,
   ): VcfRecord[] {
+    const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = this.getNestedTables(meta);
     const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
@@ -239,7 +244,8 @@ export class SqlLoader {
     return mapRows(rows, meta, categories, nestedTables);
   }
 
-  loadVcfRecordById(meta: VcfMetadata, id: number): VcfRecord {
+  loadVcfRecordById(id: number): VcfRecord {
+    const meta = this.getMetadata();
     const nestedTables: string[] = this.getNestedTables(meta);
     let nestedJoins: string = "";
     for (const nestedTable of nestedTables) {
@@ -279,25 +285,27 @@ export class SqlLoader {
   }
 
   getCategories(): Categories {
-    const sql = "SELECT field, id, value FROM categories";
-    const rows: SqlRow[] = executeSql(this.db as Database, sql);
+    if (this.categories === undefined) {
+      const sql = "SELECT field, id, value FROM categories";
+      const rows: SqlRow[] = executeSql(this.db as Database, sql);
 
-    const result = new Map<string, FieldCategories>();
+      const result = new Map<string, FieldCategories>();
 
-    for (const row of rows) {
-      const field = row.field as string;
-      const value = row.value as string;
+      for (const row of rows) {
+        const field = row.field as string;
+        const value = row.value as string;
 
-      // Get the sub-map for this field, or create if missing
-      let valueMap = result.get(field);
-      if (!valueMap) {
-        valueMap = new Map<number, string>();
-        result.set(field, valueMap);
+        // Get the sub-map for this field, or create if missing
+        let valueMap = result.get(field);
+        if (!valueMap) {
+          valueMap = new Map<number, string>();
+          result.set(field, valueMap);
+        }
+        valueMap.set(row.id as number, value);
       }
-      valueMap.set(row.id as number, value);
+      this.categories = result;
     }
-
-    return result;
+    return this.categories;
   }
 
   private getColumns(nestedTables: string[]) {
@@ -314,7 +322,8 @@ export class SqlLoader {
     return columns;
   }
 
-  countMatchingVariants(meta: VcfMetadata, query: Query | undefined): TableSize {
+  countMatchingVariants(query: Query | undefined): TableSize {
+    const meta = this.getMetadata();
     const nestedTables: string[] = this.getNestedTables(meta);
     const categories = this.getCategories();
     const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";

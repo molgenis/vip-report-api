@@ -9,7 +9,7 @@ describe("window api client", () => {
   test("get records", async () => {
     window.api = {
       binary: {},
-      database: readFileSync(path.join(__dirname, "data", "vip-report.db")),
+      database: readFileSync(path.join(__dirname, "data", "trio.db")),
     };
 
     const apiClient = new WindowApiClient();
