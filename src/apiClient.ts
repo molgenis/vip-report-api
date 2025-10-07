@@ -54,7 +54,7 @@ export class ApiClient implements Api {
     const size = params.size !== undefined ? params.size : 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: VcfRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query);
+    const variants: VcfRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query, true);
     return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize);
   }
 
@@ -78,6 +78,17 @@ export class ApiClient implements Api {
         totalElements,
       },
     };
+  }
+
+  async getRecordsWithoutSamples(params: Params = {}): Promise<PagedItems<VcfRecord>> {
+    const loader = await this.loader;
+    if (!loader) throw new Error("Loader was not initialized.");
+    const page = params.page !== undefined ? params.page : 0;
+    const size = params.size !== undefined ? params.size : 10;
+    validateQuery(loader.getMetadata(), params.query);
+    const tableSize: TableSize = loader.countMatchingVariants(params.query);
+    const variants: VcfRecord[] = (await loader).loadVcfRecords(page, size, params.sort, params.query, false);
+    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize);
   }
 
   async getRecordById(id: number): Promise<Item<VcfRecord>> {

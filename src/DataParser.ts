@@ -62,8 +62,9 @@ export function parseMultiValue(token: string, infoMetadata: InfoMetadata, categ
         jsonValues = [jsonValues];
       }
       for (const jsonValue of jsonValues) {
-        const value = jsonValue !== null ? parseSingleValue(jsonValue.toString(), infoMetadata, categories) : null;
-        values.push(value);
+        if (jsonValue !== null) {
+          values.push(parseSingleValue(jsonValue.toString(), infoMetadata, categories));
+        }
       }
     }
   }

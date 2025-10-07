@@ -107,6 +107,9 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     } else {
       parts = [clause.selector];
     }
+    if (parts.length > 3) {
+      throw Error(`Unexpected number of query parts for query: '${query}'`);
+    }
     if (parts[0] === "s") {
       tables.add("s");
     } else if (parts.length === 3) {
@@ -137,7 +140,6 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     return undefined;
   }
 
-  // 3. Your existing WHERE clause generator with alias handling
   function queryToSql(query: Query, categories: Categories, nestedTables: string[]): string {
     if (
       query &&
@@ -163,7 +165,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
       return mapOperatorToSql(clause, sqlCol);
     }
     if (parts.length === 2) {
-      const prefix = parts[0];
+      const prefix = parts[0] === "s" ? "f" : parts[0];
       const field = parts[1];
       let newClause = clause;
       if (categories.has(field as string)) {

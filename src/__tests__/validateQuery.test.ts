@@ -66,6 +66,46 @@ describe("validateQuery", () => {
     ).not.toThrow();
   });
 
+  it("validates sample_id field", () => {
+    expect(() =>
+      validateQuery(meta, {
+        selector: ["s", "sample_id"],
+        operator: "==",
+        args: 7,
+      } as QueryClause),
+    ).not.toThrow();
+  });
+
+  it("validates INFO sample_id field", () => {
+    expect(() =>
+      validateQuery(meta, {
+        selector: ["n", "sample_id"],
+        operator: "==",
+        args: 7,
+      } as QueryClause),
+    ).toThrow("Unknown field in selector: 'n,sample_id'");
+  });
+
+  it("validates GT_type field", () => {
+    expect(() =>
+      validateQuery(meta, {
+        selector: ["s", "GT_type"],
+        operator: "==",
+        args: 7,
+      } as QueryClause),
+    ).not.toThrow();
+  });
+
+  it("validates INFO GT_type field", () => {
+    expect(() =>
+      validateQuery(meta, {
+        selector: ["n", "GT_type"],
+        operator: "==",
+        args: 7,
+      } as QueryClause),
+    ).toThrow("Unknown field in selector: 'n,GT_type'");
+  });
+
   it("throws if integer comparison gets non-number", () => {
     expect(() =>
       validateQuery(meta, {

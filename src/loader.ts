@@ -173,12 +173,13 @@ export class SqlLoader {
     size: number,
     sort: SortOrder | SortOrder[] | undefined,
     query: Query | undefined,
+    includeFormat: boolean,
   ): VcfRecord[] {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = this.getNestedTables(meta);
     const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
-    const columns = this.getColumns(nestedTables);
+    const columns = this.getColumns(nestedTables, includeFormat);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
       "v.id as v_variant_id",
@@ -191,6 +192,36 @@ export class SqlLoader {
       "v.filter",
       ...columns,
     ];
+    const { orderByClauses, distinctOrderByClauses, orderCols } = this.getSortClauses(sortOrders, nestedTables);
+    let nestedJoins: string = "";
+    for (const nestedTable of nestedTables) {
+      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
+    }
+    const sql = `
+          SELECT DISTINCT ${selectCols}
+          FROM (SELECT DISTINCT v.*
+                FROM (SELECT v.*,
+                             v.id AS v_variant_id
+                          ${orderCols.length ? "," + orderCols.join(", ") : ""}
+                      FROM vcf v
+                          LEFT JOIN info n ON n.variant_id = v.id
+                          ${includeFormat ? "LEFT JOIN format f ON f.variant_id = v.id" : ""}
+                          ${nestedJoins} 
+                          ${whereClause}
+                      GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
+                    LIMIT ${size}
+                OFFSET ${page * size}) v
+                   LEFT JOIN info n ON n.variant_id = v.id 
+                   ${nestedJoins}
+            ${includeFormat ? "LEFT JOIN format f ON f.variant_id = v.id" : ""}
+            ${whereClause}
+            ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
+      `;
+    const rows = executeSql(this.db as Database, sql);
+    return mapRows(rows, meta, categories, nestedTables);
+  }
+
+  private getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) {
     const orderByClauses: string[] = [];
     const distinctOrderByClauses: string[] = [];
     const orderCols: string[] = [];
@@ -217,31 +248,7 @@ export class SqlLoader {
         `${order.compare === "desc" ? `MAX(${col}) as MAX_${escapedCol}` : `MIN(${col}) as MIN_${escapedCol}`}`,
       );
     }
-    let nestedJoins: string = "";
-    for (const nestedTable of nestedTables) {
-      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
-    }
-    const sql = `
-          SELECT DISTINCT ${selectCols}
-          FROM (SELECT DISTINCT v.*
-                FROM (SELECT v.*,
-                             v.id AS v_variant_id
-                          ${orderCols.length ? "," + orderCols.join(", ") : ""}
-                      FROM vcf v
-                               LEFT JOIN info n ON n.variant_id = v.id
-                               LEFT JOIN format f ON f.variant_id = v.id
-                          ${nestedJoins} ${whereClause}
-                      GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
-                    LIMIT ${size}
-                OFFSET ${page * size}) v
-                   LEFT JOIN info n ON n.variant_id = v.id ${nestedJoins}
-            LEFT JOIN format f
-          ON f.variant_id = v.id
-            ${whereClause}
-            ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
-      `;
-    const rows = executeSql(this.db as Database, sql);
-    return mapRows(rows, meta, categories, nestedTables);
+    return { orderByClauses, distinctOrderByClauses, orderCols };
   }
 
   loadVcfRecordById(id: number): VcfRecord {
@@ -252,7 +259,7 @@ export class SqlLoader {
       nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
     }
 
-    const columns = this.getColumns(nestedTables);
+    const columns = this.getColumns(nestedTables, true);
     const selectCols = [
       "v.id as v_variant_id",
       "v.chrom",
@@ -269,8 +276,9 @@ export class SqlLoader {
                   ${selectCols}
                   FROM
                   (SELECT * FROM vcf) v
-                  LEFT JOIN info n ON n.variant_id = v.id ${nestedJoins}
+                  LEFT JOIN info n ON n.variant_id = v.id 
                   LEFT JOIN format f ON f.variant_id = v.id
+                  ${nestedJoins}
                   WHERE v.id = ${id}
                 `;
 
@@ -278,10 +286,11 @@ export class SqlLoader {
     if (rows.length === 0) {
       throw new Error(`No VCF Record returned for id ${id}`);
     }
-    if (rows.length > 1) {
+    const mapped = mapRows(rows, meta, this.getCategories(), nestedTables);
+    if (mapped.length > 1) {
       throw new Error(`More than 1 VCF Record returned for id ${id}`);
     }
-    return mapRows(rows, meta, this.getCategories(), nestedTables)[0] as VcfRecord;
+    return mapped[0] as VcfRecord;
   }
 
   getCategories(): Categories {
@@ -295,7 +304,6 @@ export class SqlLoader {
         const field = row.field as string;
         const value = row.value as string;
 
-        // Get the sub-map for this field, or create if missing
         let valueMap = result.get(field);
         if (!valueMap) {
           valueMap = new Map<number, string>();
@@ -308,7 +316,7 @@ export class SqlLoader {
     return this.categories;
   }
 
-  private getColumns(nestedTables: string[]) {
+  private getColumns(nestedTables: string[], includeFormat: boolean) {
     let columns: string[] = [];
     for (const nestedTable of nestedTables) {
       columns = columns.concat(
@@ -317,7 +325,9 @@ export class SqlLoader {
         ),
       );
     }
-    columns = columns.concat(getColumnNames(this.db as Database, "format").map((col) => `f.${col} AS FMT_${col} `));
+    if (includeFormat) {
+      columns = columns.concat(getColumnNames(this.db as Database, "format").map((col) => `f.${col} AS FMT_${col} `));
+    }
     columns = columns.concat(getColumnNames(this.db as Database, "info").map((col) => `n.${col} AS INFO_${col} `));
     return columns;
   }

@@ -16,7 +16,7 @@ import { Categories } from "./loader";
 import { RecordSamples } from "./index";
 
 export type SqlRow = { [column: string]: string | number | boolean | null | undefined };
-export const excludeKeys = ["id", "v_variant_id", "variant_id"];
+export const excludeKeys = ["id", "v_variant_id", "variant_id", "GT_type"];
 
 export function mapRows(
   rows: SqlRow[],
@@ -220,7 +220,10 @@ function parseFormatValue(
 
 // Parse VCF genotype string into Genotype structure
 function parseGenotype(token: string): Genotype {
-  const alleles = token.split(/[|/]/).map((idx) => parseIntegerValue(idx));
+  const alleles = token
+    .split(/[|/]/)
+    .map((idx) => parseIntegerValue(idx))
+    .map((value) => (value === -1 ? null : value));
   const genotype: Genotype = {
     a: alleles,
     t: determineGenotypeType(alleles),
