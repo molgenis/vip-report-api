@@ -15,7 +15,7 @@ import {
   Sample,
   SortOrder,
 } from "./index";
-import { complexQueryToSql, executeSql, getColumnNames, mapField, simpleQueryToSql } from "./sqlHelper";
+import { complexQueryToSql, executeSql, getColumnNames, mapField, simpleQueryToSql, toSqlList } from "./sqlHelper";
 import { mapSamples, mapSample } from "./sampleMapper";
 
 export type FieldCategories = Map<number, string>;
@@ -174,11 +174,14 @@ export class SqlLoader {
     sort: SortOrder | SortOrder[] | undefined,
     query: Query | undefined,
     includeFormat: boolean,
+    sampleIds: number[] | undefined,
   ): VcfRecord[] {
+    //FIXME: validate NOT !includeFormat and defined sampleIds
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = this.getNestedTables(meta);
     const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
+    const sampleJoinQuery = sampleIds !== undefined ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
     const columns = this.getColumns(nestedTables, includeFormat);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
@@ -205,7 +208,7 @@ export class SqlLoader {
                           ${orderCols.length ? "," + orderCols.join(", ") : ""}
                       FROM vcf v
                           LEFT JOIN info n ON n.variant_id = v.id
-                          ${includeFormat ? "LEFT JOIN format f ON f.variant_id = v.id" : ""}
+                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
                           ${nestedJoins} 
                           ${whereClause}
                       GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
@@ -213,7 +216,7 @@ export class SqlLoader {
                 OFFSET ${page * size}) v
                    LEFT JOIN info n ON n.variant_id = v.id 
                    ${nestedJoins}
-            ${includeFormat ? "LEFT JOIN format f ON f.variant_id = v.id" : ""}
+            ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
             ${whereClause}
             ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
       `;

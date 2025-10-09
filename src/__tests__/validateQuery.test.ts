@@ -69,27 +69,17 @@ describe("validateQuery", () => {
   it("validates sample_id field", () => {
     expect(() =>
       validateQuery(meta, {
-        selector: ["s", "sample_id"],
+        selector: ["f", "sample_id"],
         operator: "==",
         args: 7,
       } as QueryClause),
-    ).not.toThrow();
-  });
-
-  it("validates INFO sample_id field", () => {
-    expect(() =>
-      validateQuery(meta, {
-        selector: ["n", "sample_id"],
-        operator: "==",
-        args: 7,
-      } as QueryClause),
-    ).toThrow("Unknown field in selector: 'n,sample_id'");
+    ).toThrow("Unknown field in selector: 'f,sample_id'");
   });
 
   it("validates GT_type field", () => {
     expect(() =>
       validateQuery(meta, {
-        selector: ["s", "GT_type"],
+        selector: ["s", 1, "GT_type"],
         operator: "==",
         args: 7,
       } as QueryClause),

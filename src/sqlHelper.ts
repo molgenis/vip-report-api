@@ -88,7 +88,6 @@ function mapQueryCategories(
 }
 
 export function complexQueryToSql(query: Query, categories: Categories, nestedTables: string[]): string {
-  // 1. Helper to find referenced tables
   function usedTables(query: Query, tables = new Set<string>()): Set<string> {
     if (
       query &&
@@ -120,7 +119,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     return tables;
   }
 
-  // 2. Helper: recursively extract only the CSQ portions of the query
+  // Extract only the Nested parts of the query
   function extractNestedQuery(query: Query, nestedTable: string): Query | undefined {
     if (
       query &&
@@ -191,7 +190,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     throw new Error("Could not convert selector '" + JSON.stringify(parts) + "' to SQL.");
   }
 
-  // 4. Gather tables referenced
+  // Gather tables referenced
   const tables = usedTables(query);
   let joins = "vcf v_inner";
   if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
@@ -201,7 +200,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
   }
   if (tables.has("n")) joins += " JOIN info n_inner ON n_inner.variant_id = v_inner.id";
 
-  // 5. Build only-CSQ WHERE portion for main join
+  // Build only-CSQ WHERE portion for main join
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
     const nestedQuery = extractNestedQuery(query, nestedTable);
@@ -213,7 +212,6 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     }
   }
 
-  // 6. Return WHERE clause for use in outer SELECT
   return `
 v.id IN (
   SELECT v_inner.id
@@ -224,10 +222,8 @@ ${nestedFilter}`.trim();
 }
 
 function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
-  // Helper for proper escaping/list creation, assumed defined elsewhere
   const { args, operator } = clause;
 
-  // Handle NULL/no args
   if (args === null || args === undefined || (Array.isArray(args) && (args as Array<ArgsValue>).length === 0)) {
     switch (operator) {
       case "==":
@@ -248,15 +244,13 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
 
     let sqlFrag = "";
     if (nonNulls.length > 0) {
-      const valueList = toSqlList(nonNulls); // Already SQL-escaped
+      const valueList = toSqlList(nonNulls);
 
-      // JSON case: json_each if valid JSON
       const jsonExists = `(json_valid(${sqlCol}) AND EXISTS (
         SELECT 1 FROM json_each(${sqlCol})
         WHERE CAST(json_each.value as TEXT) IN (${valueList})
       ))`;
 
-      // Plain string case (unquoted or quoted string for robustness)
       const plainExists = `(${sqlCol} IN (${valueList}) OR ${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")}))`;
 
       // Combine both cases
@@ -265,7 +259,6 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
       sqlFrag = operator === "in" ? inClause : `NOT ${inClause}`;
     }
 
-    // NULL handling for the array column itself
     if (hasNull) {
       const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
       if (sqlFrag.trim()) {
@@ -277,7 +270,6 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
     return sqlFrag;
   }
 
-  // Scalar cases
   switch (operator) {
     case "==":
     case "!=":
@@ -301,7 +293,6 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     return "(" + query.args.map((subQuery) => simpleQueryToSql(subQuery, categories)).join(` ${joinWord} `) + ")";
   }
 
-  // Single clause (LEAF)
   const clause = query as QueryClause;
   let parts: SelectorPart[];
   if (Array.isArray(clause.selector)) {
@@ -310,13 +301,10 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     parts = [clause.selector];
   }
 
-  // non-nested field
   if (parts.length === 1) {
     const sqlCol = mapField((parts[0] as SelectorPart).toString());
     return mapOperatorToSql(clause, sqlCol);
-  }
-  // info/format or two-segment
-  else if (parts.length === 2) {
+  } else if (parts.length === 2) {
     const prefix = parts[0];
     const field = parts[1];
     const sqlCol = `${prefix}.${field}`;

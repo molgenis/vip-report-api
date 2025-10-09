@@ -102,13 +102,8 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
           throw Error(`Unknown field: ${parts[0]}`);
       }
     } else {
-      //fields specific for filtering
-      if (
-        !(
-          (parts.length === 2 && parts[0] === "s" && (parts[1] === "sample_id" || parts[1] === "GT_type")) ||
-          (parts.length === 3 && parts[0] === "s" && (parts[2] === "sample_id" || parts[2] === "GT_type"))
-        )
-      ) {
+      //field specific for filtering
+      if (!(parts.length === 3 && parts[0] === "s" && parts[2] === "GT_type")) {
         const fieldMeta = getFieldFromSelector(parts, meta);
         validate(fieldMeta, clause);
       }
@@ -122,8 +117,9 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
         const field = parts[1] as SelectorPart;
         fieldMeta = meta.info[field];
       } else {
-        const field = parts[1] as SelectorPart;
-        fieldMeta = meta.format[field];
+        if ((parts[0] as string) === "s") {
+          throw Error(`Format fields should have 3 parts: s, sampleId or * and field, got: ${parts}`);
+        }
       }
     }
     if (parts.length === 3) {

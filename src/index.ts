@@ -54,6 +54,9 @@ export interface Params {
   size?: number;
 }
 
+export interface RecordParams extends Params {
+  sampleIds?: number[];
+}
 export type SortPath = (string | number)[];
 
 export interface SortOrder {
