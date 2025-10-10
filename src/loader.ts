@@ -15,7 +15,16 @@ import {
   Sample,
   SortOrder,
 } from "./index";
-import { complexQueryToSql, executeSql, getColumnNames, mapField, simpleQueryToSql, toSqlList } from "./sqlHelper";
+import {
+  complexQueryToSql,
+  executeSql,
+  getColumnNames,
+  getNestedJoins,
+  getPagingQuery,
+  getSortClauses,
+  simpleQueryToSql,
+  toSqlList,
+} from "./sqlHelper";
 import { mapSamples, mapSample } from "./sampleMapper";
 
 export type FieldCategories = Map<number, string>;
@@ -176,7 +185,9 @@ export class SqlLoader {
     includeFormat: boolean,
     sampleIds: number[] | undefined,
   ): VcfRecord[] {
-    //FIXME: validate NOT !includeFormat and defined sampleIds
+    if (sampleIds && !includeFormat) {
+      throw Error("Cannot select samples if format information is excluded.");
+    }
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = this.getNestedTables(meta);
@@ -195,63 +206,45 @@ export class SqlLoader {
       "v.filter",
       ...columns,
     ];
-    const { orderByClauses, distinctOrderByClauses, orderCols } = this.getSortClauses(sortOrders, nestedTables);
-    let nestedJoins: string = "";
-    for (const nestedTable of nestedTables) {
-      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
-    }
+    const { orderByClauses, distinctOrderByClauses, orderCols } = getSortClauses(sortOrders, nestedTables);
+    const nestedJoins = getNestedJoins(nestedTables);
+
     const sql = `
-          SELECT DISTINCT ${selectCols}
-          FROM (SELECT DISTINCT v.*
-                FROM (SELECT v.*,
-                             v.id AS v_variant_id
-                          ${orderCols.length ? "," + orderCols.join(", ") : ""}
-                      FROM vcf v
-                          LEFT JOIN info n ON n.variant_id = v.id
-                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
-                          ${nestedJoins} 
-                          ${whereClause}
-                      GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
-                    LIMIT ${size}
-                OFFSET ${page * size}) v
-                   LEFT JOIN info n ON n.variant_id = v.id 
-                   ${nestedJoins}
-            ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
-            ${whereClause}
-            ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
-      `;
+      SELECT DISTINCT ${selectCols}
+        FROM (${getPagingQuery(orderCols, includeFormat, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
+        LEFT JOIN info n ON n.variant_id = v.id
+        ${nestedJoins} 
+        ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
+        ${whereClause}
+        ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
+    `;
     const rows = executeSql(this.db as Database, sql);
     return mapRows(rows, meta, categories, nestedTables);
   }
 
-  private getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) {
-    const orderByClauses: string[] = [];
-    const distinctOrderByClauses: string[] = [];
-    const orderCols: string[] = [];
-    let col;
-    for (const order of sortOrders) {
-      if (order.property.length == 1) {
-        col = mapField(order.property[0] as string);
-      } else if (order.property.length == 2) {
-        col = `${order.property[0]}.${order.property[1]}`;
-      } else if (order.property.length == 3) {
-        const key = order.property[1] as string;
-        if (!nestedTables.includes(key)) {
-          throw Error("Unknown nested field: " + order.property[1]);
-        }
-        col = `${key}.${order.property[2]}`;
-      }
-      if (col === undefined) {
-        throw Error("Error determining sort column for:" + order);
-      }
-      const escapedCol = col.replace(".", "_");
-      orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
-      distinctOrderByClauses.push(`${order.compare === "desc" ? `MAX_${escapedCol} DESC` : `MIN_${escapedCol} ASC`}`);
-      orderCols.push(
-        `${order.compare === "desc" ? `MAX(${col}) as MAX_${escapedCol}` : `MIN(${col}) as MIN_${escapedCol}`}`,
-      );
-    }
-    return { orderByClauses, distinctOrderByClauses, orderCols };
+  countMatchingVariants(query: Query | undefined): TableSize {
+    const meta = this.getMetadata();
+    const categories = this.getCategories();
+    const nestedTables: string[] = this.getNestedTables(meta);
+    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
+    const nestedJoins = getNestedJoins(nestedTables);
+
+    const sql = `
+SELECT
+COUNT(DISTINCT v.id) AS count, 
+v.id as v_variant_id,
+(SELECT COUNT(*) FROM vcf) AS total_size
+FROM
+    (SELECT * FROM vcf) v
+        LEFT JOIN info n ON n.variant_id = v.id
+        ${nestedJoins}
+        LEFT JOIN format f ON f.variant_id = v.id
+${whereClause}
+`;
+
+    const rows = executeSql(this.db as Database, sql);
+    if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
+    return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
   loadVcfRecordById(id: number): VcfRecord {
@@ -333,34 +326,6 @@ export class SqlLoader {
     }
     columns = columns.concat(getColumnNames(this.db as Database, "info").map((col) => `n.${col} AS INFO_${col} `));
     return columns;
-  }
-
-  countMatchingVariants(query: Query | undefined): TableSize {
-    const meta = this.getMetadata();
-    const nestedTables: string[] = this.getNestedTables(meta);
-    const categories = this.getCategories();
-    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
-    let nestedJoins: string = "";
-    for (const nestedTable of nestedTables) {
-      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
-    }
-
-    const sql = `
-SELECT
-COUNT(DISTINCT v.id) AS count, 
-v.id as v_variant_id,
-(SELECT COUNT(*) FROM vcf) AS total_size
-FROM
-    (SELECT * FROM vcf) v
-        LEFT JOIN info n ON n.variant_id = v.id
-    ${nestedJoins}
-        LEFT JOIN format f ON f.variant_id = v.id
-${whereClause}
-`;
-
-    const rows = executeSql(this.db as Database, sql);
-    if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
-    return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
   countMatchingSamples(query: Query | undefined): TableSize {

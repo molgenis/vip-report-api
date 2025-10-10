@@ -3,7 +3,7 @@ import { Database } from "sql.js";
 type SqlRow = { [column: string]: string | number | boolean | null | undefined };
 type ArgsValue = string | number | boolean | string[] | (string | null)[] | number[] | (number | null)[] | undefined;
 
-import { Query, QueryClause, SelectorPart } from "./index";
+import { Query, QueryClause, SelectorPart, SortOrder } from "./index";
 import { Categories, FieldCategories } from "./loader";
 import { Value } from "@molgenis/vip-report-vcf";
 
@@ -221,6 +221,45 @@ v.id IN (
 ${nestedFilter}`.trim();
 }
 
+function mapInQuery(
+  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+  sqlCol: string,
+  operator: "in" | "!in",
+) {
+  if (!Array.isArray(args)) {
+    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
+  }
+  const nonNulls = args.filter((v) => v !== null && v !== undefined);
+  const hasNull = args.some((v) => v === null || v === undefined);
+
+  let sqlFrag = "";
+  if (nonNulls.length > 0) {
+    const valueList = toSqlList(nonNulls);
+
+    const jsonExists = `(json_valid(${sqlCol}) AND EXISTS (
+        SELECT 1 FROM json_each(${sqlCol})
+        WHERE CAST(json_each.value as TEXT) IN (${valueList})
+      ))`;
+
+    const plainExists = `(${sqlCol} IN (${valueList}) OR ${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")}))`;
+
+    // Combine both cases
+    const inClause = `(${jsonExists} OR ${plainExists})`;
+
+    sqlFrag = operator === "in" ? inClause : `NOT ${inClause}`;
+  }
+
+  if (hasNull) {
+    const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
+    if (sqlFrag.trim()) {
+      sqlFrag = operator === "in" ? `(${sqlFrag} OR ${nullCheck})` : `(${sqlFrag} AND ${nullCheck})`;
+    } else {
+      sqlFrag = nullCheck;
+    }
+  }
+  return sqlFrag;
+}
+
 function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
   const { args, operator } = clause;
 
@@ -236,38 +275,7 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
   }
 
   if (operator === "in" || operator === "!in") {
-    if (!Array.isArray(args)) {
-      throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
-    }
-    const nonNulls = args.filter((v) => v !== null && v !== undefined);
-    const hasNull = args.some((v) => v === null || v === undefined);
-
-    let sqlFrag = "";
-    if (nonNulls.length > 0) {
-      const valueList = toSqlList(nonNulls);
-
-      const jsonExists = `(json_valid(${sqlCol}) AND EXISTS (
-        SELECT 1 FROM json_each(${sqlCol})
-        WHERE CAST(json_each.value as TEXT) IN (${valueList})
-      ))`;
-
-      const plainExists = `(${sqlCol} IN (${valueList}) OR ${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")}))`;
-
-      // Combine both cases
-      const inClause = `(${jsonExists} OR ${plainExists})`;
-
-      sqlFrag = operator === "in" ? inClause : `NOT ${inClause}`;
-    }
-
-    if (hasNull) {
-      const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
-      if (sqlFrag.trim()) {
-        sqlFrag = operator === "in" ? `(${sqlFrag} OR ${nullCheck})` : `(${sqlFrag} AND ${nullCheck})`;
-      } else {
-        sqlFrag = nullCheck;
-      }
-    }
-    return sqlFrag;
+    return mapInQuery(args, sqlCol, operator);
   }
 
   switch (operator) {
@@ -319,4 +327,65 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
 export function getColumnNames(db: Database, table: string): string[] {
   const rows = executeSql(db, `PRAGMA table_info(${table});`);
   return rows.map((row) => row.name as string);
+}
+
+export function getNestedJoins(nestedTables: string[]) {
+  let nestedJoins: string = "";
+  for (const nestedTable of nestedTables) {
+    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
+  }
+  return nestedJoins;
+}
+
+export function getPagingQuery(
+  orderCols: string[],
+  includeFormat: boolean,
+  sampleJoinQuery: string,
+  nestedJoins: string,
+  whereClause: string,
+  distinctOrderByClauses: string[],
+  size: number,
+  page: number,
+) {
+  return `SELECT DISTINCT v.*
+                FROM (SELECT v.*,
+                             v.id AS v_variant_id
+                          ${orderCols.length ? "," + orderCols.join(", ") : ""}
+                      FROM vcf v
+                          LEFT JOIN info n ON n.variant_id = v.id
+                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
+                          ${nestedJoins} 
+                          ${whereClause}
+                      GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
+                    LIMIT ${size} OFFSET ${page * size}`;
+}
+
+export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) {
+  const orderByClauses: string[] = [];
+  const distinctOrderByClauses: string[] = [];
+  const orderCols: string[] = [];
+  let col;
+  for (const order of sortOrders) {
+    if (order.property.length == 1) {
+      col = mapField(order.property[0] as string);
+    } else if (order.property.length == 2) {
+      col = `${order.property[0]}.${order.property[1]}`;
+    } else if (order.property.length == 3) {
+      const key = order.property[1] as string;
+      if (!nestedTables.includes(key)) {
+        throw Error("Unknown nested field: " + order.property[1]);
+      }
+      col = `${key}.${order.property[2]}`;
+    }
+    if (col === undefined) {
+      throw Error("Error determining sort column for:" + order);
+    }
+    const escapedCol = col.replace(".", "_");
+    orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
+    distinctOrderByClauses.push(`${order.compare === "desc" ? `MAX_${escapedCol} DESC` : `MIN_${escapedCol} ASC`}`);
+    orderCols.push(
+      `${order.compare === "desc" ? `MAX(${col}) as MAX_${escapedCol}` : `MIN(${col}) as MIN_${escapedCol}`}`,
+    );
+  }
+  return { orderByClauses, distinctOrderByClauses, orderCols };
 }
