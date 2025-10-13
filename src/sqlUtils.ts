@@ -1,11 +1,8 @@
 import { Database } from "sql.js";
 
-type SqlRow = { [column: string]: string | number | boolean | null | undefined };
-type ArgsValue = string | number | boolean | string[] | (string | null)[] | number[] | (number | null)[] | undefined;
-
 import { Query, QueryClause, SelectorPart, SortOrder } from "./index";
-import { Categories, FieldCategories } from "./loader";
-import { Value } from "@molgenis/vip-report-vcf";
+import { Value, type VcfMetadata } from "@molgenis/vip-report-vcf";
+import { ArgsValue, Categories, FieldCategories, SqlRow } from "./sql";
 
 export function executeSql(db: Database, sql: string): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
@@ -388,4 +385,25 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
     );
   }
   return { orderByClauses, distinctOrderByClauses, orderCols };
+}
+
+export function getColumns(db: Database, nestedTables: string[], includeFormat: boolean) {
+  let columns: string[] = [];
+  for (const nestedTable of nestedTables) {
+    columns = columns.concat(
+      getColumnNames(db as Database, `variant_${nestedTable}`).map(
+        (col) => `${nestedTable}.${col} AS "${nestedTable}^${col}"`,
+      ),
+    );
+  }
+  if (includeFormat) {
+    columns = columns.concat(getColumnNames(db as Database, "format").map((col) => `f.${col} AS FMT_${col} `));
+  }
+  columns = columns.concat(getColumnNames(db as Database, "info").map((col) => `n.${col} AS INFO_${col} `));
+  return columns;
+}
+
+export function getNestedTables(meta: VcfMetadata): string[] {
+  const filtered = Object.entries(meta.info).filter(([, info]) => info.nested != null);
+  return filtered.map(([key]) => key);
 }

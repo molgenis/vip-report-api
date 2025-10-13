@@ -1,6 +1,6 @@
 import { parseTypedValue } from "./ValueParser";
 import { InfoMetadata, NestedFieldMetadata, Value, ValueArray } from "@molgenis/vip-report-vcf";
-import { Categories, FieldCategories } from "./loader";
+import { Categories, FieldCategories } from "./sql";
 
 export function parseValue(token: Value, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
   let value: Value | ValueArray;

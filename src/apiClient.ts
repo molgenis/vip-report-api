@@ -14,8 +14,9 @@ import {
   Resource,
   Sample,
 } from "./index";
-import { SqlLoader, TableSize } from "./loader";
+import { SqlLoader } from "./SqlLoader";
 import { validateQuery } from "./validateQuery";
+import { TableSize } from "./sql";
 
 export class ApiClient implements Api {
   private reportData: ReportData;

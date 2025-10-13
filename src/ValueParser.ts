@@ -1,5 +1,5 @@
 import { Value, ValueType } from "@molgenis/vip-report-vcf";
-import { FieldCategories } from "./loader";
+import { FieldCategories } from "./sql";
 
 export function parseTypedValue(token: string, type: ValueType, categories: FieldCategories): Value {
   switch (type) {

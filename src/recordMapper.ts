@@ -12,10 +12,9 @@ import type {
 } from "@molgenis/vip-report-vcf";
 import { parseIntegerValue } from "./ValueParser";
 import { parseValue } from "./DataParser";
-import { Categories } from "./loader";
 import { RecordSamples } from "./index";
+import { Categories, SqlRow } from "./sql";
 
-export type SqlRow = { [column: string]: string | number | boolean | null | undefined };
 export const excludeKeys = ["id", "v_variant_id", "variant_id", "GT_type"];
 
 export function mapRows(
