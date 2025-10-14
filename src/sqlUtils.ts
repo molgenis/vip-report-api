@@ -315,7 +315,7 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     const type = prefix === "s" ? "FORMAT" : "INFO";
     const field = parts[1];
     const sqlCol = `${prefix}.${field}`;
-    const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
+    const key = `${type}/${field}`;
     if (categories.has(key)) {
       mapQueryCategories(categories, key, clause);
     }
