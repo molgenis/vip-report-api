@@ -1,23 +1,30 @@
 import { parseTypedValue } from "./ValueParser";
-import { InfoMetadata, NestedFieldMetadata, Value, ValueArray } from "@molgenis/vip-report-vcf";
+import { FieldMetadata, InfoMetadata, NestedFieldMetadata, Value, ValueArray } from "@molgenis/vip-report-vcf";
 import { Categories, FieldCategories } from "./sql";
 
-export function parseValue(token: Value, infoMetadata: InfoMetadata, categories: Categories): Value | ValueArray {
+type FieldType = "INFO" | "FORMAT";
+
+export function parseValue(
+  token: Value,
+  infoMetadata: InfoMetadata,
+  categories: Categories,
+  type: FieldType,
+): Value | ValueArray {
   let value: Value | ValueArray;
-  const type = infoMetadata.number.type;
-  switch (type) {
+  const numberType = infoMetadata.number.type;
+  switch (numberType) {
     case "NUMBER":
       if (infoMetadata.number.count === 0 || infoMetadata.number.count === 1) {
         if (token === null || token === undefined) {
           value = null;
         } else {
-          value = parseSingleValue(token.toString(), infoMetadata, categories);
+          value = parseSingleValue(token.toString(), infoMetadata, categories, type);
         }
       } else {
         if (token === null || token === undefined) {
           value = [];
         } else {
-          value = parseMultiValue(token.toString(), infoMetadata, categories);
+          value = parseMultiValue(token.toString(), infoMetadata, categories, type);
         }
       }
       break;
@@ -28,7 +35,7 @@ export function parseValue(token: Value, infoMetadata: InfoMetadata, categories:
       if (token === null || token === undefined) {
         value = [];
       } else {
-        value = parseMultiValue(token.toString(), infoMetadata, categories);
+        value = parseMultiValue(token.toString(), infoMetadata, categories, type);
       }
       break;
     default:
@@ -40,19 +47,27 @@ export function parseValue(token: Value, infoMetadata: InfoMetadata, categories:
 
 export function parseSingleValue(
   token: string,
-  infoMetadata: InfoMetadata,
+  fieldMetadata: FieldMetadata,
   categories: Categories,
+  type: FieldType,
 ): Value | ValueArray {
   let value: Value | Value[];
-  if (infoMetadata.nested) {
-    value = parseNestedValue(token, infoMetadata.nested, categories);
+  if (fieldMetadata.nested) {
+    value = parseNestedValue(token, fieldMetadata.nested, categories, type);
   } else {
-    value = parseTypedValue(token, infoMetadata.type, categories.get(infoMetadata.id) as FieldCategories);
+    const parentId = fieldMetadata.parent === undefined ? null : fieldMetadata.parent.id;
+    const key = parentId === null ? `${type}/${fieldMetadata.id}` : `${type}/${parentId}/${fieldMetadata.id}`;
+    value = parseTypedValue(token, fieldMetadata.type, categories.get(key) as FieldCategories);
   }
   return value;
 }
 
-export function parseMultiValue(token: string, infoMetadata: InfoMetadata, categories: Categories): ValueArray {
+export function parseMultiValue(
+  token: string,
+  fieldMetadata: FieldMetadata,
+  categories: Categories,
+  type: FieldType,
+): ValueArray {
   const values: Value[] = [];
   let jsonValues;
   if (token !== null && token.length > 0) {
@@ -63,7 +78,7 @@ export function parseMultiValue(token: string, infoMetadata: InfoMetadata, categ
       }
       for (const jsonValue of jsonValues) {
         if (jsonValue !== null) {
-          values.push(parseSingleValue(jsonValue.toString(), infoMetadata, categories));
+          values.push(parseSingleValue(jsonValue.toString(), fieldMetadata, categories, type));
         }
       }
     }
@@ -79,12 +94,13 @@ export function parseNestedValue(
   token: string,
   nestedInfoMetadata: NestedFieldMetadata,
   categories: Categories,
+  type: FieldType,
 ): ValueArray {
   const infoValues: Value[] = [];
   const parts = token.split(nestedInfoMetadata.separator);
   if (parts.length !== nestedInfoMetadata.items.length) throw new Error(`invalid value '${token}'`);
   for (let i = 0; i < parts.length; ++i) {
-    infoValues.push(parseValue(parts[i]!, nestedInfoMetadata.items[i]!, categories));
+    infoValues.push(parseValue(parts[i]!, nestedInfoMetadata.items[i]!, categories, type));
   }
   return infoValues;
 }

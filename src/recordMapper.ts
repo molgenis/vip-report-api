@@ -145,7 +145,7 @@ export function splitAndParseMap(
             fmtMap.set(fmtKey, parseFormatValue(value as string, meta.format[fmtKey] as FieldMetadata, categories));
           }
         } else {
-          throw Error(`Unknown info metadata: ${fmtKey}`);
+          throw Error(`Unknown format metadata: ${fmtKey}`);
         }
       }
     } else if (key.startsWith("INFO_")) {
@@ -153,7 +153,7 @@ export function splitAndParseMap(
       if (!excludeKeys.includes(infoKey)) {
         if (meta.info[infoKey] !== undefined) {
           if (value !== null) {
-            infoMap.set(infoKey, parseValue(value as string, meta.info[infoKey] as FieldMetadata, categories));
+            infoMap.set(infoKey, parseValue(value as string, meta.info[infoKey] as FieldMetadata, categories, "INFO"));
           }
         } else {
           throw Error(`Unknown info metadata: ${infoKey}`);
@@ -173,7 +173,7 @@ export function splitAndParseMap(
       if (excludeKeys.includes(nestedKey)) {
         nestedMap.set(nestedKey, value as string);
       } else {
-        nestedMap.set(nestedKey, parseValue(value as string, nestedMetaMap.get(nestedKey)!, categories));
+        nestedMap.set(nestedKey, parseValue(value as string, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
       }
       nestedFieldsMap.set(nestedField, nestedMap);
     } else {
@@ -212,7 +212,7 @@ function parseFormatValue(
   if (fmtMeta.id === "GT") {
     return token === null || token === undefined ? null : parseGenotype(token.toString());
   }
-  const val = parseValue(token as Value, fmtMeta, categories);
+  const val = parseValue(token as Value, fmtMeta, categories, "FORMAT");
   if (Array.isArray(val) && val.every((item) => item === null)) return [];
   return val;
 }

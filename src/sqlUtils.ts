@@ -48,19 +48,15 @@ export function mapField(part: string) {
   }
 }
 
-function mapCategories(categories: Map<string, FieldCategories>, field: string | number) {
-  if (!categories.has(field as string)) {
-    throw new Error(`No categorical values found for field '${field}'.`);
+function mapCategories(categories: Map<string, FieldCategories>, key: string) {
+  if (!categories.has(key)) {
+    throw new Error(`No categorical values found for field '${key}'.`);
   }
-  return categories.get(field as string) as FieldCategories;
+  return categories.get(key) as FieldCategories;
 }
 
-function mapQueryCategories(
-  categories: Map<string, FieldCategories>,
-  field: string | number,
-  clause: QueryClause,
-): QueryClause {
-  const fieldCategories = mapCategories(categories, field);
+function mapQueryCategories(categories: Map<string, FieldCategories>, key: string, clause: QueryClause): QueryClause {
+  const fieldCategories = mapCategories(categories, key);
   let args;
   if (Array.isArray(clause.args)) {
     const newArgs: (number | null)[] = [];
@@ -161,21 +157,26 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
       return mapOperatorToSql(clause, sqlCol);
     }
     if (parts.length === 2) {
+      const type = parts[0] === "s" ? "FORMAT" : "INFO";
       const prefix = parts[0] === "s" ? "f" : parts[0];
       const field = parts[1];
       let newClause = clause;
-      if (categories.has(field as string)) {
-        newClause = mapQueryCategories(categories, field as string, clause);
+      const key = `${type}/${field}`;
+      if (categories.has(key)) {
+        newClause = mapQueryCategories(categories, key, clause);
       }
       const sqlCol = `${prefix}_inner.${field}`;
       return mapOperatorToSql(newClause, sqlCol);
     }
     if (parts.length === 3) {
+      const type = parts[0] === "s" ? "FORMAT" : "INFO";
       const prefix = parts[0] === "s" ? "f_inner" : parts[1] + "_inner";
+      const parent = type === "INFO" ? parts[1] : null;
       const field = parts[2];
       let newClause = clause;
-      if (categories.has(field as string)) {
-        newClause = mapQueryCategories(categories, field as string, clause);
+      const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
+      if (categories.has(key)) {
+        newClause = mapQueryCategories(categories, key, clause);
       }
       const sqlCol = `${prefix}.${field}`;
       let where = mapOperatorToSql(newClause, sqlCol);
@@ -311,10 +312,12 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     return mapOperatorToSql(clause, sqlCol);
   } else if (parts.length === 2) {
     const prefix = parts[0];
+    const type = prefix === "s" ? "FORMAT" : "INFO";
     const field = parts[1];
     const sqlCol = `${prefix}.${field}`;
-    if (categories.has(field as string)) {
-      mapQueryCategories(categories, sqlCol, clause);
+    const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
+    if (categories.has(key)) {
+      mapQueryCategories(categories, key, clause);
     }
     return mapOperatorToSql(clause, sqlCol);
   }

@@ -1,8 +1,8 @@
 import { Value, ValueType } from "@molgenis/vip-report-vcf";
 import { FieldCategories } from "./sql";
 
-export function parseTypedValue(token: string, type: ValueType, categories: FieldCategories): Value {
-  switch (type) {
+export function parseTypedValue(token: string, valueType: ValueType, categories: FieldCategories): Value {
+  switch (valueType) {
     case "CHARACTER":
       return parseCharacterValue(token);
     case "CATEGORICAL": {
@@ -19,7 +19,7 @@ export function parseTypedValue(token: string, type: ValueType, categories: Fiel
     case "FLOAT":
       return parseFloatValue(token);
     default:
-      throw new Error(`invalid value type '${type}'`);
+      throw new Error(`invalid value type '${valueType}'`);
   }
 }
 
