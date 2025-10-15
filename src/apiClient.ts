@@ -16,7 +16,7 @@ import {
 } from "./index";
 import { SqlLoader } from "./SqlLoader";
 import { validateQuery } from "./validateQuery";
-import { TableSize } from "./sql";
+import { DatabaseRecord, DatabaseResource, TableSize } from "./sql";
 
 export class ApiClient implements Api {
   private reportData: ReportData;
@@ -56,20 +56,27 @@ export class ApiClient implements Api {
     const size = params.size !== undefined ? params.size : 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: VcfRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query, true, params.sampleIds);
-    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize);
+    const variants: DatabaseRecord[] = loader.loadVcfRecords(
+      page,
+      size,
+      params.sort,
+      params.query,
+      true,
+      params.sampleIds,
+    );
+    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
   }
 
-  toPagedItems<T extends Resource>(
-    resources: T[],
+  toPagedItems(
+    resources: DatabaseResource[],
     page: number,
     size: number,
     totalElements: number,
     total: number,
-  ): PagedItems<T> {
-    const items = resources.map((data) => ({
-      id: data.id as number,
-      data,
+  ): PagedItems<Resource> {
+    const items = resources.map((item) => ({
+      id: item.id,
+      data: item.data,
     }));
     return {
       items,
@@ -89,15 +96,15 @@ export class ApiClient implements Api {
     const size = params.size !== undefined ? params.size : 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: VcfRecord[] = (await loader).loadVcfRecords(
+    const variants: DatabaseRecord[] = (await loader).loadVcfRecords(
       page,
       size,
       params.sort,
       params.query,
       false,
       undefined,
-    ); //FIXME
-    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize);
+    );
+    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
   }
 
   async getRecordById(id: number): Promise<Item<VcfRecord>> {
@@ -115,13 +122,8 @@ export class ApiClient implements Api {
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const tableSize: TableSize = loader.countMatchingSamples(params.query);
-    return this.toPagedItems(
-      loader.loadSamples(page, size, params.query),
-      page,
-      size,
-      tableSize.size,
-      tableSize.totalSize,
-    );
+    const samples = loader.loadSamples(page, size, params.query);
+    return this.toPagedItems(samples, page, size, tableSize.size, tableSize.totalSize) as PagedItems<Sample>;
   }
 
   async getSampleById(id: number): Promise<Item<Sample>> {
@@ -144,7 +146,7 @@ export class ApiClient implements Api {
       size,
       tableSize.size,
       tableSize.totalSize,
-    );
+    ) as PagedItems<Phenotype>;
   }
 
   getFastaGz(contig: string, pos: number): Promise<Uint8Array | null> {

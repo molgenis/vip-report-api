@@ -4,17 +4,7 @@ import { mapRows } from "./recordMapper";
 import { mapSqlRowsToVcfMetadata } from "./MetadataMapper";
 import { SQLBASE64 } from "./sqLiteBase64";
 
-import {
-  AppMetadata,
-  DecisionTree,
-  HtsFileMetadata,
-  Json,
-  Phenotype,
-  Query,
-  ReportData,
-  Sample,
-  SortOrder,
-} from "./index";
+import { AppMetadata, DecisionTree, HtsFileMetadata, Json, Query, ReportData, Sample, SortOrder } from "./index";
 import {
   complexQueryToSql,
   executeSql,
@@ -27,7 +17,15 @@ import {
   toSqlList,
 } from "./sqlUtils";
 import { mapSamples, mapSample } from "./sampleMapper";
-import { Categories, FieldCategories, SqlRow, TableSize } from "./sql";
+import {
+  Categories,
+  DatabaseRecord,
+  DatabaseResource,
+  DatabaseSample,
+  FieldCategories,
+  SqlRow,
+  TableSize,
+} from "./sql";
 
 export class SqlLoader {
   private reportData: ReportData;
@@ -60,7 +58,7 @@ export class SqlLoader {
       const samples = this.loadSamples(-1, -1, undefined);
       const sampleNames: string[] = [];
       for (const row of samples) {
-        sampleNames.push(row.person.individualId as string);
+        sampleNames.push(row.data.person.individualId as string);
       }
       this.meta = mapSqlRowsToVcfMetadata(rows, headers, sampleNames);
     }
@@ -114,7 +112,7 @@ export class SqlLoader {
     const sql = `SELECT * from sample WHERE id = '${id}'`;
     const rows = executeSql(this.db as Database, sql);
     if (rows.length < 1 || rows[0] === undefined) throw Error("Could not find sample with id: " + id);
-    return mapSample(rows[0]);
+    return mapSample(rows[0]).data;
   }
 
   loadConfig(): Json {
@@ -123,7 +121,7 @@ export class SqlLoader {
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
-  loadSamples(page: number, size: number, query: Query | undefined): Sample[] {
+  loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
     const categories = this.getCategories();
     const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
     const selectClause = `SELECT * from sample ${whereClause}`;
@@ -132,7 +130,7 @@ export class SqlLoader {
     return mapSamples(rows);
   }
 
-  loadPhenotypes(page: number, size: number, query: Query | undefined): Phenotype[] {
+  loadPhenotypes(page: number, size: number, query: Query | undefined): DatabaseResource[] {
     const categories = this.getCategories();
     const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
 
@@ -157,13 +155,16 @@ export class SqlLoader {
     });
 
     return Object.entries(grouped).map(([sampleId, features]) => ({
-      subject: { id: sampleId },
-      phenotypicFeaturesList: features.map((f) => ({
-        type: {
-          id: f.id,
-          label: f.label,
-        },
-      })),
+      id: -1,
+      data: {
+        subject: { id: sampleId },
+        phenotypicFeaturesList: features.map((f) => ({
+          type: {
+            id: f.id,
+            label: f.label,
+          },
+        })),
+      },
     }));
   }
 
@@ -174,7 +175,7 @@ export class SqlLoader {
     query: Query | undefined,
     includeFormat: boolean,
     sampleIds: number[] | undefined,
-  ): VcfRecord[] {
+  ): DatabaseRecord[] {
     if (sampleIds && !includeFormat) {
       throw Error("Cannot select samples if format information is excluded.");
     }
@@ -276,7 +277,7 @@ export class SqlLoader {
     if (mapped.length > 1) {
       throw new Error(`More than 1 VCF Record returned for id ${id}`);
     }
-    return mapped[0] as VcfRecord;
+    return mapped[0]!.data as VcfRecord;
   }
 
   getCategories(): Categories {

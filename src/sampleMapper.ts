@@ -1,22 +1,25 @@
-import { Person, Sample } from "./index";
-import { SqlRow } from "./sql";
+import { Person } from "./index";
+import { DatabaseSample, SqlRow } from "./sql";
 
-export function mapSample(row: SqlRow): Sample {
+export function mapSample(row: SqlRow): DatabaseSample {
   return {
-    person: {
-      familyId: row.familyId as string,
-      individualId: row.individualId as string,
-      paternalId: row.paternalId as string,
-      maternalId: row.maternalId as string,
-      sex: mapSex(row.sex as string),
-      affectedStatus: mapAffectedStatus(row.affectedStatus as string),
-    },
     id: row.id as number,
-    proband: row.proband === 1,
+    data: {
+      person: {
+        familyId: row.familyId as string,
+        individualId: row.individualId as string,
+        paternalId: row.paternalId as string,
+        maternalId: row.maternalId as string,
+        sex: mapSex(row.sex as string),
+        affectedStatus: mapAffectedStatus(row.affectedStatus as string),
+      },
+      id: row.id as number,
+      proband: row.proband === 1,
+    },
   };
 }
 
-export function mapSamples(rows: SqlRow[]): Sample[] {
+export function mapSamples(rows: SqlRow[]): DatabaseSample[] {
   return rows.map(mapSample);
 }
 

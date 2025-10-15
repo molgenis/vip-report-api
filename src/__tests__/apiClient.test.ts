@@ -19,7 +19,6 @@ const record0: Item<VcfRecord> = {
     c: "1",
     f: ["PASS"],
     i: [],
-    id: 1,
     n: {
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
@@ -59,8 +58,8 @@ const record0: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: {
-      0: {
+    s: [
+      {
         AD: [45, 5],
         DP: 50,
         GT: {
@@ -70,7 +69,7 @@ const record0: Item<VcfRecord> = {
         },
         VIAB: 0.9,
       },
-      1: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -80,7 +79,7 @@ const record0: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-      2: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -90,7 +89,7 @@ const record0: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-    },
+    ],
   },
   id: 1,
 };
@@ -100,7 +99,6 @@ const record1: Item<VcfRecord> = {
     c: "1",
     f: [],
     i: [],
-    id: 2,
     n: {
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
@@ -135,8 +133,8 @@ const record1: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: {
-      0: {
+    s: [
+      {
         AD: [0, 0],
         DP: 10,
         GT: {
@@ -145,7 +143,7 @@ const record1: Item<VcfRecord> = {
           t: "het",
         },
       },
-      1: {
+      {
         AD: [11, 0],
         DP: 11,
         GT: {
@@ -155,7 +153,7 @@ const record1: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-      2: {
+      {
         AD: [11, 0],
         DP: 11,
         GT: {
@@ -165,7 +163,7 @@ const record1: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-    },
+    ],
   },
   id: 2,
 };
@@ -175,7 +173,6 @@ const record0desc: Item<VcfRecord> = {
     c: "1",
     f: ["PASS"],
     i: [],
-    id: 1,
     n: {
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
@@ -215,8 +212,8 @@ const record0desc: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: {
-      0: {
+    s: [
+      {
         AD: [45, 5],
         DP: 50,
         GT: {
@@ -226,7 +223,7 @@ const record0desc: Item<VcfRecord> = {
         },
         VIAB: 0.9,
       },
-      1: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -236,7 +233,7 @@ const record0desc: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-      2: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -246,7 +243,7 @@ const record0desc: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-    },
+    ],
   },
   id: 1,
 };
@@ -256,7 +253,6 @@ const record0catA: Item<VcfRecord> = {
     c: "1",
     f: ["PASS"],
     i: [],
-    id: 1,
     n: {
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
@@ -278,8 +274,8 @@ const record0catA: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: {
-      0: {
+    s: [
+      {
         AD: [45, 5],
         DP: 50,
         GT: {
@@ -289,7 +285,7 @@ const record0catA: Item<VcfRecord> = {
         },
         VIAB: 0.9,
       },
-      1: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -299,7 +295,7 @@ const record0catA: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-      2: {
+      {
         AD: [10, 0],
         DP: 10,
         GT: {
@@ -309,7 +305,7 @@ const record0catA: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-    },
+    ],
   },
   id: 1,
 };
@@ -319,7 +315,6 @@ const record1desc: Item<VcfRecord> = {
     c: "1",
     f: [],
     i: [],
-    id: 2,
     n: {
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
@@ -354,8 +349,8 @@ const record1desc: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: {
-      0: {
+    s: [
+      {
         AD: [0, 0],
         DP: 10,
         GT: {
@@ -364,7 +359,7 @@ const record1desc: Item<VcfRecord> = {
           t: "het",
         },
       },
-      1: {
+      {
         AD: [11, 0],
         DP: 11,
         GT: {
@@ -374,7 +369,7 @@ const record1desc: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-      2: {
+      {
         AD: [11, 0],
         DP: 11,
         GT: {
@@ -384,7 +379,7 @@ const record1desc: Item<VcfRecord> = {
         },
         VIAB: 1,
       },
-    },
+    ],
   },
   id: 2,
 };

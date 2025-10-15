@@ -9,30 +9,56 @@ import type {
   GenotypeType,
   GenotypeAllele,
   ValueObject,
+  RecordSample,
 } from "@molgenis/vip-report-vcf";
 import { parseIntegerValue } from "./ValueParser";
 import { parseValue } from "./DataParser";
-import { RecordSamples } from "./index";
-import { Categories, SqlRow } from "./sql";
+import { Categories, DatabaseRecord, SqlRow } from "./sql";
+
+type ValueMap = {
+  infoMap: Map<string, Value>;
+  nestedMap: Map<string, ValueObject[]>;
+  fmtArr: Map<string, Value | Genotype>[];
+  restMap: Map<string, Value>;
+};
 
 export const excludeKeys = ["id", "v_variant_id", "variant_id", "GT_type"];
+
+function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord {
+  const n = Object.fromEntries(valueMap.infoMap);
+  for (const nestedField of nestedFields) {
+    n[nestedField] = valueMap.nestedMap.get(nestedField) ?? [];
+  }
+  const s: RecordSample[] = [];
+  valueMap.fmtArr.forEach((f) => {
+    const sampleId = f.get("sample_id") as number;
+    if (sampleId !== undefined) s[sampleId] = Object.fromEntries([...f].filter(([key]) => key !== "sample_id"));
+  });
+
+  return {
+    id: valueMap.restMap.get("v_variant_id") as number,
+    data: {
+      c: valueMap.restMap.get("chrom") as string,
+      p: valueMap.restMap.get("pos") as number,
+      i: valueMap.restMap.get("id_vcf") === null ? [] : (valueMap.restMap.get("id_vcf") as string[]),
+      r: valueMap.restMap.get("ref") as string,
+      a: valueMap.restMap.get("alt") as string[],
+      q: valueMap.restMap.get("filter") === null ? null : (valueMap.restMap.get("qual") as number),
+      f: valueMap.restMap.get("filter") === null ? [] : (valueMap.restMap.get("filter") as string[]),
+      n,
+      s,
+    } as VcfRecord,
+  };
+}
 
 export function mapRows(
   rows: SqlRow[],
   meta: VcfMetadata,
   categories: Categories,
   nestedFields: string[],
-): VcfRecord[] {
+): DatabaseRecord[] {
   // Per-variant accumulation data structures
-  const variantMap = new Map<
-    number,
-    {
-      infoMap: Map<string, Value>;
-      nestedMap: Map<string, ValueObject[]>;
-      fmtArr: Map<string, Value | Genotype>[];
-      restMap: Map<string, Value>;
-    }
-  >();
+  const variantMap = new Map<number, ValueMap>();
 
   // Track CSQ/FMT rows already added by primary key
   const addedFmtMap = new Map<number, string[]>();
@@ -86,32 +112,8 @@ export function mapRows(
       }
     }
   }
-
   // Compose VcfRecord objects
-  return Array.from(variantMap.entries()).map(([variantId, record]) => {
-    const n = Object.fromEntries(record.infoMap);
-    for (const nestedField of nestedFields) {
-      n[nestedField] = record.nestedMap.get(nestedField) ?? [];
-    }
-    const s: RecordSamples = {};
-    record.fmtArr.forEach((f) => {
-      const sampleId = f.get("sample_id") as number;
-      if (sampleId !== undefined) s[sampleId] = Object.fromEntries([...f].filter(([key]) => key !== "sample_id"));
-    });
-
-    return {
-      id: variantId,
-      c: record.restMap.get("chrom") as string,
-      p: record.restMap.get("pos") as number,
-      i: record.restMap.get("id_vcf") === null ? [] : (record.restMap.get("id_vcf") as string[]),
-      r: record.restMap.get("ref") as string,
-      a: record.restMap.get("alt") as string[],
-      q: record.restMap.get("filter") === null ? null : (record.restMap.get("qual") as number),
-      f: record.restMap.get("filter") === null ? [] : (record.restMap.get("filter") as string[]),
-      n,
-      s,
-    };
-  });
+  return Array.from(variantMap.values()).map((valueMap) => mapVariant(valueMap, nestedFields));
 }
 
 /**

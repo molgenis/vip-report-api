@@ -66,7 +66,6 @@ export interface SortOrder {
 
 export interface Sample extends Resource {
   person: Person;
-  id: number;
   proband: boolean;
 }
 
