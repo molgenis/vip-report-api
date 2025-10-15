@@ -181,7 +181,7 @@ export class SqlLoader {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
-    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
+    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables, meta)}` : "";
     const sampleJoinQuery = sampleIds !== undefined ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, includeFormat);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
@@ -216,7 +216,7 @@ export class SqlLoader {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
-    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables)}` : "";
+    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables, meta)}` : "";
     const nestedJoins = getNestedJoins(nestedTables);
 
     const sql = `

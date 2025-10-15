@@ -1,8 +1,9 @@
 import { Database } from "sql.js";
 
 import { Query, QueryClause, SelectorPart, SortOrder } from "./index";
-import { Value, type VcfMetadata } from "@molgenis/vip-report-vcf";
+import { FieldMetadata, Value, type VcfMetadata } from "@molgenis/vip-report-vcf";
 import { ArgsValue, Categories, FieldCategories, SqlRow } from "./sql";
+import { FieldType } from "./DataParser";
 
 export function executeSql(db: Database, sql: string): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
@@ -80,7 +81,12 @@ function mapQueryCategories(categories: Map<string, FieldCategories>, key: strin
   return { args: args, operator: clause.operator, selector: clause.selector };
 }
 
-export function complexQueryToSql(query: Query, categories: Categories, nestedTables: string[]): string {
+export function complexQueryToSql(
+  query: Query,
+  categories: Categories,
+  nestedTables: string[],
+  meta: VcfMetadata,
+): string {
   function usedTables(query: Query, tables = new Set<string>()): Set<string> {
     if (
       query &&
@@ -154,7 +160,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
     }
     if (parts.length === 1) {
       const sqlCol = mapField((parts[0] as SelectorPart).toString());
-      return mapOperatorToSql(clause, sqlCol);
+      return mapOperatorToSql(clause, sqlCol, meta);
     }
     if (parts.length === 2) {
       const type = parts[0] === "s" ? "FORMAT" : "INFO";
@@ -166,7 +172,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
         newClause = mapQueryCategories(categories, key, clause);
       }
       const sqlCol = `${prefix}_inner.${field}`;
-      return mapOperatorToSql(newClause, sqlCol);
+      return mapOperatorToSql(newClause, sqlCol, meta);
     }
     if (parts.length === 3) {
       const type = parts[0] === "s" ? "FORMAT" : "INFO";
@@ -179,7 +185,7 @@ export function complexQueryToSql(query: Query, categories: Categories, nestedTa
         newClause = mapQueryCategories(categories, key, clause);
       }
       const sqlCol = `${prefix}.${field}`;
-      let where = mapOperatorToSql(newClause, sqlCol);
+      let where = mapOperatorToSql(newClause, sqlCol, meta);
       if (parts[0] === "s" && parts[1] !== "*") {
         where = `(${where} AND ${prefix}.sample_id = ${parts[1]})`;
       }
@@ -219,46 +225,113 @@ v.id IN (
 ${nestedFilter}`.trim();
 }
 
+function parseString(sqlCol: string): {
+  field_type: FieldType;
+  parent_field: string | undefined;
+  field: string | undefined;
+} {
+  const [rawTable, field] = sqlCol.split(".", 2);
+  const table = rawTable!.endsWith("_inner") ? rawTable!.slice(0, -6) : rawTable;
+  let field_type: FieldType;
+  let parent_field: string | undefined;
+  if (table === "f") {
+    field_type = "FORMAT";
+  } else {
+    field_type = "INFO";
+  }
+  if (table !== "n" && table !== "v") {
+    parent_field = table;
+  }
+  return { field_type, parent_field, field };
+}
+
+function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata | undefined {
+  const { field_type, parent_field, field } = parseString(sqlCol);
+  if (field === undefined) {
+    throw new Error(`Invalid column: '${sqlCol}'`);
+  }
+  if (field_type === "FORMAT") {
+    return meta.format[field];
+  } else {
+    if (parent_field !== undefined) {
+      const parentMeta = meta.info[parent_field];
+      if (parentMeta === undefined) {
+        throw new Error(`Parent metadata missing for: '${parent_field}'`);
+      }
+      if (parentMeta.nested === undefined) {
+        throw new Error(`Nested fields missing in parent metadata: '${parent_field}'`);
+      }
+      for (const nested of parentMeta.nested.items as FieldMetadata[]) {
+        if (nested.id === field) {
+          return nested;
+        }
+      }
+    } else {
+      return meta.info[field!];
+    }
+  }
+}
+
 function mapInQuery(
   args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
   sqlCol: string,
   operator: "in" | "!in",
-) {
+  meta: VcfMetadata | null,
+): string {
+  if (meta == null) {
+    throw new Error(`'in' queries are unsupported for columns without metadata.`);
+  }
+  const fieldMeta = getMetadataForColumn(sqlCol, meta);
   if (!Array.isArray(args)) {
     throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
   }
   const nonNulls = args.filter((v) => v !== null && v !== undefined);
   const hasNull = args.some((v) => v === null || v === undefined);
+  let query: string | null = null;
 
-  let sqlFrag = "";
   if (nonNulls.length > 0) {
     const valueList = toSqlList(nonNulls);
 
-    const jsonExists = `(json_valid(${sqlCol}) AND EXISTS (
+    let inClause: string;
+    if (fieldMeta?.number.count !== 1) {
+      inClause = `EXISTS (
         SELECT 1 FROM json_each(${sqlCol})
         WHERE CAST(json_each.value as TEXT) IN (${valueList})
-      ))`;
-
-    const plainExists = `(${sqlCol} IN (${valueList}) OR ${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")}))`;
-
-    // Combine both cases
-    const inClause = `(${jsonExists} OR ${plainExists})`;
-
-    sqlFrag = operator === "in" ? inClause : `NOT ${inClause}`;
+      )`;
+    } else {
+      switch (fieldMeta.type) {
+        case "CHARACTER":
+        case "STRING":
+          inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
+          break;
+        case "CATEGORICAL":
+        case "INTEGER":
+        case "FLAG":
+        case "FLOAT":
+          inClause = `(${sqlCol} IN (${valueList})`;
+          break;
+        default:
+          throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
+      }
+    }
+    query = operator === "in" ? inClause : `NOT ${inClause}`;
   }
 
   if (hasNull) {
     const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
-    if (sqlFrag.trim()) {
-      sqlFrag = operator === "in" ? `(${sqlFrag} OR ${nullCheck})` : `(${sqlFrag} AND ${nullCheck})`;
+    if (query !== null && query.trim()) {
+      query = operator === "in" ? `(${query} OR ${nullCheck})` : `(${query} AND ${nullCheck})`;
     } else {
-      sqlFrag = nullCheck;
+      query = nullCheck;
     }
   }
-  return sqlFrag;
+  if (query === null) {
+    throw new Error(`An error occurred while mapping the IN query for column '${sqlCol}'`);
+  }
+  return query;
 }
 
-function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
+function mapOperatorToSql(clause: QueryClause, sqlCol: string, meta: VcfMetadata | null): string {
   const { args, operator } = clause;
 
   if (args === null || args === undefined || (Array.isArray(args) && (args as Array<ArgsValue>).length === 0)) {
@@ -273,7 +346,7 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string): string {
   }
 
   if (operator === "in" || operator === "!in") {
-    return mapInQuery(args, sqlCol, operator);
+    return mapInQuery(args, sqlCol, operator, meta);
   }
 
   switch (operator) {
@@ -309,7 +382,7 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
 
   if (parts.length === 1) {
     const sqlCol = mapField((parts[0] as SelectorPart).toString());
-    return mapOperatorToSql(clause, sqlCol);
+    return mapOperatorToSql(clause, sqlCol, null);
   } else if (parts.length === 2) {
     const prefix = parts[0];
     const type = prefix === "s" ? "FORMAT" : "INFO";
@@ -319,7 +392,7 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     if (categories.has(key)) {
       mapQueryCategories(categories, key, clause);
     }
-    return mapOperatorToSql(clause, sqlCol);
+    return mapOperatorToSql(clause, sqlCol, null);
   }
   throw new Error("Unsupported query:" + JSON.stringify(parts));
 }
