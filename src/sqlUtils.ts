@@ -87,114 +87,6 @@ export function complexQueryToSql(
   nestedTables: string[],
   meta: VcfMetadata,
 ): string {
-  function usedTables(query: Query, tables = new Set<string>()): Set<string> {
-    if (
-      query &&
-      typeof query === "object" &&
-      "args" in query &&
-      Array.isArray(query.args) &&
-      (query.operator === "and" || query.operator === "or")
-    ) {
-      for (const subQuery of query.args) usedTables(subQuery as Query, tables);
-      return tables;
-    }
-    const clause = query as QueryClause;
-    let parts: SelectorPart[];
-    if (Array.isArray(clause.selector)) {
-      parts = clause.selector.slice();
-    } else {
-      parts = [clause.selector];
-    }
-    if (parts.length > 3) {
-      throw Error(`Unexpected number of query parts for query: '${query}'`);
-    }
-    if (parts[0] === "s") {
-      tables.add("s");
-    } else if (parts.length === 3) {
-      tables.add(parts[1] as string);
-    } else {
-      tables.add(parts[0] as string);
-    }
-    return tables;
-  }
-
-  // Extract only the Nested parts of the query
-  function extractNestedQuery(query: Query, nestedTable: string): Query | undefined {
-    if (
-      query &&
-      typeof query === "object" &&
-      "args" in query &&
-      Array.isArray(query.args) &&
-      (query.operator === "and" || query.operator === "or")
-    ) {
-      const subCSQs = query.args.map((q) => extractNestedQuery(q as Query, nestedTable)).filter(Boolean) as Query[];
-      if (subCSQs.length === 0) return undefined;
-      if (subCSQs.length === 1) return subCSQs[0];
-      return { operator: query.operator, args: subCSQs as Query[] } as Query;
-    }
-    const clause = query as QueryClause;
-    const parts = Array.isArray(clause.selector) ? clause.selector : [clause.selector];
-    if (parts.length === 3 && parts[1] === nestedTable) return query;
-    return undefined;
-  }
-
-  function queryToSql(query: Query, categories: Categories, nestedTables: string[]): string {
-    if (
-      query &&
-      typeof query === "object" &&
-      "args" in query &&
-      Array.isArray(query.args) &&
-      (query.operator === "and" || query.operator === "or")
-    ) {
-      const joinWord = query.operator.toUpperCase();
-      return (
-        "(" + query.args.map((subQuery) => queryToSql(subQuery, categories, nestedTables)).join(` ${joinWord} `) + ")"
-      );
-    }
-    const clause = query as QueryClause;
-    let parts: SelectorPart[];
-    if (Array.isArray(clause.selector)) {
-      parts = clause.selector.slice();
-    } else {
-      parts = [clause.selector];
-    }
-    if (parts.length === 1) {
-      const sqlCol = mapField((parts[0] as SelectorPart).toString());
-      return mapOperatorToSql(clause, sqlCol, meta);
-    }
-    if (parts.length === 2) {
-      const type = parts[0] === "s" ? "FORMAT" : "INFO";
-      const prefix = parts[0] === "s" ? "f" : parts[0];
-      const field = parts[1];
-      let newClause = clause;
-      const key = `${type}/${field}`;
-      if (categories.has(key)) {
-        newClause = mapQueryCategories(categories, key, clause);
-      }
-      const sqlCol = `${prefix}_inner.${field}`;
-      return mapOperatorToSql(newClause, sqlCol, meta);
-    }
-    if (parts.length === 3) {
-      const type = parts[0] === "s" ? "FORMAT" : "INFO";
-      const prefix = parts[0] === "s" ? "f_inner" : parts[1] + "_inner";
-      const parent = type === "INFO" ? parts[1] : null;
-      const field = parts[2];
-      let newClause = clause;
-      const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
-      if (categories.has(key)) {
-        newClause = mapQueryCategories(categories, key, clause);
-      }
-      const sqlCol = `${prefix}.${field}`;
-      let where = mapOperatorToSql(newClause, sqlCol, meta);
-      if (parts[0] === "s" && parts[1] !== "*") {
-        where = `(${where} AND ${prefix}.sample_id = ${parts[1]})`;
-      }
-      return where;
-    }
-    throw new Error("Could not convert selector '" + JSON.stringify(parts) + "' to SQL.");
-  }
-
-  // Gather tables referenced
   const tables = usedTables(query);
   let joins = "vcf v_inner";
   if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
@@ -204,7 +96,6 @@ export function complexQueryToSql(
   }
   if (tables.has("n")) joins += " JOIN info n_inner ON n_inner.variant_id = v_inner.id";
 
-  // Build only-CSQ WHERE portion for main join
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
     const nestedQuery = extractNestedQuery(query, nestedTable);
@@ -212,7 +103,7 @@ export function complexQueryToSql(
       const oldPrefix = `${nestedTable}_inner.`;
       const newPrefix = `${nestedTable}.`;
       const pattern = new RegExp(oldPrefix, "g");
-      nestedFilter += " AND " + queryToSql(nestedQuery, categories, nestedTables).replace(pattern, newPrefix);
+      nestedFilter += " AND " + queryToSql(nestedQuery, categories, nestedTables, meta).replace(pattern, newPrefix);
     }
   }
 
@@ -220,9 +111,118 @@ export function complexQueryToSql(
 v.id IN (
   SELECT v_inner.id
   FROM ${joins}
-  WHERE ${queryToSql(query, categories, nestedTables)}
+  WHERE ${queryToSql(query, categories, nestedTables, meta)}
 )
 ${nestedFilter}`.trim();
+}
+
+function usedTables(query: Query, tables = new Set<string>()): Set<string> {
+  if (
+    query &&
+    typeof query === "object" &&
+    "args" in query &&
+    Array.isArray(query.args) &&
+    (query.operator === "and" || query.operator === "or")
+  ) {
+    for (const subQuery of query.args) usedTables(subQuery as Query, tables);
+    return tables;
+  }
+  const clause = query as QueryClause;
+  let parts: SelectorPart[];
+  if (Array.isArray(clause.selector)) {
+    parts = clause.selector.slice();
+  } else {
+    parts = [clause.selector];
+  }
+  if (parts.length > 3) {
+    throw Error(`Unexpected number of query parts for query: '${query}'`);
+  }
+  if (parts[0] === "s") {
+    tables.add("s");
+  } else if (parts.length === 3) {
+    tables.add(parts[1] as string);
+  } else {
+    tables.add(parts[0] as string);
+  }
+  return tables;
+}
+
+// Extract only the Nested parts of the query
+function extractNestedQuery(query: Query, nestedTable: string): Query | undefined {
+  if (
+    query &&
+    typeof query === "object" &&
+    "args" in query &&
+    Array.isArray(query.args) &&
+    (query.operator === "and" || query.operator === "or")
+  ) {
+    const subCSQs = query.args.map((q) => extractNestedQuery(q as Query, nestedTable)).filter(Boolean) as Query[];
+    if (subCSQs.length === 0) return undefined;
+    if (subCSQs.length === 1) return subCSQs[0];
+    return { operator: query.operator, args: subCSQs as Query[] } as Query;
+  }
+  const clause = query as QueryClause;
+  const parts = Array.isArray(clause.selector) ? clause.selector : [clause.selector];
+  if (parts.length === 3 && parts[1] === nestedTable) return query;
+  return undefined;
+}
+
+function queryToSql(query: Query, categories: Categories, nestedTables: string[], meta: VcfMetadata): string {
+  if (
+    query &&
+    typeof query === "object" &&
+    "args" in query &&
+    Array.isArray(query.args) &&
+    (query.operator === "and" || query.operator === "or")
+  ) {
+    const joinWord = query.operator.toUpperCase();
+    return (
+      "(" +
+      query.args.map((subQuery) => queryToSql(subQuery, categories, nestedTables, meta)).join(` ${joinWord} `) +
+      ")"
+    );
+  }
+  const clause = query as QueryClause;
+  let parts: SelectorPart[];
+  if (Array.isArray(clause.selector)) {
+    parts = clause.selector.slice();
+  } else {
+    parts = [clause.selector];
+  }
+  if (parts.length === 1) {
+    const sqlCol = mapField((parts[0] as SelectorPart).toString());
+    return mapOperatorToSql(clause, sqlCol, meta);
+  }
+  if (parts.length === 2) {
+    const type = parts[0] === "s" ? "FORMAT" : "INFO";
+    const prefix = parts[0] === "s" ? "f" : parts[0];
+    const field = parts[1];
+    let newClause = clause;
+    const key = `${type}/${field}`;
+    if (categories.has(key)) {
+      newClause = mapQueryCategories(categories, key, clause);
+    }
+    const sqlCol = `${prefix}_inner.${field}`;
+    return mapOperatorToSql(newClause, sqlCol, meta);
+  }
+  if (parts.length === 3) {
+    const type = parts[0] === "s" ? "FORMAT" : "INFO";
+    const prefix = parts[0] === "s" ? "f_inner" : parts[1] + "_inner";
+    const parent = type === "INFO" ? parts[1] : null;
+    const field = parts[2];
+    let newClause = clause;
+    const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
+    if (categories.has(key)) {
+      newClause = mapQueryCategories(categories, key, clause);
+    }
+    const sqlCol = `${prefix}.${field}`;
+    let where = mapOperatorToSql(newClause, sqlCol, meta);
+    if (parts[0] === "s" && parts[1] !== "*") {
+      where = `(${where} AND ${prefix}.sample_id = ${parts[1]})`;
+    }
+    return where;
+  }
+  throw new Error("Could not convert selector '" + JSON.stringify(parts) + "' to SQL.");
 }
 
 function parseString(sqlCol: string): {
