@@ -94,13 +94,15 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
         items: childRows.map((childRow) => metaMap.get((row.name + "_" + childRow.name) as string)!),
       };
     }
-    postProcessedMetaMap.set(row.name as string, field);
+    if (row.parent === null) {
+      postProcessedMetaMap.set(row.name as string, field);
+    }
   }
 
   // Now assign to info/format
   const info: FieldMetadataContainer = {};
   const format: FormatMetadataContainer = {};
-  for (const row of rows.filter((r) => r.parent == null)) {
+  for (const row of rows.filter((r) => r.parent === null)) {
     const field = postProcessedMetaMap.get(row.name as string)!;
     if (row.fieldType === "INFO") {
       info[row.name as string] = field;
