@@ -31,7 +31,7 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
   }
   const s: RecordSample[] = [];
   valueMap.fmtArr.forEach((f) => {
-    const sampleId = f.get("sample_id") as number;
+    const sampleId = f.get("sample_id") as number | undefined;
     if (sampleId !== undefined) s[sampleId] = Object.fromEntries([...f].filter(([key]) => key !== "sample_id"));
   });
 
@@ -140,11 +140,11 @@ export function splitAndParseMap(
     if (key.startsWith("FMT_")) {
       const fmtKey = key.substring("FMT_".length);
       if (fmtKey === "sample_id") {
-        fmtMap.set(fmtKey, value as number);
+        fmtMap.set(fmtKey, value as Value);
       } else if (!excludeKeys.includes(fmtKey)) {
         if (meta.format[fmtKey] !== undefined) {
           if (value !== null) {
-            fmtMap.set(fmtKey, parseFormatValue(value as string, meta.format[fmtKey] as FieldMetadata, categories));
+            fmtMap.set(fmtKey, parseFormatValue(value as Value, meta.format[fmtKey] as FieldMetadata, categories));
           }
         } else {
           throw Error(`Unknown format metadata: ${fmtKey}`);
@@ -155,7 +155,7 @@ export function splitAndParseMap(
       if (!excludeKeys.includes(infoKey)) {
         if (meta.info[infoKey] !== undefined) {
           if (value !== null) {
-            infoMap.set(infoKey, parseValue(value as string, meta.info[infoKey] as FieldMetadata, categories, "INFO"));
+            infoMap.set(infoKey, parseValue(value as Value, meta.info[infoKey] as FieldMetadata, categories, "INFO"));
           }
         } else {
           throw Error(`Unknown info metadata: ${infoKey}`);
@@ -173,33 +173,33 @@ export function splitAndParseMap(
 
       const nestedKey = key.substring(key.indexOf("^") + 1);
       if (excludeKeys.includes(nestedKey)) {
-        nestedMap.set(nestedKey, value as string);
+        nestedMap.set(nestedKey, value as Value);
       } else {
-        nestedMap.set(nestedKey, parseValue(value as string, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
+        nestedMap.set(nestedKey, parseValue(value as Value, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
       }
       nestedFieldsMap.set(nestedField, nestedMap);
     } else {
-      restMap.set(key, parseStandardField(value as string, key));
+      restMap.set(key, parseStandardField(value as Value, key));
     }
   }
   return { fmtMap, nestedFieldsMap, infoMap, restMap };
 }
 
 // Standardize parsing of non-sample non-info fields
-function parseStandardField(token: string, key: string): Value {
+function parseStandardField(token: Value, key: string): Value {
   switch (key) {
     case "v_variant_id":
     case "chrom":
     case "ref":
-      return token;
+      return token as string;
     case "pos":
-      return Number(token);
+      return token as number;
     case "alt":
     case "id_vcf":
     case "filter":
       return JSON.parse(token as string);
     case "qual":
-      return token == null ? null : Number(token);
+      return token == null ? null : (token as number);
     default:
       throw new Error("Unknown VCF field: " + key);
   }
@@ -207,7 +207,7 @@ function parseStandardField(token: string, key: string): Value {
 
 // Parse FORMAT column values (GT vs everything else)
 function parseFormatValue(
-  token: Value | Genotype | undefined | null,
+  token: Value | Genotype | undefined,
   fmtMeta: FieldMetadata,
   categories: Categories,
 ): RecordSampleType {
