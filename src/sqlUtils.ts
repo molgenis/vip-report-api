@@ -272,16 +272,37 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
   }
 }
 
+function mapInQueryRegular(sqlCol: string, inClause: string, nonNulls: (string | number)[]) {
+  switch (sqlCol) {
+    case "v.chrom":
+    case "v.ref":
+      inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
+      break;
+    case "v.pos":
+    case "v.qual":
+      inClause = `${sqlCol} IN (${toSqlList(nonNulls)})`;
+      break;
+    case "v.alt":
+    case "v.id_vcf":
+    case "v.filter":
+      inClause = `EXISTS (
+            SELECT 1 FROM json_each(${sqlCol})
+            WHERE CAST(json_each.value as TEXT) IN (${toSqlList(nonNulls)})
+          )`;
+      break;
+    default:
+      throw Error(`Unknown column '${sqlCol}'`);
+  }
+  return inClause;
+}
+
 function mapInQuery(
   args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
   sqlCol: string,
   operator: "in" | "!in",
   meta: VcfMetadata | null,
 ): string {
-  if (meta == null) {
-    throw new Error(`'in' queries are unsupported for columns without metadata.`);
-  }
-  const fieldMeta = getMetadataForColumn(sqlCol, meta);
+  let inClause: string = "";
   if (!Array.isArray(args)) {
     throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
   }
@@ -289,34 +310,40 @@ function mapInQuery(
   const hasNull = args.some((v) => v === null || v === undefined);
   let query: string | null = null;
 
-  if (nonNulls.length > 0) {
-    const valueList = toSqlList(nonNulls);
-
-    let inClause: string;
-    if (fieldMeta?.number.count !== 1) {
-      inClause = `EXISTS (
+  if (meta == null) {
+    inClause = `${sqlCol} IN (${toSqlList(nonNulls)})`;
+  } else {
+    if (nonNulls.length > 0) {
+      const fieldMeta = getMetadataForColumn(sqlCol, meta);
+      if (fieldMeta == null) {
+        inClause = mapInQueryRegular(sqlCol, inClause, nonNulls);
+      } else {
+        const valueList = toSqlList(nonNulls);
+        if (fieldMeta?.number.count !== 1) {
+          inClause = `EXISTS (
         SELECT 1 FROM json_each(${sqlCol})
         WHERE CAST(json_each.value as TEXT) IN (${valueList})
       )`;
-    } else {
-      switch (fieldMeta.type) {
-        case "CHARACTER":
-        case "STRING":
-          inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
-          break;
-        case "CATEGORICAL":
-        case "INTEGER":
-        case "FLAG":
-        case "FLOAT":
-          inClause = `(${sqlCol} IN (${valueList})`;
-          break;
-        default:
-          throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
+        } else {
+          switch (fieldMeta.type) {
+            case "CHARACTER":
+            case "STRING":
+              inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
+              break;
+            case "CATEGORICAL":
+            case "INTEGER":
+            case "FLAG":
+            case "FLOAT":
+              inClause = `${sqlCol} IN (${valueList})`;
+              break;
+            default:
+              throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
+          }
+        }
       }
     }
-    query = operator === "in" ? inClause : `NOT ${inClause}`;
   }
-
+  query = operator === "in" ? inClause : `NOT ${inClause}`;
   if (hasNull) {
     const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
     if (query !== null && query.trim()) {
@@ -325,7 +352,7 @@ function mapInQuery(
       query = nullCheck;
     }
   }
-  if (query === null) {
+  if (!query) {
     throw new Error(`An error occurred while mapping the IN query for column '${sqlCol}'`);
   }
   return query;
