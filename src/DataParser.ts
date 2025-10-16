@@ -15,13 +15,13 @@ export function parseValue(
   switch (numberType) {
     case "NUMBER":
       if (infoMetadata.number.count === 0 || infoMetadata.number.count === 1) {
-        if (token === null || token === undefined) {
+        if (token === null) {
           value = null;
         } else {
           value = parseSingleValue(token.toString(), infoMetadata, categories, type);
         }
       } else {
-        if (token === null || token === undefined) {
+        if (token === null) {
           value = [];
         } else {
           value = parseMultiValue(token.toString(), infoMetadata, categories, type);
@@ -32,7 +32,7 @@ export function parseValue(
     case "PER_ALT_AND_REF":
     case "PER_GENOTYPE":
     case "OTHER":
-      if (token === null || token === undefined) {
+      if (token === null) {
         value = [];
       } else {
         value = parseMultiValue(token.toString(), infoMetadata, categories, type);
@@ -70,8 +70,8 @@ export function parseMultiValue(
 ): ValueArray {
   const values: Value[] = [];
   let jsonValues;
-  if (token !== null && token.length > 0) {
-    jsonValues = JSON.parse(token) as object[];
+  if (token.length > 0) {
+    jsonValues = JSON.parse(token);
     if (jsonValues !== null && jsonValues.length > 0) {
       if (!isIterable(jsonValues)) {
         jsonValues = [jsonValues];
@@ -87,7 +87,7 @@ export function parseMultiValue(
 }
 
 function isIterable(obj: object[]): boolean {
-  return obj != null && typeof obj[Symbol.iterator] === "function";
+  return typeof obj[Symbol.iterator] === "function";
 }
 
 export function parseNestedValue(

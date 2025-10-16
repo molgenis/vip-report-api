@@ -52,8 +52,7 @@
   },
   "dependencies": {
     "@molgenis/vip-report-vcf": "4.0.0",
-    "sql.js": "^1.10.2",
-    "jszip": "^3.10.1"
+    "sql.js": "^1.13.0"
   },
   "engines": {
     "node": "22",
