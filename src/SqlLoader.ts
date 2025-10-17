@@ -171,18 +171,15 @@ export class SqlLoader {
     size: number,
     sort: SortOrder | SortOrder[] | undefined,
     query: Query | undefined,
-    includeFormat: boolean,
     sampleIds: number[] | undefined,
   ): DatabaseRecord[] {
-    if (sampleIds && !includeFormat) {
-      throw new Error("Cannot select samples if format information is excluded.");
-    }
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
     const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables, meta)}` : "";
-    const sampleJoinQuery = sampleIds !== undefined ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
-    const columns = getColumns(this.db as Database, nestedTables, includeFormat);
+    const sampleJoinQuery =
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
+    const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
       "v.id as v_variant_id",
@@ -200,10 +197,10 @@ export class SqlLoader {
 
     const sql = `
       SELECT DISTINCT ${selectCols}
-        FROM (${getPagingQuery(orderCols, includeFormat, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
+        FROM (${getPagingQuery(orderCols, sampleIds !== undefined, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
         LEFT JOIN info n ON n.variant_id = v.id
         ${nestedJoins} 
-        ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
@@ -236,7 +233,7 @@ export class SqlLoader {
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
-  loadVcfRecordById(id: number): VcfRecord {
+  loadVcfRecordById(id: number, sampleIds: number[] | undefined): VcfRecord {
     const meta = this.getMetadata();
     const nestedTables: string[] = getNestedTables(meta);
     let nestedJoins: string = "";
@@ -244,7 +241,10 @@ export class SqlLoader {
       nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
     }
 
-    const columns = getColumns(this.db as Database, nestedTables, true);
+    const sampleJoinQuery =
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
+    const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
+
     const selectCols = [
       "v.id as v_variant_id",
       "v.chrom",
@@ -262,7 +262,7 @@ export class SqlLoader {
                   FROM
                   (SELECT * FROM vcf) v
                   LEFT JOIN info n ON n.variant_id = v.id 
-                  LEFT JOIN format f ON f.variant_id = v.id
+                    ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
                   ${nestedJoins}
                   WHERE v.id = ${id}
                 `;

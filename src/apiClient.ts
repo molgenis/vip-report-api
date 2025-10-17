@@ -54,14 +54,7 @@ export class ApiClient implements Api {
     const size = params.size ?? 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: DatabaseRecord[] = loader.loadVcfRecords(
-      page,
-      size,
-      params.sort,
-      params.query,
-      true,
-      params.sampleIds,
-    );
+    const variants: DatabaseRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query, params.sampleIds);
     return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
   }
 
@@ -87,22 +80,11 @@ export class ApiClient implements Api {
     };
   }
 
-  async getRecordsWithoutSamples(params: Params = {}): Promise<PagedItems<VcfRecord>> {
-    const loader = await this.loader;
-    if (!loader) throw new Error("Loader was not initialized.");
-    const page = params.page ?? 0;
-    const size = params.size ?? 10;
-    validateQuery(loader.getMetadata(), params.query);
-    const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: DatabaseRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query, false, undefined);
-    return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
-  }
-
-  async getRecordById(id: number): Promise<Item<VcfRecord>> {
+  async getRecordById(id: number, sampleIds?: number[]): Promise<Item<VcfRecord>> {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const record: VcfRecord = loader.loadVcfRecordById(id);
+    const record: VcfRecord = loader.loadVcfRecordById(id, sampleIds);
     return { data: record, id: id };
   }
 

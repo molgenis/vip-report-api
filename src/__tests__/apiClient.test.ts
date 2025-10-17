@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from "vitest";
 import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
 import path from "path";
-import { Item, Params } from "../index";
+import { Item, RecordParams } from "../index";
 import { ApiClient } from "../apiClient";
 import { VcfRecord } from "@molgenis/vip-report-vcf";
 
@@ -473,7 +473,10 @@ test("get - all samples", async () => {
 });
 
 test("get - all records", async () => {
-  const records = await api.getRecords();
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+  };
+  const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0, record1],
     page: { number: 0, size: 10, totalElements: 2 },
@@ -482,7 +485,8 @@ test("get - all records", async () => {
 });
 
 test("get - page of records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     page: 1,
     size: 1,
   };
@@ -495,7 +499,8 @@ test("get - page of records", async () => {
 });
 
 test("get - one record", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "==",
@@ -511,7 +516,8 @@ test("get - one record", async () => {
 });
 
 test("get - records with greater than query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: ">",
@@ -527,7 +533,8 @@ test("get - records with greater than query", async () => {
 });
 
 test("get - records with greater than or equal query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: ">=",
@@ -543,7 +550,8 @@ test("get - records with greater than or equal query", async () => {
 });
 
 test("get - records with less than query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: "<",
@@ -559,7 +567,8 @@ test("get - records with less than query", async () => {
 });
 
 test("get - records with equals null query on qual", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["q"],
       operator: "==",
@@ -575,7 +584,8 @@ test("get - records with equals null query on qual", async () => {
 });
 
 test("get - records with equals empty filter", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["f"],
       operator: "==",
@@ -591,7 +601,8 @@ test("get - records with equals empty filter", async () => {
 });
 
 test("get - records with equals null query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIAB"],
       operator: "==",
@@ -607,7 +618,8 @@ test("get - records with equals null query", async () => {
 });
 
 test("get - records with categorical query on nested", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_object0", "n_cat1"],
       operator: "==",
@@ -623,7 +635,8 @@ test("get - records with categorical query on nested", async () => {
 });
 
 test("get - records with equals not null query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIAB"],
       operator: "!=",
@@ -639,7 +652,8 @@ test("get - records with equals not null query", async () => {
 });
 
 test("get - records with equals undefined query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", "0", "TEST"],
       operator: "==",
@@ -655,7 +669,8 @@ test("get - records with equals undefined query", async () => {
 });
 
 test("get - records with equals not undefined query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "TEST"],
       operator: "!=",
@@ -671,7 +686,8 @@ test("get - records with equals not undefined query", async () => {
 });
 
 test("get - records with less than or equal query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: "<=",
@@ -687,7 +703,8 @@ test("get - records with less than or equal query", async () => {
 });
 
 test("get - records with less than or equal query invalid field", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_string0"],
       operator: "<=",
@@ -700,7 +717,8 @@ test("get - records with less than or equal query invalid field", async () => {
 });
 
 test("get - one record with invalid selector", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p", "x", "y", "z"],
       operator: "==",
@@ -711,7 +729,8 @@ test("get - one record with invalid selector", async () => {
 });
 
 test("get - one record using composed and query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       operator: "and",
       args: [
@@ -737,7 +756,8 @@ test("get - one record using composed and query", async () => {
 });
 
 test("get - all records sorted on n.n_bool0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool0"],
     },
@@ -746,7 +766,8 @@ test("get - all records sorted on n.n_bool0", async () => {
 });
 
 test("get - all records sorted on n.n_bool3", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool3"],
     },
@@ -756,7 +777,8 @@ test("get - all records sorted on n.n_bool3", async () => {
 });
 
 test("get - all records sorted on n.n_bool6", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool6"],
     },
@@ -766,7 +788,8 @@ test("get - all records sorted on n.n_bool6", async () => {
 });
 
 test("get - all records sorted on n.n_bool7", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool7"],
     },
@@ -776,7 +799,8 @@ test("get - all records sorted on n.n_bool7", async () => {
 });
 
 test("get - all records sorted on n.n_number2", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_number2"],
     },
@@ -786,7 +810,8 @@ test("get - all records sorted on n.n_number2", async () => {
 });
 
 test("get - all records sorted on n.n_string0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string0"],
     },
@@ -796,7 +821,8 @@ test("get - all records sorted on n.n_string0", async () => {
 });
 
 test("get - all records sorted on n.n_string3", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string3"],
     },
@@ -806,7 +832,8 @@ test("get - all records sorted on n.n_string3", async () => {
 });
 
 test("get - all records sorted on n.n_string4", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string4"],
     },
@@ -816,7 +843,8 @@ test("get - all records sorted on n.n_string4", async () => {
 });
 
 test("get - all records sorted on n.n_array0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_array0"],
       compare: "asc",
@@ -827,7 +855,8 @@ test("get - all records sorted on n.n_array0", async () => {
 });
 
 test("get - all records sorted on n.n_object0.n_string1 ascending", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_object0", "n_string1"],
       compare: "asc",
@@ -838,7 +867,8 @@ test("get - all records sorted on n.n_object0.n_string1 ascending", async () => 
 });
 
 test("get - all records sorted on n.n_object0.n_string1 descending", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_object0", "n_string1"],
       compare: "desc",
@@ -849,7 +879,8 @@ test("get - all records sorted on n.n_object0.n_string1 descending", async () =>
 });
 
 test("get - all records sorted on n.n_object0 throws an error", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_object0"],
     },
@@ -858,7 +889,8 @@ test("get - all records sorted on n.n_object0 throws an error", async () => {
 });
 
 test("get - all records sorted ascending on position implicitly", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p" },
   };
   const records = await api.getRecords(params);
@@ -866,7 +898,8 @@ test("get - all records sorted ascending on position implicitly", async () => {
 });
 
 test("get - all records sorted ascending on position", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p", compare: "asc" },
   };
   const records = await api.getRecords(params);
@@ -874,7 +907,8 @@ test("get - all records sorted ascending on position", async () => {
 });
 
 test("get - all records sorted descending on position", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p", compare: "desc" },
   };
   const records = await api.getRecords(params);
@@ -882,7 +916,8 @@ test("get - all records sorted descending on position", async () => {
 });
 
 test("get - all records sorted ascending on reference", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "r", compare: "asc" },
   };
   const records = await api.getRecords(params);
@@ -890,7 +925,8 @@ test("get - all records sorted ascending on reference", async () => {
 });
 
 test("get - all records sorted descending on reference", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "r", compare: "desc" },
   };
   const records = await api.getRecords(params);
@@ -898,7 +934,8 @@ test("get - all records sorted descending on reference", async () => {
 });
 
 test("get - all records sorted custom on identifier", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: "i",
       compare: function (a, b) {
@@ -915,7 +952,8 @@ test("get - all records sorted custom on identifier", async () => {
 });
 
 test("get - not one record", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "!=",
@@ -931,7 +969,8 @@ test("get - not one record", async () => {
 });
 
 test("get - some records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "in",
@@ -947,7 +986,8 @@ test("get - some records", async () => {
 });
 
 test("get - some records with invalid selector", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p", "x", "y", "z"],
       operator: "in",
@@ -958,7 +998,8 @@ test("get - some records with invalid selector", async () => {
 });
 
 test("get - some records using composed query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       operator: "or",
       args: [
@@ -984,7 +1025,8 @@ test("get - some records using composed query", async () => {
 });
 
 test("get - not some records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "!in",

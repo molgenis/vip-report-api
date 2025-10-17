@@ -14,9 +14,7 @@ export interface Api {
 
   getRecords(params: Params): Promise<PagedItems<VcfRecord>>;
 
-  getRecordsWithoutSamples(params: Params): Promise<PagedItems<VcfRecord>>;
-
-  getRecordById(id: number): Promise<Item<VcfRecord>>;
+  getRecordById(id: number, sampleIds: number[]): Promise<Item<VcfRecord>>;
 
   getSamples(params: Params): Promise<PagedItems<Sample>>;
 
