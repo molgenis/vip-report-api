@@ -3,7 +3,7 @@ import { Database } from "sql.js";
 import { Query, QueryClause, SelectorPart, SortOrder } from "./index";
 import { FieldMetadata, Value, type VcfMetadata } from "@molgenis/vip-report-vcf";
 import { ArgsValue, Categories, FieldCategories, SqlRow } from "./sql";
-import { FieldType } from "./DataParser";
+import { FieldType } from "./sqlDataParser";
 
 export function executeSql(db: Database, sql: string): SqlRow[] {
   if (!db) throw new Error("Database not initialized");

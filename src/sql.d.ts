@@ -4,7 +4,8 @@ import { Phenotype, Resource, Sample } from "./index";
 export type FieldCategories = Map<number, string>;
 export type Categories = Map<string, FieldCategories>;
 export type TableSize = { size: number; totalSize: number };
-export type SqlRow = { [column: string]: string | number | boolean | null | undefined };
+export type SqlRow = { [column: string]: SqlValue };
+export type SqlValue = string | number | boolean | null;
 export type ArgsValue =
   | string
   | number

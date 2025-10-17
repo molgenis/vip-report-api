@@ -11,9 +11,9 @@ import type {
   ValueObject,
   RecordSample,
 } from "@molgenis/vip-report-vcf";
-import { parseIntegerValue } from "./ValueParser";
-import { parseValue } from "./DataParser";
-import { Categories, DatabaseRecord, SqlRow } from "./sql";
+import { parseIntegerValue } from "./sqlValueParser";
+import { parseSqlValue } from "./sqlDataParser";
+import { Categories, DatabaseRecord, SqlRow, SqlValue } from "./sql";
 
 type ValueMap = {
   infoMap: Map<string, Value>;
@@ -155,7 +155,7 @@ export function splitAndParseMap(
       if (!excludeKeys.includes(infoKey)) {
         if (meta.info[infoKey] !== undefined) {
           if (value !== null) {
-            infoMap.set(infoKey, parseValue(value as Value, meta.info[infoKey], categories, "INFO"));
+            infoMap.set(infoKey, parseSqlValue(value as SqlValue, meta.info[infoKey], categories, "INFO"));
           }
         } else {
           throw new Error(`Unknown info metadata: ${infoKey}`);
@@ -175,7 +175,7 @@ export function splitAndParseMap(
       if (excludeKeys.includes(nestedKey)) {
         nestedMap.set(nestedKey, value as Value);
       } else {
-        nestedMap.set(nestedKey, parseValue(value as Value, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
+        nestedMap.set(nestedKey, parseSqlValue(value as SqlValue, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
       }
       nestedFieldsMap.set(nestedField, nestedMap);
     } else {
@@ -214,7 +214,7 @@ function parseFormatValue(
   if (fmtMeta.id === "GT") {
     return token === null || token === undefined ? null : parseGenotype(token.toString());
   }
-  const val = parseValue(token as Value, fmtMeta, categories, "FORMAT");
+  const val = parseSqlValue(token as SqlValue, fmtMeta, categories, "FORMAT");
   if (Array.isArray(val) && val.every((item) => item === null)) return [];
   return val;
 }
