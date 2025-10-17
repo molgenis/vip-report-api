@@ -30,10 +30,10 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
     n[nestedField] = valueMap.nestedMap.get(nestedField) ?? [];
   }
   const s: RecordSample[] = [];
-  valueMap.fmtArr.forEach((f) => {
+  for (const f of valueMap.fmtArr) {
     const sampleId = f.get("sample_id") as number | undefined;
     if (sampleId !== undefined) s[sampleId] = Object.fromEntries([...f].filter(([key]) => key !== "sample_id"));
-  });
+  }
 
   return {
     id: valueMap.restMap.get("v_variant_id") as number,
@@ -144,10 +144,10 @@ export function splitAndParseMap(
       } else if (!excludeKeys.includes(fmtKey)) {
         if (meta.format[fmtKey] !== undefined) {
           if (value !== null) {
-            fmtMap.set(fmtKey, parseFormatValue(value as Value, meta.format[fmtKey] as FieldMetadata, categories));
+            fmtMap.set(fmtKey, parseFormatValue(value as Value, meta.format[fmtKey], categories));
           }
         } else {
-          throw Error(`Unknown format metadata: ${fmtKey}`);
+          throw new Error(`Unknown format metadata: ${fmtKey}`);
         }
       }
     } else if (key.startsWith("INFO_")) {
@@ -155,10 +155,10 @@ export function splitAndParseMap(
       if (!excludeKeys.includes(infoKey)) {
         if (meta.info[infoKey] !== undefined) {
           if (value !== null) {
-            infoMap.set(infoKey, parseValue(value as Value, meta.info[infoKey] as FieldMetadata, categories, "INFO"));
+            infoMap.set(infoKey, parseValue(value as Value, meta.info[infoKey], categories, "INFO"));
           }
         } else {
-          throw Error(`Unknown info metadata: ${infoKey}`);
+          throw new Error(`Unknown info metadata: ${infoKey}`);
         }
       }
     } else if (nestedTables.includes(key.substring(0, key.indexOf("^")))) {
@@ -236,7 +236,7 @@ function parseGenotype(token: string): Genotype {
 // Classify genotype alleles
 function determineGenotypeType(alleles: GenotypeAllele[]): GenotypeType {
   if (alleles.every((a) => a === null)) return "miss";
-  if (alleles.some((a) => a === null)) return "part";
+  if (alleles.includes(null)) return "part";
   if (alleles.every((a) => a === 0)) return "hom_r";
   if (alleles.every((a) => a === alleles[0])) return "hom_a";
   return "het";

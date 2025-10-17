@@ -28,9 +28,7 @@ export class ApiClient implements Api {
   }
 
   initLoader() {
-    if (this.loader === undefined) {
-      this.loader = new SqlLoader(this.reportData).init();
-    }
+    this.loader ??= new SqlLoader(this.reportData).init();
   }
 
   async getConfig(): Promise<Json | null> {
@@ -52,8 +50,8 @@ export class ApiClient implements Api {
   async getRecords(params: RecordParams = {}): Promise<PagedItems<VcfRecord>> {
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const page = params.page !== undefined ? params.page : 0;
-    const size = params.size !== undefined ? params.size : 10;
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
     const variants: DatabaseRecord[] = loader.loadVcfRecords(
@@ -92,18 +90,11 @@ export class ApiClient implements Api {
   async getRecordsWithoutSamples(params: Params = {}): Promise<PagedItems<VcfRecord>> {
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
-    const page = params.page !== undefined ? params.page : 0;
-    const size = params.size !== undefined ? params.size : 10;
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
     validateQuery(loader.getMetadata(), params.query);
     const tableSize: TableSize = loader.countMatchingVariants(params.query);
-    const variants: DatabaseRecord[] = (await loader).loadVcfRecords(
-      page,
-      size,
-      params.sort,
-      params.query,
-      false,
-      undefined,
-    );
+    const variants: DatabaseRecord[] = loader.loadVcfRecords(page, size, params.sort, params.query, false, undefined);
     return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
   }
 
@@ -117,8 +108,8 @@ export class ApiClient implements Api {
 
   async getSamples(params: Params = {}): Promise<PagedItems<Sample>> {
     console.log("getSamples");
-    const page = params.page !== undefined ? params.page : 0;
-    const size = params.size !== undefined ? params.size : 10;
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const tableSize: TableSize = loader.countMatchingSamples(params.query);
@@ -135,8 +126,8 @@ export class ApiClient implements Api {
   }
 
   async getPhenotypes(params: Params = {}): Promise<PagedItems<Phenotype>> {
-    const page = params.page !== undefined ? params.page : 0;
-    const size = params.size !== undefined ? params.size : 10;
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const tableSize = loader.countMatchingPhenotypes(params.query);
@@ -174,12 +165,12 @@ export class ApiClient implements Api {
 
   getGenesGz(): Promise<Uint8Array | null> {
     const genesGz = this.reportData.binary.genesGz;
-    return Promise.resolve(genesGz ? genesGz : null);
+    return Promise.resolve(genesGz ?? null);
   }
 
   getCram(sampleId: string): Promise<Cram | null> {
     const cram = this.reportData.binary.cram;
-    const sampleCram = cram ? (cram[sampleId] ? cram[sampleId] : null) : null;
+    const sampleCram = cram ? (cram[sampleId] ?? null) : null;
     return Promise.resolve(sampleCram);
   }
 

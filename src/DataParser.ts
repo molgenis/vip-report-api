@@ -20,13 +20,12 @@ export function parseValue(
         } else {
           value = parseSingleValue(token.toString(), infoMetadata, categories, type);
         }
+      } else if (token === null) {
+        value = [];
       } else {
-        if (token === null) {
-          value = [];
-        } else {
-          value = parseMultiValue(token.toString(), infoMetadata, categories, type);
-        }
+        value = parseMultiValue(token.toString(), infoMetadata, categories, type);
       }
+
       break;
     case "PER_ALT":
     case "PER_ALT_AND_REF":
@@ -35,7 +34,7 @@ export function parseValue(
       if (token === null) {
         value = [];
       } else {
-        value = parseMultiValue(token.toString(), infoMetadata, categories, type);
+        value = parseMultiValue(token as string, infoMetadata, categories, type);
       }
       break;
     default:

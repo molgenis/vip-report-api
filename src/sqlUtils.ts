@@ -135,7 +135,7 @@ function usedTables(query: Query, tables = new Set<string>()): Set<string> {
     parts = [clause.selector];
   }
   if (parts.length > 3) {
-    throw Error(`Unexpected number of query parts for query: '${query}'`);
+    throw new Error(`Unexpected number of query parts for query: '${query}'`);
   }
   if (parts[0] === "s") {
     tables.add("s");
@@ -159,7 +159,7 @@ function extractNestedQuery(query: Query, nestedTable: string): Query | undefine
     const subCSQs = query.args.map((q) => extractNestedQuery(q as Query, nestedTable)).filter(Boolean) as Query[];
     if (subCSQs.length === 0) return undefined;
     if (subCSQs.length === 1) return subCSQs[0];
-    return { operator: query.operator, args: subCSQs as Query[] } as Query;
+    return { operator: query.operator, args: subCSQs } as Query;
   }
   const clause = query as QueryClause;
   const parts = Array.isArray(clause.selector) ? clause.selector : [clause.selector];
@@ -252,23 +252,21 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
   }
   if (field_type === "FORMAT") {
     return meta.format[field];
-  } else {
-    if (parent_field !== undefined) {
-      const parentMeta = meta.info[parent_field];
-      if (parentMeta === undefined) {
-        throw new Error(`Parent metadata missing for: '${parent_field}'`);
-      }
-      if (parentMeta.nested === undefined) {
-        throw new Error(`Nested fields missing in parent metadata: '${parent_field}'`);
-      }
-      for (const nested of parentMeta.nested.items as FieldMetadata[]) {
-        if (nested.id === field) {
-          return nested;
-        }
-      }
-    } else {
-      return meta.info[field!];
+  } else if (parent_field !== undefined) {
+    const parentMeta = meta.info[parent_field];
+    if (parentMeta === undefined) {
+      throw new Error(`Parent metadata missing for: '${parent_field}'`);
     }
+    if (parentMeta.nested === undefined) {
+      throw new Error(`Nested fields missing in parent metadata: '${parent_field}'`);
+    }
+    for (const nested of parentMeta.nested.items) {
+      if (nested.id === field) {
+        return nested;
+      }
+    }
+  } else {
+    return meta.info[field];
   }
 }
 
@@ -291,7 +289,7 @@ function mapInQueryRegular(sqlCol: string, inClause: string, nonNulls: (string |
           )`;
       break;
     default:
-      throw Error(`Unknown column '${sqlCol}'`);
+      throw new Error(`Unknown column '${sqlCol}'`);
   }
   return inClause;
 }
@@ -312,33 +310,31 @@ function mapInQuery(
 
   if (meta == null) {
     inClause = `${sqlCol} IN (${toSqlList(nonNulls)})`;
-  } else {
-    if (nonNulls.length > 0) {
-      const fieldMeta = getMetadataForColumn(sqlCol, meta);
-      if (fieldMeta == null) {
-        inClause = mapInQueryRegular(sqlCol, inClause, nonNulls);
+  } else if (nonNulls.length > 0) {
+    const fieldMeta = getMetadataForColumn(sqlCol, meta);
+    if (fieldMeta == null) {
+      inClause = mapInQueryRegular(sqlCol, inClause, nonNulls);
+    } else {
+      const valueList = toSqlList(nonNulls);
+      if (fieldMeta?.number.count !== 1) {
+        inClause = `EXISTS (
+      SELECT 1 FROM json_each(${sqlCol})
+      WHERE CAST(json_each.value as TEXT) IN (${valueList})
+    )`;
       } else {
-        const valueList = toSqlList(nonNulls);
-        if (fieldMeta?.number.count !== 1) {
-          inClause = `EXISTS (
-        SELECT 1 FROM json_each(${sqlCol})
-        WHERE CAST(json_each.value as TEXT) IN (${valueList})
-      )`;
-        } else {
-          switch (fieldMeta.type) {
-            case "CHARACTER":
-            case "STRING":
-              inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
-              break;
-            case "CATEGORICAL":
-            case "INTEGER":
-            case "FLAG":
-            case "FLOAT":
-              inClause = `${sqlCol} IN (${valueList})`;
-              break;
-            default:
-              throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
-          }
+        switch (fieldMeta.type) {
+          case "CHARACTER":
+          case "STRING":
+            inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
+            break;
+          case "CATEGORICAL":
+          case "INTEGER":
+          case "FLAG":
+          case "FLOAT":
+            inClause = `${sqlCol} IN (${valueList})`;
+            break;
+          default:
+            throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
         }
       }
     }
@@ -473,12 +469,12 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
     } else if (order.property.length == 3) {
       const key = order.property[1] as string;
       if (!nestedTables.includes(key)) {
-        throw Error("Unknown nested field: " + order.property[1]);
+        throw new Error("Unknown nested field: " + order.property[1]);
       }
       col = `${key}.${order.property[2]}`;
     }
     if (col === undefined) {
-      throw Error("Error determining sort column for:" + order);
+      throw new Error("Error determining sort column for:" + order);
     }
     const escapedCol = col.replace(".", "_");
     orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
@@ -494,15 +490,13 @@ export function getColumns(db: Database, nestedTables: string[], includeFormat: 
   let columns: string[] = [];
   for (const nestedTable of nestedTables) {
     columns = columns.concat(
-      getColumnNames(db as Database, `variant_${nestedTable}`).map(
-        (col) => `${nestedTable}.${col} AS "${nestedTable}^${col}"`,
-      ),
+      getColumnNames(db, `variant_${nestedTable}`).map((col) => `${nestedTable}.${col} AS "${nestedTable}^${col}"`),
     );
   }
   if (includeFormat) {
-    columns = columns.concat(getColumnNames(db as Database, "format").map((col) => `f.${col} AS FMT_${col} `));
+    columns = columns.concat(getColumnNames(db, "format").map((col) => `f.${col} AS FMT_${col} `));
   }
-  columns = columns.concat(getColumnNames(db as Database, "info").map((col) => `n.${col} AS INFO_${col} `));
+  columns = columns.concat(getColumnNames(db, "info").map((col) => `n.${col} AS INFO_${col} `));
   return columns;
 }
 

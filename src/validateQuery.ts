@@ -23,7 +23,7 @@ function validate(fieldMeta: FieldMetadata, clause: QueryClause) {
       if (fieldMeta.type === "INTEGER" || fieldMeta.type === "FLOAT") {
         validateNumber(clause);
       } else {
-        throw Error(`Numerical operators are not allowed for values of type 'string'`);
+        throw new Error(`Numerical operators are not allowed for values of type 'string'`);
       }
       break;
     case "in":
@@ -35,25 +35,25 @@ function validate(fieldMeta: FieldMetadata, clause: QueryClause) {
 
 function validateString(clause: QueryClause) {
   if (typeof clause.args !== "string") {
-    throw Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of string.`);
+    throw new Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of string.`);
   }
 }
 
 function validateFlag(clause: QueryClause) {
   if (clause.args !== "1" && clause.args !== "0") {
-    throw Error(`Argument for a field of type 'FLAG' can only be '1' or '0'.`);
+    throw new Error(`Argument for a field of type 'FLAG' can only be '1' or '0'.`);
   }
 }
 
 function validateNumber(clause: QueryClause) {
   if (typeof clause.args !== "number") {
-    throw Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of number.`);
+    throw new Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of number.`);
   }
 }
 
 function validateArray(clause: QueryClause) {
   if (!Array.isArray(clause.args)) {
-    throw Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of array.`);
+    throw new Error(`Argument '${clause.args}' is of type '${typeof clause.args}' instead of array.`);
   }
 }
 
@@ -66,7 +66,9 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
     Array.isArray(query.args) &&
     (query.operator === "and" || query.operator === "or")
   ) {
-    query.args.forEach((subQuery) => validateQuery(meta, subQuery));
+    for (const subQuery of query.args) {
+      validateQuery(meta, subQuery);
+    }
   } else {
     const clause = query as QueryClause;
     let parts: SelectorPart[];
@@ -99,14 +101,11 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
           validateArray(clause);
           break;
         default:
-          throw Error(`Unknown field: ${parts[0]}`);
+          throw new Error(`Unknown field: ${parts[0]}`);
       }
-    } else {
-      //field specific for filtering
-      if (!(parts.length === 3 && parts[0] === "s" && parts[2] === "GT_type")) {
-        const fieldMeta = getFieldFromSelector(parts, meta);
-        validate(fieldMeta, clause);
-      }
+    } else if (!(parts.length === 3 && parts[0] === "s" && parts[2] === "GT_type")) {
+      const fieldMeta = getFieldFromSelector(parts, meta);
+      validate(fieldMeta, clause);
     }
   }
 
@@ -116,10 +115,8 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
       if ((parts[0] as string) === "n") {
         const field = parts[1] as SelectorPart;
         fieldMeta = meta.info[field];
-      } else {
-        if ((parts[0] as string) === "s") {
-          throw Error(`Format fields should have 3 parts: s, sampleId or * and field, got: ${parts}`);
-        }
+      } else if ((parts[0] as string) === "s") {
+        throw new Error(`Format fields should have 3 parts: s, sampleId or * and field, got: ${parts}`);
       }
     }
     if (parts.length === 3) {
@@ -131,13 +128,13 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
         const parentMeta = meta.info[parent];
         const field = parts[2] as SelectorPart;
         if (parentMeta === undefined) {
-          throw Error(`Unknown parent field in selector: '${parts}'`);
+          throw new Error(`Unknown parent field in selector: '${parts}'`);
         }
         fieldMeta = parentMeta.nested?.items.find((fm) => fm.id === field);
       }
     }
     if (fieldMeta === undefined) {
-      throw Error(`Unknown field in selector: '${parts}'`);
+      throw new Error(`Unknown field in selector: '${parts}'`);
     }
     return fieldMeta;
   }

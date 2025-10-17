@@ -28,7 +28,7 @@ import {
 } from "./sql";
 
 export class SqlLoader {
-  private reportData: ReportData;
+  private readonly reportData: ReportData;
   private db: Database | undefined;
   private meta: VcfMetadata | undefined;
   private categories: Categories | undefined;
@@ -39,7 +39,7 @@ export class SqlLoader {
 
   async init(): Promise<SqlLoader> {
     const bytes = base64ToUint8Array();
-    const wasmBinary = bytes.slice().buffer as ArrayBuffer;
+    const wasmBinary = bytes.slice().buffer;
     const SQL = await initSqlJs({ wasmBinary });
     this.db = new SQL.Database(this.reportData.database);
     return this;
@@ -58,7 +58,7 @@ export class SqlLoader {
       const samples = this.loadSamples(-1, -1, undefined);
       const sampleNames: string[] = [];
       for (const row of samples) {
-        sampleNames.push(row.data.person.individualId as string);
+        sampleNames.push(row.data.person.individualId);
       }
       this.meta = mapSqlRowsToVcfMetadata(rows, headers, sampleNames);
     }
@@ -68,7 +68,7 @@ export class SqlLoader {
   loadDecisionTree(id: string): DecisionTree {
     const sql = `SELECT tree from decisiontree WHERE id = '${id}'`;
     const rows = executeSql(this.db as Database, sql);
-    if (rows.length < 1 || rows[0] === undefined) throw Error("Could not find decision tree with id: " + id);
+    if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find decision tree with id: " + id);
     return JSON.parse(rows[0]["tree"] as string);
   }
 
@@ -94,11 +94,11 @@ export class SqlLoader {
           htsFile = JSON.parse(row["value"] as string) as HtsFileMetadata;
           break;
         default:
-          throw Error("Unknown app metadata key " + row["key"]);
+          throw new Error("Unknown app metadata key " + row["key"]);
       }
     }
     if (args === undefined || appName === undefined || version === undefined) {
-      throw Error("Incomplete AppMetadata in database.");
+      throw new Error("Incomplete AppMetadata in database.");
     }
     return {
       args: args,
@@ -111,7 +111,7 @@ export class SqlLoader {
   loadSampleById(id: number): Sample {
     const sql = `SELECT * from sample WHERE id = '${id}'`;
     const rows = executeSql(this.db as Database, sql);
-    if (rows.length < 1 || rows[0] === undefined) throw Error("Could not find sample with id: " + id);
+    if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
   }
 
@@ -144,15 +144,13 @@ export class SqlLoader {
           `;
     const rows = executeSql(this.db as Database, sql);
     const grouped: Record<string, { id: string; label: string }[]> = {};
-    rows.forEach((row) => {
+    for (const row of rows) {
       const sampleId = row.sample_id as string;
-      if (!grouped[sampleId]) {
-        grouped[sampleId] = [];
-      }
+      grouped[sampleId] ??= [];
       if (grouped[row.sample_id as string]) {
         grouped[sampleId].push({ id: row.phenotype_id as string, label: row.phenotype_label as string });
       }
-    });
+    }
 
     return Object.entries(grouped).map(([sampleId, features]) => ({
       id: -1,
@@ -177,7 +175,7 @@ export class SqlLoader {
     sampleIds: number[] | undefined,
   ): DatabaseRecord[] {
     if (sampleIds && !includeFormat) {
-      throw Error("Cannot select samples if format information is excluded.");
+      throw new Error("Cannot select samples if format information is excluded.");
     }
     const meta = this.getMetadata();
     const categories = this.getCategories();
@@ -277,7 +275,7 @@ export class SqlLoader {
     if (mapped.length > 1) {
       throw new Error(`More than 1 VCF Record returned for id ${id}`);
     }
-    return mapped[0]!.data as VcfRecord;
+    return mapped[0]!.data;
   }
 
   getCategories(): Categories {

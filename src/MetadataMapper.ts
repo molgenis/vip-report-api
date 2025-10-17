@@ -42,7 +42,7 @@ function parseCategories(raw: Value): CategoryRecord | undefined {
   try {
     return JSON.parse(raw as string);
   } catch {
-    throw new Error("Unable to parse categories: " + raw);
+    throw new Error(`Unable to parse categories: ${raw}`);
   }
 }
 
@@ -51,7 +51,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
   for (const row of rows) {
     const number: NumberMetadata = {
       type: toNumberType(row.numberType as string),
-      count: row.numberCount != null ? Number(row.numberCount) : undefined,
+      count: row.numberCount == null ? undefined : (row.numberCount as number),
     };
     const field: FieldMetadata = {
       id: row.name as string,
@@ -61,11 +61,11 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
       description: row.description as string | undefined,
       categories: row.categories ? parseCategories(row.categories) : undefined,
       required: !!row.required,
-      nullValue: row.nullValue !== null ? (JSON.parse(row.nullValue as string) as ValueDescription) : undefined,
+      nullValue: row.nullValue === null ? undefined : (JSON.parse(row.nullValue as string) as ValueDescription),
     };
     //Avoid name collision if field name is present both a CSQ child and INFO field
     if (row.parent) {
-      metaMap.set((row.parent + "_" + row.name) as string, field);
+      metaMap.set(row.parent + "_" + row.name, field);
     } else {
       metaMap.set(row.name as string, field);
     }
@@ -76,7 +76,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
   let field;
   for (const row of rows) {
     if (row.parent) {
-      field = metaMap.get((row.parent + "_" + row.name) as string)!;
+      field = metaMap.get(row.parent + "_" + row.name)!;
     } else {
       field = metaMap.get(row.name as string)!;
     }
@@ -91,7 +91,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
       const childRows = rows.filter((r) => r.parent === row.name);
       field.nested = {
         separator: row.separator as string,
-        items: childRows.map((childRow) => metaMap.get((row.name + "_" + childRow.name) as string)!),
+        items: childRows.map((childRow) => metaMap.get(row.name + "_" + childRow.name)!),
       };
     }
     if (row.parent === null) {
