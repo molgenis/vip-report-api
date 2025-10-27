@@ -1,13 +1,14 @@
-import { Database } from "sql.js";
+import { Database, ParamsObject, SqlValue } from "sql.js";
 
-import { Query, QueryClause, SelectorPart, SortOrder } from "./index";
+import { ComposedQuery, Query, QueryClause, SelectorPart, SortOrder } from "./index";
 import { FieldMetadata, Value, type VcfMetadata } from "@molgenis/vip-report-vcf";
-import { ArgsValue, Categories, FieldCategories, SqlRow } from "./sql";
+import { ArgsValue, Categories, FieldCategories, PartialStatement, SqlRow } from "./sql";
 import { FieldType } from "./sqlDataParser";
 
-export function executeSql(db: Database, sql: string): SqlRow[] {
+export function executeSql(db: Database, sql: string, values: ParamsObject): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
   const stmt = db.prepare(sql);
+  stmt.bind(values);
   const rows: SqlRow[] = [];
   try {
     while (stmt.step()) rows.push(stmt.getAsObject() as SqlRow);
@@ -17,14 +18,16 @@ export function executeSql(db: Database, sql: string): SqlRow[] {
   return rows;
 }
 
-export function sqlEscape(val: unknown): string {
+export function sqlEscape(val: unknown): string | number {
   if (val === null || val === undefined) return "NULL";
-  if (typeof val === "number") return String(val);
-  if (typeof val === "boolean") return val ? "1" : "0";
-  return "'" + String(val).replace(/'/g, "''") + "'";
+  if (typeof val === "boolean") return val ? 1 : 0;
+  return String(val);
 }
 
-export function toSqlList(arg: Value): string {
+export function toSqlList(arg: Value): SqlValue {
+  if (arg === null) {
+    throw new Error("Sql list value cannot be null.");
+  }
   return Array.isArray(arg) ? arg.map(sqlEscape).join(", ") : sqlEscape(arg);
 }
 
@@ -86,7 +89,9 @@ export function complexQueryToSql(
   categories: Categories,
   nestedTables: string[],
   meta: VcfMetadata,
-): string {
+): PartialStatement {
+  let values = {};
+  let partialStatement;
   const tables = usedTables(query);
   let joins = "vcf v_inner";
   if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
@@ -100,20 +105,20 @@ export function complexQueryToSql(
   for (const nestedTable of nestedTables) {
     const nestedQuery = extractNestedQuery(query, nestedTable);
     if (nestedQuery) {
-      const oldPrefix = `${nestedTable}_inner.`;
-      const newPrefix = `${nestedTable}.`;
-      const pattern = new RegExp(oldPrefix, "g");
-      nestedFilter += " AND " + queryToSql(nestedQuery, categories, nestedTables, meta).replace(pattern, newPrefix);
+      ({ partialStatement, values } = queryToSql(nestedQuery, categories, nestedTables, meta, values, true));
+      nestedFilter += " AND " + partialStatement;
     }
   }
+  ({ partialStatement, values } = queryToSql(query, categories, nestedTables, meta, values));
 
-  return `
+  const statement = `
 v.id IN (
   SELECT v_inner.id
   FROM ${joins}
-  WHERE ${queryToSql(query, categories, nestedTables, meta)}
+  WHERE ${partialStatement}
 )
 ${nestedFilter}`.trim();
+  return { partialStatement: statement, values: values };
 }
 
 function usedTables(query: Query, tables = new Set<string>()): Set<string> {
@@ -167,7 +172,90 @@ function extractNestedQuery(query: Query, nestedTable: string): Query | undefine
   return undefined;
 }
 
-function queryToSql(query: Query, categories: Categories, nestedTables: string[], meta: VcfMetadata): string {
+function nestedQuerytoSql(
+  query: ComposedQuery & {
+    args: unknown;
+  },
+  categories: Map<string, FieldCategories>,
+  meta: VcfMetadata,
+  nestedTables: string[],
+  values: ParamsObject,
+  isNested: boolean,
+) {
+  const joinWord = query.operator.toUpperCase();
+  let statement = "(";
+  for (const subQuery of query.args) {
+    let partialStatement;
+    ({ partialStatement, values } = queryToSql(subQuery, categories, nestedTables, meta, values, isNested));
+    if (statement !== "(") {
+      statement += ` ${joinWord} `;
+    }
+    statement += partialStatement;
+  }
+  statement += ")";
+  return { partialStatement: statement, values: values };
+}
+
+function mapQueryOnNestedField(
+  parts: SelectorPart[],
+  clause: QueryClause,
+  categories: Map<string, FieldCategories>,
+  meta: VcfMetadata,
+  values: ParamsObject,
+  isNested: boolean,
+) {
+  const type = parts[0] === "s" ? "FORMAT" : "INFO";
+  let prefix;
+  if (isNested) {
+    prefix = parts[0] === "s" ? "f." : parts[1] + ".";
+  } else {
+    prefix = parts[0] === "s" ? "f_inner." : parts[1] + "_inner.";
+  }
+  const parent = type === "INFO" ? parts[1] : null;
+  const field = parts[2];
+  let newClause = clause;
+  const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
+  if (categories.has(key)) {
+    newClause = mapQueryCategories(categories, key, clause);
+  }
+  const sqlCol = `${prefix}${field}`;
+  let partialStatement;
+  ({ partialStatement, values } = mapOperatorToSql(newClause, sqlCol, meta, values));
+  const sampleKey = getUniqueKey(values, "sample_id");
+  if (parts[0] === "s" && parts[1] !== "*") {
+    values[sampleKey] = parts[1] as string;
+    partialStatement = `(${partialStatement} AND ${prefix}sample_id = ${sampleKey})`;
+  }
+  return { partialStatement, values };
+}
+
+function MapQueryOnInfoOrFormat(
+  parts: SelectorPart[],
+  clause: QueryClause,
+  categories: Map<string, FieldCategories>,
+  meta: VcfMetadata,
+  values: ParamsObject,
+) {
+  const type = parts[0] === "s" ? "FORMAT" : "INFO";
+  const prefix = parts[0] === "s" ? "f" : parts[0];
+  const field = parts[1];
+  let newClause = clause;
+  const key = `${type}/${field}`;
+  if (categories.has(key)) {
+    newClause = mapQueryCategories(categories, key, clause);
+  }
+  const sqlCol = `${prefix}_inner.${field}`;
+  return mapOperatorToSql(newClause, sqlCol, meta, values);
+}
+
+function queryToSql(
+  query: Query,
+  categories: Categories,
+  nestedTables: string[],
+  meta: VcfMetadata,
+  values: ParamsObject,
+  isNested: boolean = false,
+): PartialStatement {
   if (
     query &&
     typeof query === "object" &&
@@ -175,12 +263,7 @@ function queryToSql(query: Query, categories: Categories, nestedTables: string[]
     Array.isArray(query.args) &&
     (query.operator === "and" || query.operator === "or")
   ) {
-    const joinWord = query.operator.toUpperCase();
-    return (
-      "(" +
-      query.args.map((subQuery) => queryToSql(subQuery, categories, nestedTables, meta)).join(` ${joinWord} `) +
-      ")"
-    );
+    return nestedQuerytoSql(query, categories, meta, nestedTables, values, isNested);
   }
   const clause = query as QueryClause;
   let parts: SelectorPart[];
@@ -191,36 +274,13 @@ function queryToSql(query: Query, categories: Categories, nestedTables: string[]
   }
   if (parts.length === 1) {
     const sqlCol = mapField((parts[0] as SelectorPart).toString());
-    return mapOperatorToSql(clause, sqlCol, meta);
+    return mapOperatorToSql(clause, sqlCol, meta, values);
   }
   if (parts.length === 2) {
-    const type = parts[0] === "s" ? "FORMAT" : "INFO";
-    const prefix = parts[0] === "s" ? "f" : parts[0];
-    const field = parts[1];
-    let newClause = clause;
-    const key = `${type}/${field}`;
-    if (categories.has(key)) {
-      newClause = mapQueryCategories(categories, key, clause);
-    }
-    const sqlCol = `${prefix}_inner.${field}`;
-    return mapOperatorToSql(newClause, sqlCol, meta);
+    return MapQueryOnInfoOrFormat(parts, clause, categories, meta, values);
   }
   if (parts.length === 3) {
-    const type = parts[0] === "s" ? "FORMAT" : "INFO";
-    const prefix = parts[0] === "s" ? "f_inner" : parts[1] + "_inner";
-    const parent = type === "INFO" ? parts[1] : null;
-    const field = parts[2];
-    let newClause = clause;
-    const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
-    if (categories.has(key)) {
-      newClause = mapQueryCategories(categories, key, clause);
-    }
-    const sqlCol = `${prefix}.${field}`;
-    let where = mapOperatorToSql(newClause, sqlCol, meta);
-    if (parts[0] === "s" && parts[1] !== "*") {
-      where = `(${where} AND ${prefix}.sample_id = ${parts[1]})`;
-    }
-    return where;
+    return mapQueryOnNestedField(parts, clause, categories, meta, values, isNested);
   }
   throw new Error("Could not convert selector '" + JSON.stringify(parts) + "' to SQL.");
 }
@@ -270,75 +330,74 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
   }
 }
 
-function mapInQueryRegular(sqlCol: string, inClause: string, nonNulls: (string | number)[]) {
+function processValueList(nonNulls: (string | number)[], values: ParamsObject, sqlCol: string) {
+  const keys = [];
+  for (const nonNull of nonNulls) {
+    const key = getUniqueKey(values, sqlCol);
+    keys.push(key);
+    values[key] = toSqlList(nonNull);
+  }
+  return keys;
+}
+
+function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values: ParamsObject): PartialStatement {
+  const keys = processValueList(nonNulls, values, sqlCol);
+  let inClause;
   switch (sqlCol) {
     case "v.chrom":
     case "v.ref":
-      inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
+      inClause = `${sqlCol} IN (${keys})`;
       break;
     case "v.pos":
     case "v.qual":
-      inClause = `${sqlCol} IN (${toSqlList(nonNulls)})`;
+      inClause = `${sqlCol} IN (${keys})`;
       break;
     case "v.alt":
     case "v.id_vcf":
     case "v.filter":
       inClause = `EXISTS (
             SELECT 1 FROM json_each(${sqlCol})
-            WHERE CAST(json_each.value as TEXT) IN (${toSqlList(nonNulls)})
+            WHERE CAST(json_each.value as TEXT) IN (${keys})
           )`;
       break;
     default:
       throw new Error(`Unknown column '${sqlCol}'`);
   }
+  return { partialStatement: inClause, values: values };
+}
+
+function mapInQueryInfoFormat(fieldMeta: FieldMetadata, inClause: string, sqlCol: string, keys: string[]) {
+  if (fieldMeta?.number.count !== 1) {
+    inClause = `EXISTS (
+      SELECT 1 FROM json_each(${sqlCol})
+      WHERE CAST(json_each.value as TEXT) IN (${keys})
+    )`;
+  } else {
+    switch (fieldMeta.type) {
+      case "CHARACTER":
+      case "STRING":
+        inClause = `${sqlCol} IN (${keys})`;
+        break;
+      case "CATEGORICAL":
+      case "INTEGER":
+      case "FLAG":
+      case "FLOAT":
+        inClause = `${sqlCol} IN (${keys})`;
+        break;
+      default:
+        throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
+    }
+  }
   return inClause;
 }
 
-function mapInQuery(
-  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
-  sqlCol: string,
+function composeInQuery(
+  query: string | null,
   operator: "in" | "!in",
-  meta: VcfMetadata | null,
-): string {
-  let inClause: string = "";
-  if (!Array.isArray(args)) {
-    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
-  }
-  const nonNulls = args.filter((v) => v !== null && v !== undefined);
-  const hasNull = args.some((v) => v === null || v === undefined);
-  let query: string | null = null;
-
-  if (meta == null) {
-    inClause = `${sqlCol} IN (${toSqlList(nonNulls)})`;
-  } else if (nonNulls.length > 0) {
-    const fieldMeta = getMetadataForColumn(sqlCol, meta);
-    if (fieldMeta == null) {
-      inClause = mapInQueryRegular(sqlCol, inClause, nonNulls);
-    } else {
-      const valueList = toSqlList(nonNulls);
-      if (fieldMeta?.number.count !== 1) {
-        inClause = `EXISTS (
-      SELECT 1 FROM json_each(${sqlCol})
-      WHERE CAST(json_each.value as TEXT) IN (${valueList})
-    )`;
-      } else {
-        switch (fieldMeta.type) {
-          case "CHARACTER":
-          case "STRING":
-            inClause = `${sqlCol} IN (${nonNulls.map((s) => `"${s}"`).join(", ")})`;
-            break;
-          case "CATEGORICAL":
-          case "INTEGER":
-          case "FLAG":
-          case "FLOAT":
-            inClause = `${sqlCol} IN (${valueList})`;
-            break;
-          default:
-            throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
-        }
-      }
-    }
-  }
+  inClause: string,
+  hasNull: boolean,
+  sqlCol: string,
+) {
   query = operator === "in" ? inClause : `NOT ${inClause}`;
   if (hasNull) {
     const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
@@ -348,34 +407,73 @@ function mapInQuery(
       query = nullCheck;
     }
   }
-  if (!query) {
-    throw new Error(`An error occurred while mapping the IN query for column '${sqlCol}'`);
-  }
   return query;
 }
 
-function mapOperatorToSql(clause: QueryClause, sqlCol: string, meta: VcfMetadata | null): string {
+function mapInQuery(
+  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+  sqlCol: string,
+  operator: "in" | "!in",
+  meta: VcfMetadata | null,
+  values: ParamsObject,
+): PartialStatement {
+  let inClause: string = "";
+  if (!Array.isArray(args)) {
+    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
+  }
+  const nonNulls = args.filter((v) => v !== null && v !== undefined);
+  const keys = processValueList(nonNulls, values, sqlCol);
+  const hasNull = args.some((v) => v === null || v === undefined);
+  let query: string | null = null;
+
+  if (meta == null) {
+    inClause = `${sqlCol} IN (${keys})`;
+  } else if (nonNulls.length > 0) {
+    const fieldMeta = getMetadataForColumn(sqlCol, meta);
+    if (fieldMeta == null) {
+      ({ partialStatement: inClause, values } = mapInQueryRegular(sqlCol, nonNulls, values));
+    } else {
+      inClause = mapInQueryInfoFormat(fieldMeta, inClause, sqlCol, keys);
+    }
+  }
+  query = composeInQuery(query, operator, inClause, hasNull, sqlCol);
+  if (!query) {
+    throw new Error(`An error occurred while mapping the IN query for column '${sqlCol}'`);
+  }
+  return { partialStatement: query, values: values };
+}
+
+function mapOperatorToSql(
+  clause: QueryClause,
+  sqlCol: string,
+  meta: VcfMetadata | null,
+  values: ParamsObject,
+): PartialStatement {
+  const key = getUniqueKey(values, sqlCol);
   const { args, operator } = clause;
 
   if (args === null || args === undefined || (Array.isArray(args) && (args as Array<ArgsValue>).length === 0)) {
     switch (operator) {
       case "==":
-        return `${sqlCol} IS NULL`;
+        return { partialStatement: `${sqlCol} IS NULL`, values: values };
       case "!=":
-        return `${sqlCol} IS NOT NULL`;
+        return { partialStatement: `${sqlCol} IS NOT NULL`, values: values };
       default:
         throw new Error("Unsupported op: " + operator + " for NULL arg");
     }
   }
 
   if (operator === "in" || operator === "!in") {
-    return mapInQuery(args, sqlCol, operator, meta);
+    return mapInQuery(args, sqlCol, operator, meta, values);
   }
 
+  values[key] = sqlEscape(args);
+  let partialStatement;
   switch (operator) {
     case "==":
     case "!=":
-      return `${sqlCol} ${operator} ${sqlEscape(args)}`;
+      partialStatement = `${sqlCol} ${operator} ${key}`;
+      break;
     case ">":
     case ">=":
     case "<":
@@ -383,16 +481,28 @@ function mapOperatorToSql(clause: QueryClause, sqlCol: string, meta: VcfMetadata
       if (typeof args !== "number") {
         throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
       }
-      return `${sqlCol} ${operator} ${sqlEscape(args)}`;
+      partialStatement = `${sqlCol} ${operator} ${key}`;
+      break;
     default:
       throw new Error("Unsupported op: " + operator);
   }
+  return { partialStatement, values };
 }
 
-export function simpleQueryToSql(query: Query, categories: Categories): string {
+export function simpleQueryToSql(query: Query, categories: Categories, values: ParamsObject): PartialStatement {
   if ("args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
     const joinWord = query.operator.toUpperCase();
-    return "(" + query.args.map((subQuery) => simpleQueryToSql(subQuery, categories)).join(` ${joinWord} `) + ")";
+    let statement = "(";
+    for (const subQuery of query.args) {
+      let partialStatement;
+      ({ partialStatement, values } = simpleQueryToSql(subQuery, categories, values));
+      if (statement !== "(") {
+        statement += ` ${joinWord} `;
+      }
+      statement += partialStatement;
+    }
+    statement += ")";
+    return { partialStatement: statement, values: values };
   }
 
   const clause = query as QueryClause;
@@ -405,7 +515,7 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
 
   if (parts.length === 1) {
     const sqlCol = mapField((parts[0] as SelectorPart).toString());
-    return mapOperatorToSql(clause, sqlCol, null);
+    return mapOperatorToSql(clause, sqlCol, null, values);
   } else if (parts.length === 2) {
     const prefix = parts[0];
     const type = prefix === "s" ? "FORMAT" : "INFO";
@@ -415,13 +525,13 @@ export function simpleQueryToSql(query: Query, categories: Categories): string {
     if (categories.has(key)) {
       mapQueryCategories(categories, key, clause);
     }
-    return mapOperatorToSql(clause, sqlCol, null);
+    return mapOperatorToSql(clause, sqlCol, null, values);
   }
   throw new Error("Unsupported query:" + JSON.stringify(parts));
 }
 
 export function getColumnNames(db: Database, table: string): string[] {
-  const rows = executeSql(db, `PRAGMA table_info(${table});`);
+  const rows = executeSql(db, `PRAGMA table_info(${table});`, {});
   return rows.map((row) => row.name as string);
 }
 
@@ -503,4 +613,15 @@ export function getColumns(db: Database, nestedTables: string[], includeFormat: 
 export function getNestedTables(meta: VcfMetadata): string[] {
   const filtered = Object.entries(meta.info).filter(([, info]) => info.nested != null);
   return filtered.map(([key]) => key);
+}
+
+function getUniqueKey(valueObject: ParamsObject, key: string): string {
+  let suffix = 1;
+  key = ":" + key.replaceAll(".", "_");
+  let newKey = key;
+  while (Object.hasOwn(valueObject, newKey)) {
+    newKey = `${key}_${suffix}`;
+    suffix++;
+  }
+  return newKey;
 }

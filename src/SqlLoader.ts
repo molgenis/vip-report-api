@@ -48,9 +48,9 @@ export class SqlLoader {
   getMetadata(): VcfMetadata {
     if (this.meta === undefined) {
       const sql = "SELECT * FROM metadata";
-      const rows = executeSql(this.db as Database, sql);
+      const rows = executeSql(this.db as Database, sql, {});
       const headerSql = "SELECT * FROM header";
-      const headerLines = executeSql(this.db as Database, headerSql);
+      const headerLines = executeSql(this.db as Database, headerSql, {});
       const headers: string[] = [];
       for (const row of headerLines) {
         headers.push(row["line"] as string);
@@ -66,15 +66,15 @@ export class SqlLoader {
   }
 
   loadDecisionTree(id: string): DecisionTree {
-    const sql = `SELECT tree from decisiontree WHERE id = '${id}'`;
-    const rows = executeSql(this.db as Database, sql);
+    const sql = "SELECT tree from decisiontree WHERE id = :id";
+    const rows = executeSql(this.db as Database, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find decision tree with id: " + id);
     return JSON.parse(rows[0]["tree"] as string);
   }
 
   loadAppMetadata(): AppMetadata {
     const sql = `SELECT * from appMetadata`;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, {});
     let args: string | undefined;
     let appName: string | undefined;
     let version: string | undefined;
@@ -109,30 +109,34 @@ export class SqlLoader {
   }
 
   loadSampleById(id: number): Sample {
-    const sql = `SELECT * from sample WHERE id = '${id}'`;
-    const rows = executeSql(this.db as Database, sql);
+    const sql = "SELECT * from sample WHERE id = :id";
+    const rows = executeSql(this.db as Database, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
   }
 
   loadConfig(): Json {
     const sql = `SELECT * from config`;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, {});
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
   loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
     const categories = this.getCategories();
-    const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
+    const { partialStatement, values } =
+      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const selectClause = `SELECT * from sample ${whereClause}`;
     const sql = selectClause + (page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``);
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     return mapSamples(rows);
   }
 
   loadPhenotypes(page: number, size: number, query: Query | undefined): DatabaseResource[] {
     const categories = this.getCategories();
-    const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
+    const { partialStatement, values } =
+      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
 
     const sql = `
             SELECT sp.sample_id, p.id AS phenotype_id, p.label AS phenotype_label
@@ -142,7 +146,7 @@ export class SqlLoader {
             ${whereClause}
             LIMIT ${size} OFFSET ${page * size}
           `;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     const grouped: Record<string, { id: string; label: string }[]> = {};
     for (const row of rows) {
       const sampleId = row.sample_id as string;
@@ -176,7 +180,11 @@ export class SqlLoader {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
-    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables, meta)}` : "";
+    const { partialStatement, values } =
+      query !== undefined
+        ? complexQueryToSql(query, categories, nestedTables, meta)
+        : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sampleJoinQuery =
       sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
@@ -204,7 +212,7 @@ export class SqlLoader {
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     return mapRows(rows, meta, categories, nestedTables);
   }
 
@@ -212,7 +220,11 @@ export class SqlLoader {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
-    const whereClause = query !== undefined ? `WHERE ${complexQueryToSql(query, categories, nestedTables, meta)}` : "";
+    const { partialStatement, values } =
+      query !== undefined
+        ? complexQueryToSql(query, categories, nestedTables, meta)
+        : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const nestedJoins = getNestedJoins(nestedTables);
 
     const sql = `
@@ -228,7 +240,7 @@ export class SqlLoader {
       ${whereClause}
       `;
 
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
@@ -264,10 +276,10 @@ export class SqlLoader {
                   LEFT JOIN info n ON n.variant_id = v.id 
                     ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
                   ${nestedJoins}
-                  WHERE v.id = ${id}
+                  WHERE v.id = :id
                 `;
 
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, { ":id": id });
     if (rows.length === 0) {
       throw new Error(`No VCF Record returned for id ${id}`);
     }
@@ -281,8 +293,7 @@ export class SqlLoader {
   getCategories(): Categories {
     if (this.categories === undefined) {
       const sql = "SELECT field, id, value FROM categories";
-      const rows: SqlRow[] = executeSql(this.db as Database, sql);
-
+      const rows: SqlRow[] = executeSql(this.db as Database, sql, {});
       const result = new Map<string, FieldCategories>();
 
       for (const row of rows) {
@@ -303,26 +314,30 @@ export class SqlLoader {
 
   countMatchingSamples(query: Query | undefined): TableSize {
     const categories = this.getCategories();
-    const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
+    const { partialStatement, values } =
+      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT 
                         (SELECT COUNT(*) FROM sample) AS total_size, 
                         COUNT(DISTINCT id) AS count
                      from sample ${whereClause}`;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
   countMatchingPhenotypes(query: Query | undefined): TableSize {
     const categories = this.getCategories();
-    const whereClause = query !== undefined ? `WHERE ${simpleQueryToSql(query, categories)}` : "";
+    const { partialStatement, values } =
+      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+    const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT (SELECT COUNT(*) FROM phenotype) AS total_size,
                             COUNT(DISTINCT p.id) AS count
                                  FROM samplePhenotype sp
                                           JOIN phenotype p ON sp.phenotype_id = p.id
                                           JOIN sample sample ON sp.sample_id = sample.id
                                      ${whereClause}`;
-    const rows = executeSql(this.db as Database, sql);
+    const rows = executeSql(this.db as Database, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }

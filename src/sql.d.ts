@@ -1,5 +1,6 @@
 import { VcfRecord } from "@molgenis/vip-report-vcf";
-import { Phenotype, Resource, Sample } from "./index";
+import { Resource, Sample } from "./index";
+import { ParamsObject } from "sql.js";
 
 export type FieldCategories = Map<number, string>;
 export type Categories = Map<string, FieldCategories>;
@@ -29,7 +30,4 @@ export interface DatabaseSample extends DatabaseResource {
   data: Sample;
 }
 
-export interface DatabasePhenotype extends DatabaseResource {
-  id: number;
-  data: Phenotype;
-}
+export type PartialStatement = { partialStatement: string; values: ParamsObject };
