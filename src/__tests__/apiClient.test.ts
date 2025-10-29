@@ -411,6 +411,8 @@ beforeEach(() => {
 });
 
 async function getDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
+  console.log("CHECK WHY TRAVIS FAILS");
+  console.log(wasmBinaryBytes.length);
   const wasmBinary = wasmBinaryBytes.slice().buffer;
   const SQL = await initSqlJs({ wasmBinary });
   return new SQL.Database(database);
