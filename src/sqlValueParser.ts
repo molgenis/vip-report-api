@@ -39,18 +39,18 @@ export function parseStringValue(token: string, unescape = true): string | null 
   let value;
   if (token === null || token.length === 0) {
     value = null;
-  } else if (!unescape || token.indexOf("%") === -1) {
+  } else if (!unescape || token.includes("%")) {
     value = token;
   } else {
     value = token
-      .replace(/%3A/g, ":")
-      .replace(/%3B/g, ";")
-      .replace(/%3D/g, "=")
-      .replace(/%25/g, "%")
-      .replace(/%2C/g, ",")
-      .replace(/%0D/g, "\r")
-      .replace(/%0A/g, "\n")
-      .replace(/%09/g, "\t");
+      .replaceAll(/%3A/g, ":")
+      .replaceAll(/%3B/g, ";")
+      .replaceAll(/%3D/g, "=")
+      .replaceAll(/%25/g, "%")
+      .replaceAll(/%2C/g, ",")
+      .replaceAll(/%0D/g, "\r")
+      .replaceAll(/%0A/g, "\n")
+      .replaceAll(/%09/g, "\t");
   }
   return value;
 }
@@ -68,7 +68,7 @@ export function parseIntegerValue(token: string): number | null {
     } else if (upperCaseToken === "NAN") {
       value = Number.NaN;
     } else {
-      value = parseInt(token, 10);
+      value = Number.parseInt(token, 10);
       if (Number.isNaN(value)) {
         throw new Error(`invalid integer '${token}'`);
       }

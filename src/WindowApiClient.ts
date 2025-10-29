@@ -1,5 +1,6 @@
 import { ReportData } from "./index";
 import { ApiClient } from "./apiClient";
+import initSqlJs, { Database } from "sql.js";
 
 export type EncodedReport = ReportData & {
   base85?: EncodedReportData;
@@ -9,12 +10,19 @@ export type EncodedReportData = {
   fastaGz?: { [key: string]: string };
   genesGz?: string;
   cram?: { [key: string]: { cram: string; crai: string } };
+  wasmBinary: string;
 };
 
 declare global {
   interface Window {
     api: EncodedReport;
   }
+}
+
+async function getDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
+  const wasmBinary = wasmBinaryBytes.slice().buffer;
+  const SQL = await initSqlJs({ wasmBinary });
+  return new SQL.Database(database);
 }
 
 /**
@@ -26,6 +34,16 @@ export class WindowApiClient extends ApiClient {
     if (reportData === undefined) {
       alert("This is a report template. Use the vip-report tool to create reports using this template and data.");
     }
-    super(reportData);
+    if (reportData.binary.wasmBinary === undefined) {
+      throw new Error("Reportdata is missing the required 'reportData.binary.wasmBinary'.");
+    }
+    if (reportData.database === undefined) {
+      throw new Error("Reportdata is missing the required 'reportData.database'.");
+    }
+    const wasmBinary = reportData.binary.wasmBinary;
+    const database = reportData.database;
+    delete reportData.binary.wasmBinary;
+    delete reportData.database;
+    super(reportData, getDatabase(wasmBinary, database));
   }
 }

@@ -175,7 +175,7 @@ export function splitAndParseMap(
       if (excludeKeys.includes(nestedKey)) {
         nestedMap.set(nestedKey, value as Value);
       } else {
-        nestedMap.set(nestedKey, parseSqlValue(value as SqlValue, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
+        nestedMap.set(nestedKey, parseSqlValue(value, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
       }
       nestedFieldsMap.set(nestedField, nestedMap);
     } else {

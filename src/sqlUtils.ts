@@ -5,7 +5,7 @@ import { FieldMetadata, Value, type VcfMetadata } from "@molgenis/vip-report-vcf
 import { ArgsValue, Categories, FieldCategories, PartialStatement, SqlRow } from "./sql";
 import { FieldType } from "./sqlDataParser";
 
-export function executeSql(db: Database, sql: string, values: ParamsObject): SqlRow[] {
+export function executeSql(db: Database | undefined, sql: string, values: ParamsObject): SqlRow[] {
   if (!db) throw new Error("Database not initialized");
   const stmt = db.prepare(sql);
   stmt.bind(values);
@@ -530,7 +530,7 @@ export function simpleQueryToSql(query: Query, categories: Categories, values: P
   throw new Error("Unsupported query:" + JSON.stringify(parts));
 }
 
-export function getColumnNames(db: Database, table: string): string[] {
+export function getColumnNames(db: Database | undefined, table: string): string[] {
   const rows = executeSql(db, `PRAGMA table_info(${table});`, {});
   return rows.map((row) => row.name as string);
 }
@@ -596,7 +596,7 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
   return { orderByClauses, distinctOrderByClauses, orderCols };
 }
 
-export function getColumns(db: Database, nestedTables: string[], includeFormat: boolean) {
+export function getColumns(db: Database | undefined, nestedTables: string[], includeFormat: boolean) {
   let columns: string[] = [];
   for (const nestedTable of nestedTables) {
     columns = columns.concat(

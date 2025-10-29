@@ -1,10 +1,8 @@
-import initSqlJs, { Database } from "sql.js";
 import type { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { mapRows } from "./recordMapper";
 import { mapSqlRowsToVcfMetadata } from "./MetadataMapper";
-import { SQLBASE64 } from "./sqLiteBase64";
 
-import { AppMetadata, DecisionTree, HtsFileMetadata, Json, Query, ReportData, Sample, SortOrder } from "./index";
+import { AppMetadata, DecisionTree, HtsFileMetadata, Json, Query, Sample, SortOrder } from "./index";
 import {
   complexQueryToSql,
   executeSql,
@@ -26,31 +24,24 @@ import {
   SqlRow,
   TableSize,
 } from "./sql";
+import { Database } from "sql.js";
 
 export class SqlLoader {
-  private readonly reportData: ReportData;
   private db: Database | undefined;
   private meta: VcfMetadata | undefined;
   private categories: Categories | undefined;
 
-  constructor(reportData: ReportData) {
-    this.reportData = reportData;
-  }
-
-  async init(): Promise<SqlLoader> {
-    const bytes = base64ToUint8Array();
-    const wasmBinary = bytes.slice().buffer;
-    const SQL = await initSqlJs({ wasmBinary });
-    this.db = new SQL.Database(this.reportData.database);
+  async init(db: Promise<Database>): Promise<SqlLoader> {
+    this.db = await db;
     return this;
   }
 
   getMetadata(): VcfMetadata {
     if (this.meta === undefined) {
       const sql = "SELECT * FROM metadata";
-      const rows = executeSql(this.db as Database, sql, {});
+      const rows = executeSql(this.db, sql, {});
       const headerSql = "SELECT * FROM header";
-      const headerLines = executeSql(this.db as Database, headerSql, {});
+      const headerLines = executeSql(this.db, headerSql, {});
       const headers: string[] = [];
       for (const row of headerLines) {
         headers.push(row["line"] as string);
@@ -67,14 +58,14 @@ export class SqlLoader {
 
   loadDecisionTree(id: string): DecisionTree {
     const sql = "SELECT tree from decisiontree WHERE id = :id";
-    const rows = executeSql(this.db as Database, sql, { ":id": id });
+    const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find decision tree with id: " + id);
     return JSON.parse(rows[0]["tree"] as string);
   }
 
   loadAppMetadata(): AppMetadata {
     const sql = `SELECT * from appMetadata`;
-    const rows = executeSql(this.db as Database, sql, {});
+    const rows = executeSql(this.db, sql, {});
     let args: string | undefined;
     let appName: string | undefined;
     let version: string | undefined;
@@ -110,14 +101,14 @@ export class SqlLoader {
 
   loadSampleById(id: number): Sample {
     const sql = "SELECT * from sample WHERE id = :id";
-    const rows = executeSql(this.db as Database, sql, { ":id": id });
+    const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
   }
 
   loadConfig(): Json {
     const sql = `SELECT * from config`;
-    const rows = executeSql(this.db as Database, sql, {});
+    const rows = executeSql(this.db, sql, {});
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
@@ -128,7 +119,7 @@ export class SqlLoader {
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const selectClause = `SELECT * from sample ${whereClause}`;
     const sql = selectClause + (page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``);
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     return mapSamples(rows);
   }
 
@@ -146,7 +137,7 @@ export class SqlLoader {
             ${whereClause}
             LIMIT ${size} OFFSET ${page * size}
           `;
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     const grouped: Record<string, { id: string; label: string }[]> = {};
     for (const row of rows) {
       const sampleId = row.sample_id as string;
@@ -212,7 +203,7 @@ export class SqlLoader {
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     return mapRows(rows, meta, categories, nestedTables);
   }
 
@@ -240,12 +231,12 @@ export class SqlLoader {
       ${whereClause}
       `;
 
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
-  loadVcfRecordById(id: number, sampleIds: number[] | undefined): VcfRecord {
+  loadVcfRecordById(id: number, sampleIds: number[]): VcfRecord {
     const meta = this.getMetadata();
     const nestedTables: string[] = getNestedTables(meta);
     let nestedJoins: string = "";
@@ -255,7 +246,7 @@ export class SqlLoader {
 
     const sampleJoinQuery =
       sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
-    const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
+    const columns = getColumns(this.db, nestedTables, sampleIds !== undefined);
 
     const selectCols = [
       "v.id as v_variant_id",
@@ -279,7 +270,7 @@ export class SqlLoader {
                   WHERE v.id = :id
                 `;
 
-    const rows = executeSql(this.db as Database, sql, { ":id": id });
+    const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length === 0) {
       throw new Error(`No VCF Record returned for id ${id}`);
     }
@@ -293,7 +284,7 @@ export class SqlLoader {
   getCategories(): Categories {
     if (this.categories === undefined) {
       const sql = "SELECT field, id, value FROM categories";
-      const rows: SqlRow[] = executeSql(this.db as Database, sql, {});
+      const rows: SqlRow[] = executeSql(this.db, sql, {});
       const result = new Map<string, FieldCategories>();
 
       for (const row of rows) {
@@ -321,7 +312,7 @@ export class SqlLoader {
                         (SELECT COUNT(*) FROM sample) AS total_size, 
                         COUNT(DISTINCT id) AS count
                      from sample ${whereClause}`;
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
@@ -337,16 +328,8 @@ export class SqlLoader {
                                           JOIN phenotype p ON sp.phenotype_id = p.id
                                           JOIN sample sample ON sp.sample_id = sample.id
                                      ${whereClause}`;
-    const rows = executeSql(this.db as Database, sql, values);
+    const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
-}
-
-function base64ToUint8Array(): Uint8Array {
-  const binaryString = atob(SQLBASE64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let index = 0; index < len; index++) bytes[index] = binaryString.charCodeAt(index);
-  return bytes;
 }

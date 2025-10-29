@@ -17,18 +17,16 @@ import {
 import { SqlLoader } from "./SqlLoader";
 import { validateQuery } from "./validateQuery";
 import { DatabaseRecord, DatabaseResource, TableSize } from "./sql";
+import { Database } from "sql.js";
 
 export class ApiClient implements Api {
   private reportData: ReportData;
-  private loader: Promise<SqlLoader> | undefined;
+  private loader: Promise<SqlLoader>;
 
-  constructor(reportData: ReportData) {
+  constructor(reportData: ReportData, db: Promise<Database>) {
     this.reportData = reportData;
-    this.initLoader();
-  }
-
-  initLoader() {
-    this.loader ??= new SqlLoader(this.reportData).init();
+    const loader = new SqlLoader();
+    this.loader = loader.init(db);
   }
 
   async getConfig(): Promise<Json | null> {
@@ -80,7 +78,7 @@ export class ApiClient implements Api {
     };
   }
 
-  async getRecordById(id: number, sampleIds?: number[]): Promise<Item<VcfRecord>> {
+  async getRecordById(id: number, sampleIds: number[] = []): Promise<Item<VcfRecord>> {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
@@ -129,7 +127,7 @@ export class ApiClient implements Api {
         const pair = key.split(":");
         if (pair[0] === contig) {
           const interval = pair[1]!.split("-");
-          if (pos >= parseInt(interval[0]!, 10) && pos <= parseInt(interval[1]!, 10)) {
+          if (pos >= Number.parseInt(interval[0]!, 10) && pos <= Number.parseInt(interval[1]!, 10)) {
             buffer = value;
             break;
           }

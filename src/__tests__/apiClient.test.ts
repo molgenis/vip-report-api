@@ -5,6 +5,7 @@ import path from "path";
 import { Item, RecordParams } from "../index";
 import { ApiClient } from "../apiClient";
 import { VcfRecord } from "@molgenis/vip-report-vcf";
+import initSqlJs, { Database } from "sql.js";
 
 let api: ApiClient;
 
@@ -399,11 +400,21 @@ beforeEach(() => {
           crai: readFileSync(path.join(__dirname, "alignment.cram.crai")),
         },
       },
+      wasmBinary: readFileSync(path.join(__dirname, "sql-wasm.wasm")),
     },
   };
 
-  api = new ApiClient(reportData as unknown as EncodedReport);
+  api = new ApiClient(
+    reportData as unknown as EncodedReport,
+    getDatabase(reportData.binary.wasmBinary, reportData.database),
+  );
 });
+
+async function getDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
+  const wasmBinary = wasmBinaryBytes.slice().buffer;
+  const SQL = await initSqlJs({ wasmBinary });
+  return new SQL.Database(database);
+}
 
 test("getAppMeta", async () => {
   const metadata = await api.getAppMetadata();

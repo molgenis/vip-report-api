@@ -1,4 +1,4 @@
-import { RecordSampleType, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { ApiClient as ApiClientAlias } from "./apiClient";
 import { WindowApiClient as WindowApiClientAlias } from "./WindowApiClient";
 
@@ -12,9 +12,9 @@ export interface Api {
 
   getRecordsMeta(): Promise<VcfMetadata>;
 
-  getRecords(params: Params): Promise<PagedItems<VcfRecord>>;
+  getRecords(params: RecordParams): Promise<PagedItems<VcfRecord>>;
 
-  getRecordById(id: number, sampleIds: number[]): Promise<Item<VcfRecord>>;
+  getRecordById(id: number, sampleIds?: number[]): Promise<Item<VcfRecord>>;
 
   getSamples(params: Params): Promise<PagedItems<Sample>>;
 
@@ -91,7 +91,7 @@ export interface AppMetadata {
   name: string;
   version: string;
   args: string;
-  htsFile: HtsFileMetadata | undefined;
+  htsFile?: HtsFileMetadata;
 }
 
 export interface HtsFileMetadata {
@@ -106,14 +106,6 @@ export type Selector = SelectorPart | SelectorPart[];
 export interface ComposedQuery {
   operator: ComposedQueryOperator;
   args: (QueryClause | ComposedQuery)[];
-}
-
-export interface RecordSamples {
-  [id: number]: RecordSample;
-}
-
-export interface RecordSample {
-  [index: string]: RecordSampleType;
 }
 
 export type ComposedQueryOperator = "and" | "or";
@@ -253,12 +245,13 @@ export type Cram = {
 };
 
 export interface ReportData {
-  database: Uint8Array;
+  database?: Uint8Array;
   binary: BinaryReportData;
 }
 
 export interface BinaryReportData {
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
+  wasmBinary?: Uint8Array;
   cram?: { [key: string]: Cram };
 }
