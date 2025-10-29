@@ -385,7 +385,11 @@ const record1desc: Item<VcfRecord> = {
   id: 2,
 };
 
-beforeEach(() => {
+beforeEach(async () => {
+  const response = await fetch("https://download.molgeniscloud.org/downloads/vip/resources/sql-wasm.wasm");
+  const wasmArrayBuffer = await response.arrayBuffer();
+  const wasmUint8Array = new Uint8Array(wasmArrayBuffer);
+
   const reportData = {
     database: readFileSync(path.join(__dirname, "/data/trio.db")),
     binary: {
@@ -400,7 +404,7 @@ beforeEach(() => {
           crai: readFileSync(path.join(__dirname, "alignment.cram.crai")),
         },
       },
-      wasmBinary: readFileSync(path.join(__dirname, "sql-wasm-fixed.wasm")),
+      wasmBinary: wasmUint8Array,
     },
   };
 
@@ -411,8 +415,6 @@ beforeEach(() => {
 });
 
 async function getDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
-  console.log("CHECK WHY TRAVIS FAILS");
-  console.log(wasmBinaryBytes.length);
   const wasmBinary = wasmBinaryBytes.slice().buffer;
   const SQL = await initSqlJs({ wasmBinary });
   return new SQL.Database(database);
