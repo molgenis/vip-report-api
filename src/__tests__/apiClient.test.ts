@@ -400,7 +400,7 @@ beforeEach(() => {
           crai: readFileSync(path.join(__dirname, "alignment.cram.crai")),
         },
       },
-      wasmBinary: readFileSync(path.join(__dirname, "sql-wasm-fixed.wasm")),
+      wasmBinary: readFileSync(path.join(__dirname, "sql-wasm.wasm")),
     },
   };
 
