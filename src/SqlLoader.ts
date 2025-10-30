@@ -236,7 +236,7 @@ export class SqlLoader {
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
-  loadVcfRecordById(id: number, sampleIds: number[]): VcfRecord {
+  loadVcfRecordById(id: number, sampleIds: number[] | undefined): VcfRecord {
     const meta = this.getMetadata();
     const nestedTables: string[] = getNestedTables(meta);
     let nestedJoins: string = "";

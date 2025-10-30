@@ -78,7 +78,7 @@ export class ApiClient implements Api {
     };
   }
 
-  async getRecordById(id: number, sampleIds: number[] = []): Promise<Item<VcfRecord>> {
+  async getRecordById(id: number, sampleIds: number[] | undefined = undefined): Promise<Item<VcfRecord>> {
     console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");

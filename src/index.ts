@@ -14,7 +14,14 @@ export interface Api {
 
   getRecords(params: RecordParams): Promise<PagedItems<VcfRecord>>;
 
-  getRecordById(id: number, sampleIds?: number[]): Promise<Item<VcfRecord>>;
+  /**
+   *
+   * if sampleIds is undefined or missing -> return record including data for all samples
+   * if sampleIds is [] -> return record excluding sample data
+   * if sampleIds is e.g. [ 2 , 3 ] -> return record including data for sample 2 and 3
+   *
+   * */
+  getRecordById(id: number, sampleIds: number[] | undefined): Promise<Item<VcfRecord>>;
 
   getSamples(params: Params): Promise<PagedItems<Sample>>;
 
