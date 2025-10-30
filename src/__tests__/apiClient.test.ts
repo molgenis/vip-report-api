@@ -386,10 +386,6 @@ const record1desc: Item<VcfRecord> = {
 };
 
 beforeEach(async () => {
-  const response = await fetch("https://download.molgeniscloud.org/downloads/vip/resources/sql-wasm.wasm");
-  const wasmArrayBuffer = await response.arrayBuffer();
-  const wasmUint8Array = new Uint8Array(wasmArrayBuffer);
-
   const reportData = {
     database: readFileSync(path.join(__dirname, "/data/trio.db")),
     binary: {
@@ -404,7 +400,7 @@ beforeEach(async () => {
           crai: readFileSync(path.join(__dirname, "alignment.cram.crai")),
         },
       },
-      wasmBinary: wasmUint8Array,
+      wasmBinary: readFileSync(path.join(__dirname, "data", "sql-wasm.wasm")),
     },
   };
 

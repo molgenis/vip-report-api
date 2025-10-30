@@ -7,11 +7,8 @@ describe("window api client", () => {
   vi.stubGlobal("window", {});
 
   test("get records", async () => {
-    const response = await fetch("https://download.molgeniscloud.org/downloads/vip/resources/sql-wasm.wasm");
-    const wasmArrayBuffer = await response.arrayBuffer();
-    const wasmUint8Array = new Uint8Array(wasmArrayBuffer);
     window.api = {
-      binary: { wasmBinary: wasmUint8Array },
+      binary: { wasmBinary: readFileSync(path.join(__dirname, "data", "sql-wasm.wasm")) },
       database: readFileSync(path.join(__dirname, "data", "trio.db")),
     };
 
