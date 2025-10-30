@@ -30,14 +30,12 @@ export class ApiClient implements Api {
   }
 
   async getConfig(): Promise<Json | null> {
-    console.log("getConfig");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     return loader.loadConfig();
   }
 
   async getRecordsMeta(): Promise<VcfMetadata> {
-    console.log("getRecordsMeta");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const meta = loader.getMetadata();
@@ -79,7 +77,6 @@ export class ApiClient implements Api {
   }
 
   async getRecordById(id: number, sampleIds: number[] | undefined = undefined): Promise<Item<VcfRecord>> {
-    console.log("getRecordById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const record: VcfRecord = loader.loadVcfRecordById(id, sampleIds);
@@ -87,7 +84,6 @@ export class ApiClient implements Api {
   }
 
   async getSamples(params: Params = {}): Promise<PagedItems<Sample>> {
-    console.log("getSamples");
     const page = params.page ?? 0;
     const size = params.size ?? 10;
     const loader = await this.loader;
@@ -98,7 +94,6 @@ export class ApiClient implements Api {
   }
 
   async getSampleById(id: number): Promise<Item<Sample>> {
-    console.log("getSampleById");
     const loader = await this.loader;
     if (!loader) throw new Error("Loader was not initialized.");
     const sample: Sample = loader.loadSampleById(id);

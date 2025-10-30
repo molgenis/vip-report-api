@@ -44,10 +44,6 @@ export interface Api {
 
 export type Json = string | number | boolean | null | { [property: string]: Json } | Json[];
 
-export interface Metadata {
-  app: AppMetadata;
-}
-
 export interface Resource {
   [key: string]: unknown;
 }
@@ -256,6 +252,9 @@ export interface ReportData {
   binary: BinaryReportData;
 }
 
+/*
+ * wasmBinary -> sql.js 1.13.0 wasm binary
+ */
 export interface BinaryReportData {
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;

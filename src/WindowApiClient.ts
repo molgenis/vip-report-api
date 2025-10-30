@@ -19,8 +19,8 @@ declare global {
   }
 }
 
-async function getDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
-  const wasmBinary = wasmBinaryBytes.slice().buffer;
+async function createDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
+  const wasmBinary = wasmBinaryBytes.buffer as ArrayBuffer;
   const SQL = await initSqlJs({ wasmBinary });
   return new SQL.Database(database);
 }
@@ -42,8 +42,8 @@ export class WindowApiClient extends ApiClient {
     }
     const wasmBinary = reportData.binary.wasmBinary;
     const database = reportData.database;
+    super(reportData, createDatabase(wasmBinary, database));
     delete reportData.binary.wasmBinary;
     delete reportData.database;
-    super(reportData, getDatabase(wasmBinary, database));
   }
 }

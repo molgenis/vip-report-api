@@ -8,7 +8,7 @@ This repository provides an API to query report data:
 ```ts
 export interface Api {
   getRecordsMeta(): Promise<RecordMetadata>;
-  getRecords(params: Params): Promise<PagedItems<Record>>;
+  getRecords(params: Params): Promise<PagedItems<RecordParams>>;
   getRecordById(id: number): Promise<Item<Record>>;
   getSamples(params: Params): Promise<PagedItems<Sample>>;
   getSampleById(id: number): Promise<Item<Sample>>;
