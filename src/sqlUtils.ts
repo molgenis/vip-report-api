@@ -34,7 +34,7 @@ export function toSqlList(arg: Value): SqlValue {
 export function mapField(part: string) {
   switch (part) {
     case "c":
-      return `v.chrom`;
+      return `contig.value`;
     case "p":
       return `v.pos`;
     case "i":
@@ -93,19 +93,20 @@ export function complexQueryToSql(
   let values = {};
   let partialStatement;
   const tables = usedTables(query);
-  let joins = "vcf v_inner";
-  if (tables.has("s")) joins += " JOIN format f_inner ON f_inner.variant_id = v_inner.id";
+  let joins = "vcf v";
+  if (tables.has("s")) joins += " JOIN format f ON f.variant_id = v.id";
+  joins += " LEFT JOIN contig contig ON contig.id = v.chrom";
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
-      joins += ` JOIN variant_${nestedTable} ${nestedTable}_inner ON ${nestedTable}_inner.variant_id = v_inner.id`;
+      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
   }
-  if (tables.has("n")) joins += " JOIN info n_inner ON n_inner.variant_id = v_inner.id";
+  if (tables.has("n")) joins += " JOIN info n ON n.variant_id = v.id";
 
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
     const nestedQuery = extractNestedQuery(query, nestedTable);
     if (nestedQuery) {
-      ({ partialStatement, values } = queryToSql(nestedQuery, categories, nestedTables, meta, values, true));
+      ({ partialStatement, values } = queryToSql(nestedQuery, categories, nestedTables, meta, values));
       nestedFilter += " AND " + partialStatement;
     }
   }
@@ -113,7 +114,7 @@ export function complexQueryToSql(
 
   const statement = `
 v.id IN (
-  SELECT v_inner.id
+  SELECT v.id
   FROM ${joins}
   WHERE ${partialStatement}
 )
@@ -180,13 +181,12 @@ function nestedQuerytoSql(
   meta: VcfMetadata,
   nestedTables: string[],
   values: ParamsObject,
-  isNested: boolean,
 ) {
   const joinWord = query.operator.toUpperCase();
   let statement = "(";
   for (const subQuery of query.args) {
     let partialStatement;
-    ({ partialStatement, values } = queryToSql(subQuery, categories, nestedTables, meta, values, isNested));
+    ({ partialStatement, values } = queryToSql(subQuery, categories, nestedTables, meta, values));
     if (statement !== "(") {
       statement += ` ${joinWord} `;
     }
@@ -202,15 +202,9 @@ function mapQueryOnNestedField(
   categories: Map<string, FieldCategories>,
   meta: VcfMetadata,
   values: ParamsObject,
-  isNested: boolean,
 ) {
   const type = parts[0] === "s" ? "FORMAT" : "INFO";
-  let prefix;
-  if (isNested) {
-    prefix = parts[0] === "s" ? "f." : parts[1] + ".";
-  } else {
-    prefix = parts[0] === "s" ? "f_inner." : parts[1] + "_inner.";
-  }
+  const prefix = parts[0] === "s" ? "f." : parts[1] + ".";
   const parent = type === "INFO" ? parts[1] : null;
   const field = parts[2];
   let newClause = clause;
@@ -244,7 +238,7 @@ function MapQueryOnInfoOrFormat(
   if (categories.has(key)) {
     newClause = mapQueryCategories(categories, key, clause);
   }
-  const sqlCol = `${prefix}_inner.${field}`;
+  const sqlCol = `${prefix}.${field}`;
   return mapOperatorToSql(newClause, sqlCol, meta, values);
 }
 
@@ -254,7 +248,6 @@ function queryToSql(
   nestedTables: string[],
   meta: VcfMetadata,
   values: ParamsObject,
-  isNested: boolean = false,
 ): PartialStatement {
   if (
     query &&
@@ -263,7 +256,7 @@ function queryToSql(
     Array.isArray(query.args) &&
     (query.operator === "and" || query.operator === "or")
   ) {
-    return nestedQuerytoSql(query, categories, meta, nestedTables, values, isNested);
+    return nestedQuerytoSql(query, categories, meta, nestedTables, values);
   }
   const clause = query as QueryClause;
   let parts: SelectorPart[];
@@ -280,7 +273,7 @@ function queryToSql(
     return MapQueryOnInfoOrFormat(parts, clause, categories, meta, values);
   }
   if (parts.length === 3) {
-    return mapQueryOnNestedField(parts, clause, categories, meta, values, isNested);
+    return mapQueryOnNestedField(parts, clause, categories, meta, values);
   }
   throw new Error("Could not convert selector '" + JSON.stringify(parts) + "' to SQL.");
 }
@@ -290,8 +283,7 @@ function parseString(sqlCol: string): {
   parent_field: string | undefined;
   field: string | undefined;
 } {
-  const [rawTable, field] = sqlCol.split(".", 2);
-  const table = rawTable!.endsWith("_inner") ? rawTable!.slice(0, -6) : rawTable;
+  const [table, field] = sqlCol.split(".", 2);
   let field_type: FieldType;
   let parent_field: string | undefined;
   if (table === "f") {
@@ -344,7 +336,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
   const keys = processValueList(nonNulls, values, sqlCol);
   let inClause;
   switch (sqlCol) {
-    case "v.chrom":
+    case "contig.value":
     case "v.ref":
       inClause = `${sqlCol} IN (${keys})`;
       break;
@@ -489,13 +481,18 @@ function mapOperatorToSql(
   return { partialStatement, values };
 }
 
-export function simpleQueryToSql(query: Query, categories: Categories, values: ParamsObject): PartialStatement {
+export function simpleQueryToSql(
+  query: Query,
+  categories: Categories,
+  values: ParamsObject,
+  prefix: string | undefined = undefined,
+): PartialStatement {
   if ("args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
     const joinWord = query.operator.toUpperCase();
     let statement = "(";
     for (const subQuery of query.args) {
       let partialStatement;
-      ({ partialStatement, values } = simpleQueryToSql(subQuery, categories, values));
+      ({ partialStatement, values } = simpleQueryToSql(subQuery, categories, values, prefix));
       if (statement !== "(") {
         statement += ` ${joinWord} `;
       }
@@ -514,7 +511,10 @@ export function simpleQueryToSql(query: Query, categories: Categories, values: P
   }
 
   if (parts.length === 1) {
-    const sqlCol = mapField((parts[0] as SelectorPart).toString());
+    const sqlCol =
+      prefix !== undefined
+        ? `${prefix}.${mapField((parts[0] as SelectorPart).toString())}`
+        : mapField((parts[0] as SelectorPart).toString());
     return mapOperatorToSql(clause, sqlCol, null, values);
   } else if (parts.length === 2) {
     const prefix = parts[0];
@@ -555,10 +555,12 @@ export function getPagingQuery(
 ) {
   return `SELECT DISTINCT v.*
                 FROM (SELECT v.*,
+                             contig.value as chrom,
                              v.id AS v_variant_id
                           ${orderCols.length ? "," + orderCols.join(", ") : ""}
                       FROM vcf v
                           LEFT JOIN info n ON n.variant_id = v.id
+                          LEFT JOIN contig contig ON contig.id = v.chrom
                           ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
                           ${nestedJoins} 
                           ${whereClause}

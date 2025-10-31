@@ -118,7 +118,20 @@ export class SqlLoader {
   }
 
   loadSampleById(id: number): Sample {
-    const sql = "SELECT * from sample WHERE id = :id";
+    const sql = `SELECT s.sample_index,
+                            s.familyId,
+                            s.individualId,
+                            paternal.individualId AS paternalId,
+                            maternal.individualId AS maternalId,
+                            sex.value AS sex,
+                            affectedStatus.value AS affectedStatus,
+                            s.proband
+                          FROM sample s
+                                 LEFT JOIN sample paternal ON s.paternalId = paternal.sample_index
+                                 LEFT JOIN sample maternal ON s.maternalId = maternal.sample_index
+                                 LEFT JOIN sex ON s.sex = sex.id
+                                 LEFT JOIN affectedStatus ON s.affectedStatus = affectedStatus.id
+                      WHERE s.sample_index = :id`;
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
@@ -133,7 +146,7 @@ export class SqlLoader {
   loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
     const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, categories, {}, "s") : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const selectClause = `SELECT
                             s.sample_index,
@@ -283,7 +296,7 @@ export class SqlLoader {
 
     const selectCols = [
       "v.id as v_variant_id",
-      "v.chrom",
+      "contig.value as chrom",
       "v.pos",
       "v.id_vcf",
       "v.ref",
@@ -297,7 +310,8 @@ export class SqlLoader {
                   ${selectCols}
                   FROM
                   (SELECT * FROM vcf) v
-                  LEFT JOIN info n ON n.variant_id = v.id 
+                  LEFT JOIN info n ON n.variant_id = v.id
+                  LEFT JOIN contig contig ON contig.id = v.chrom
                     ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
                   ${nestedJoins}
                   WHERE v.id = :id
@@ -339,12 +353,12 @@ export class SqlLoader {
   countMatchingSamples(query: Query | undefined): TableSize {
     const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, categories, {}, "s") : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT 
                         (SELECT COUNT(*) FROM sample) AS total_size, 
                         COUNT(DISTINCT sample_index) AS count
-                     from sample ${whereClause}`;
+                     from sample s ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
