@@ -221,10 +221,10 @@ function mapQueryOnNestedField(
   const sqlCol = `${prefix}${field}`;
   let partialStatement;
   ({ partialStatement, values } = mapOperatorToSql(newClause, sqlCol, meta, values));
-  const sampleKey = getUniqueKey(values, "sample_id");
+  const sampleKey = getUniqueKey(values, "sample_index");
   if (parts[0] === "s" && parts[1] !== "*") {
     values[sampleKey] = parts[1] as string;
-    partialStatement = `(${partialStatement} AND ${prefix}sample_id = ${sampleKey})`;
+    partialStatement = `(${partialStatement} AND ${prefix}sample_index = ${sampleKey})`;
   }
   return { partialStatement, values };
 }

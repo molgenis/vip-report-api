@@ -38,7 +38,25 @@ export class SqlLoader {
 
   getMetadata(): VcfMetadata {
     if (this.meta === undefined) {
-      const sql = "SELECT * FROM metadata";
+      const sql = `SELECT
+          m.id,
+          m.name,
+          ft.value AS fieldType,
+          vt.value AS valueType,
+          nt.value AS numberType,
+          m.numberCount,
+          m.required,
+          m.separator,
+          m.categories,
+          m.label,
+          m.description,
+          m.parent,
+          m.nested,
+          m.nullValue
+        FROM metadata m
+        LEFT JOIN fieldType ft ON m.fieldType = ft.id
+        LEFT JOIN valueType vt ON m.valueType = vt.id
+        LEFT JOIN numberType nt ON m.numberType = nt.id;`;
       const rows = executeSql(this.db, sql, {});
       const headerSql = "SELECT * FROM header";
       const headerLines = executeSql(this.db, headerSql, {});
@@ -117,8 +135,22 @@ export class SqlLoader {
     const { partialStatement, values } =
       query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
-    const selectClause = `SELECT * from sample ${whereClause}`;
-    const sql = selectClause + (page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``);
+    const selectClause = `SELECT
+                            s.sample_index,
+                            s.familyId,
+                            s.individualId,
+                            paternal.individualId AS paternalId,
+                            maternal.individualId AS maternalId,
+                            sex.value AS sex,
+                            affectedStatus.value AS affectedStatus,
+                            s.proband
+                          FROM sample s
+                                 LEFT JOIN sample paternal ON s.paternalId = paternal.sample_index
+                                 LEFT JOIN sample maternal ON s.maternalId = maternal.sample_index
+                                 LEFT JOIN sex ON s.sex = sex.id
+                                 LEFT JOIN affectedStatus ON s.affectedStatus = affectedStatus.id`;
+    const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
+    const sql = `${selectClause} ${whereClause} ${pagingSql}`;
     const rows = executeSql(this.db, sql, values);
     return mapSamples(rows);
   }
@@ -130,10 +162,10 @@ export class SqlLoader {
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
 
     const sql = `
-            SELECT sp.sample_id, p.id AS phenotype_id, p.label AS phenotype_label
+            SELECT sp.sample_index, p.id AS phenotype_id, p.label AS phenotype_label
             FROM samplePhenotype sp
             JOIN phenotype p ON sp.phenotype_id = p.id
-            JOIN sample sample ON sp.sample_id = sample.id
+            JOIN sample sample ON sp.sample_index = sample.sample_index
             ${whereClause}
             LIMIT ${size} OFFSET ${page * size}
           `;
@@ -177,12 +209,12 @@ export class SqlLoader {
         : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_index in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
       "v.id as v_variant_id",
-      "v.chrom",
+      "contig.value as chrom",
       "v.pos",
       "v.id_vcf",
       "v.ref",
@@ -198,6 +230,7 @@ export class SqlLoader {
       SELECT DISTINCT ${selectCols}
         FROM (${getPagingQuery(orderCols, sampleIds !== undefined, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
         LEFT JOIN info n ON n.variant_id = v.id
+        LEFT JOIN contig contig ON contig.id = v.chrom
         ${nestedJoins} 
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
         ${whereClause}
@@ -245,7 +278,7 @@ export class SqlLoader {
     }
 
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_id in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sample_index in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db, nestedTables, sampleIds !== undefined);
 
     const selectCols = [
@@ -310,7 +343,7 @@ export class SqlLoader {
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT 
                         (SELECT COUNT(*) FROM sample) AS total_size, 
-                        COUNT(DISTINCT id) AS count
+                        COUNT(DISTINCT sample_index) AS count
                      from sample ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
@@ -326,7 +359,7 @@ export class SqlLoader {
                             COUNT(DISTINCT p.id) AS count
                                  FROM samplePhenotype sp
                                           JOIN phenotype p ON sp.phenotype_id = p.id
-                                          JOIN sample sample ON sp.sample_id = sample.id
+                                          JOIN sample sample ON sp.sample_index = sample.sample_index
                                      ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };

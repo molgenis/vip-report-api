@@ -434,7 +434,7 @@ test("get - all samples", async () => {
     items: [
       {
         data: {
-          id: 0,
+          index: 0,
           person: {
             affectedStatus: "MISSING",
             familyId: "MISSING_0",
@@ -449,7 +449,7 @@ test("get - all samples", async () => {
       },
       {
         data: {
-          id: 1,
+          index: 1,
           person: {
             affectedStatus: "MISSING",
             familyId: "MISSING_1",
@@ -464,7 +464,7 @@ test("get - all samples", async () => {
       },
       {
         data: {
-          id: 2,
+          index: 2,
           person: {
             affectedStatus: "MISSING",
             familyId: "MISSING_2",

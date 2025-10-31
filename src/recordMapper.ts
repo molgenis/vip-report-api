@@ -31,8 +31,8 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
   }
   const s: RecordSample[] = [];
   for (const f of valueMap.fmtArr) {
-    const sampleId = f.get("sample_id") as number | undefined;
-    if (sampleId !== undefined) s[sampleId] = Object.fromEntries([...f].filter(([key]) => key !== "sample_id"));
+    const sampleIdx = f.get("sample_index") as number | undefined;
+    if (sampleIdx !== undefined) s[sampleIdx] = Object.fromEntries([...f].filter(([key]) => key !== "sample_index"));
   }
 
   return {
@@ -61,7 +61,7 @@ export function mapRows(
   const variantMap = new Map<number, ValueMap>();
 
   // Track CSQ/FMT rows already added by primary key
-  const addedFmtMap = new Map<number, string[]>();
+  const addedFmtMap = new Map<number, number[]>();
   const addedCsqMap = new Map<number, Map<string, string[]>>(); // by variantId, then nestedField
 
   for (const row of rows) {
@@ -102,7 +102,7 @@ export function mapRows(
 
     // Accumulate unique FMT/sample maps
     if (fmtMap && fmtMap.size > 0) {
-      const sampleId = fmtMap.get("sample_id") as string;
+      const sampleId = fmtMap.get("sample_index") as number;
       const seenSamples = addedFmtMap.get(variantId) ?? [];
       if (!seenSamples.includes(sampleId)) {
         const filteredFmt = new Map([...fmtMap.entries()].filter(([key]) => !excludeKeys.includes(key)));
@@ -139,7 +139,7 @@ export function splitAndParseMap(
   for (const [key, value] of Object.entries(row)) {
     if (key.startsWith("FMT_")) {
       const fmtKey = key.substring("FMT_".length);
-      if (fmtKey === "sample_id") {
+      if (fmtKey === "sample_index") {
         fmtMap.set(fmtKey, value as Value);
       } else if (!excludeKeys.includes(fmtKey)) {
         if (meta.format[fmtKey] !== undefined) {

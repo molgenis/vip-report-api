@@ -21,12 +21,10 @@ export interface DatabaseResource {
   data: Resource;
 }
 export interface DatabaseRecord extends DatabaseResource {
-  id: number;
   data: VcfRecord;
 }
 
 export interface DatabaseSample extends DatabaseResource {
-  id: number;
   data: Sample;
 }
 

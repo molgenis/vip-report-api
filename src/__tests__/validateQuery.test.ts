@@ -66,14 +66,14 @@ describe("validateQuery", () => {
     ).not.toThrow();
   });
 
-  it("validates sample_id field", () => {
+  it("validates sample_index field", () => {
     expect(() =>
       validateQuery(meta, {
-        selector: ["f", "sample_id"],
+        selector: ["f", "sample_index"],
         operator: "==",
         args: 7,
       } as QueryClause),
-    ).toThrow("Unknown field in selector: 'f,sample_id'");
+    ).toThrow("Unknown field in selector: 'f,sample_index'");
   });
 
   it("validates GT_type field", () => {
