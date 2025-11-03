@@ -1,5 +1,6 @@
 import { Query, QueryClause, SelectorPart } from "./index";
 import { FieldMetadata, VcfMetadata } from "@molgenis/vip-report-vcf";
+import { mapFormatField } from "./sqlUtils";
 
 function validate(fieldMeta: FieldMetadata, clause: QueryClause) {
   switch (clause.operator) {
