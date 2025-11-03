@@ -7,9 +7,9 @@ Report data API for Variant Call Format (VCF) Report templates (see https://gith
 This repository provides an API to query report data:
 ```ts
 export interface Api {
-  getRecordsMeta(): Promise<RecordMetadata>;
-  getRecords(params: Params): Promise<PagedItems<RecordParams>>;
-  getRecordById(id: number): Promise<Item<Record>>;
+  getRecordsMeta(): Promise<VcfMetadata>;
+  getRecords(params: RecordParams): Promise<PagedItems<VcfRecord>>;
+  getRecordById(id: number): Promise<Item<VcfRecord>>;
   getSamples(params: Params): Promise<PagedItems<Sample>>;
   getSampleById(id: number): Promise<Item<Sample>>;
   getPhenotypes(params: Params): Promise<PagedItems<Phenotype>>;
