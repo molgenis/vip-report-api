@@ -22,14 +22,14 @@ type ValueMap = {
   restMap: Map<string, Value>;
 };
 
-export const excludeKeys = ["id", "v_variant_id", "variant_id", "GT_type"];
+export const excludeKeys = ["id", "v_variantId", "variantId", "GtType"];
 
 function postProcessVIPC_SandVIPP_S(valueMap: ValueMap) {
-  //remove CSQ_index field from CSQ value, and store in separate array
+  //remove CsqIndex field from CSQ value, and store in separate array
   const { csqIndices, objsWithoutCSQIndex } = separateCSQIndex(valueMap.nestedMap.get("CSQ") as ValueObject[]);
   valueMap.nestedMap.set("CSQ", objsWithoutCSQIndex);
 
-  //use the CSQ_index array to filter VIPC_S and VIPP_S values
+  //use the CsqIndex array to filter VIPC_S and VIPP_S values
   const fmt = valueMap.fmtArr;
   const newFmt = [];
   for (const value of fmt) {
@@ -62,16 +62,16 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
   }
   const s: RecordSample[] = [];
   for (const f of valueMap.fmtArr) {
-    const sampleIdx = f.get("sample_index") as number | undefined;
-    if (sampleIdx !== undefined) s[sampleIdx] = Object.fromEntries([...f].filter(([key]) => key !== "sample_index"));
+    const sampleIdx = f.get("sampleIndex") as number | undefined;
+    if (sampleIdx !== undefined) s[sampleIdx] = Object.fromEntries([...f].filter(([key]) => key !== "sampleIndex"));
   }
 
   return {
-    id: valueMap.restMap.get("v_variant_id") as number,
+    id: valueMap.restMap.get("v_variantId") as number,
     data: {
       c: valueMap.restMap.get("chrom") as string,
       p: valueMap.restMap.get("pos") as number,
-      i: valueMap.restMap.get("id_vcf") === null ? [] : (valueMap.restMap.get("id_vcf") as string[]),
+      i: valueMap.restMap.get("idVcf") === null ? [] : (valueMap.restMap.get("idVcf") as string[]),
       r: valueMap.restMap.get("ref") as string,
       a: valueMap.restMap.get("alt") as string[],
       q: valueMap.restMap.get("filter") === null ? null : (valueMap.restMap.get("qual") as number),
@@ -88,8 +88,8 @@ function separateCSQIndex(csqArray: ValueObject[]): { csqIndices: number[]; objs
     if (csq === null) {
       throw new Error("Unexpected CSQ value null encountered.");
     }
-    const { CSQ_index, ...rest } = csq;
-    csqIndices.push(CSQ_index as number);
+    const { CsqIndex, ...rest } = csq;
+    csqIndices.push(CsqIndex as number);
     return rest;
   });
   return { csqIndices, objsWithoutCSQIndex };
@@ -111,7 +111,7 @@ export function mapRows(
   for (const row of rows) {
     // Partition fields and parse values
     const { fmtMap, nestedFieldsMap, infoMap, restMap } = splitAndParseMap(row, meta, categories, nestedFields);
-    const variantId = row.v_variant_id as number;
+    const variantId = row.v_variantId as number;
 
     // Initialize variant container if not seen
     if (!variantMap.has(variantId)) {
@@ -145,7 +145,7 @@ export function mapRows(
     }
     // Accumulate unique FMT/sample maps
     if (fmtMap && fmtMap.size > 0) {
-      const sampleId = fmtMap.get("sample_index") as number;
+      const sampleId = fmtMap.get("sampleIndex") as number;
       const seenSamples = addedFmtMap.get(variantId) ?? [];
       if (!seenSamples.includes(sampleId)) {
         const filteredFmt = new Map([...fmtMap.entries()].filter(([key]) => !excludeKeys.includes(key)));
@@ -181,7 +181,7 @@ export function splitAndParseMap(
   for (const [key, value] of Object.entries(row)) {
     if (key.startsWith("FMT_")) {
       const fmtKey = key.substring("FMT_".length);
-      if (fmtKey === "sample_index") {
+      if (fmtKey === "sampleIndex") {
         fmtMap.set(fmtKey, value as Value);
       } else if (!excludeKeys.includes(fmtKey)) {
         if (meta.format[fmtKey] !== undefined) {
@@ -214,8 +214,8 @@ export function splitAndParseMap(
       for (const nestedMeta of nestedMetas) nestedMetaMap.set(nestedMeta.id, nestedMeta);
 
       const nestedKey = key.substring(key.indexOf("^") + 1);
-      //CSQ_index exception because it is used in postprocessing to fix VIPC and VIPP
-      if (excludeKeys.includes(nestedKey) || nestedKey === "CSQ_index") {
+      //CsqIndex exception because it is used in postprocessing to fix VIPC and VIPP
+      if (excludeKeys.includes(nestedKey) || nestedKey === "CsqIndex") {
         nestedMap.set(nestedKey, value as Value);
       } else {
         nestedMap.set(nestedKey, parseSqlValue(value, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
@@ -231,14 +231,14 @@ export function splitAndParseMap(
 // Standardize parsing of non-sample non-info fields
 function parseStandardField(token: Value, key: string): Value {
   switch (key) {
-    case "v_variant_id":
+    case "v_variantId":
     case "chrom":
     case "ref":
       return token as string;
     case "pos":
       return token as number;
     case "alt":
-    case "id_vcf":
+    case "idVcf":
     case "filter":
       return JSON.parse(token as string);
     case "qual":

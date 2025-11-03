@@ -121,14 +121,17 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
     }
     if (parts.length === 3) {
       if (parts[0] === "s") {
-        const field = parts[2] as SelectorPart;
+        const field = mapFormatField(parts[2] as SelectorPart, "FORMAT");
         fieldMeta = meta.format[field];
       } else {
         const parent = parts[1] as SelectorPart;
         const parentMeta = meta.info[parent];
-        const field = parts[2] as SelectorPart;
         if (parentMeta === undefined) {
           throw new Error(`Unknown parent field in selector: '${parts}'`);
+        }
+        let field = parts[2] as SelectorPart;
+        if (field === "GT_type") {
+          field = "gtType";
         }
         fieldMeta = parentMeta.nested?.items.find((fm) => fm.id === field);
       }

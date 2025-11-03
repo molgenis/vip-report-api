@@ -38,7 +38,7 @@ export function mapField(part: string) {
     case "p":
       return `v.pos`;
     case "i":
-      return `v.id_vcf`;
+      return `v.idVcf`;
     case "r":
       return `v.ref`;
     case "a":
@@ -84,6 +84,13 @@ function mapQueryCategories(categories: Map<string, FieldCategories>, key: strin
   return { args: args, operator: clause.operator, selector: clause.selector };
 }
 
+export function mapFormatField(field: SelectorPart, type: "FORMAT" | "INFO") {
+  if (type === "FORMAT" && field === "GT_type") {
+    field = "gtType";
+  }
+  return field;
+}
+
 export function complexQueryToSql(
   query: Query,
   categories: Categories,
@@ -94,13 +101,13 @@ export function complexQueryToSql(
   let partialStatement;
   const tables = usedTables(query);
   let joins = "vcf v";
-  if (tables.has("s")) joins += " JOIN format f ON f.variant_id = v.id";
+  if (tables.has("s")) joins += " JOIN format f ON f.variantId = v.id";
   joins += " LEFT JOIN contig contig ON contig.id = v.chrom";
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
-      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
+      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variantId = v.id`;
   }
-  if (tables.has("n")) joins += " JOIN info n ON n.variant_id = v.id";
+  if (tables.has("n")) joins += " JOIN info n ON n.variantId = v.id";
 
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
@@ -203,10 +210,10 @@ function mapQueryOnNestedField(
   meta: VcfMetadata,
   values: ParamsObject,
 ) {
-  const type = parts[0] === "s" ? "FORMAT" : "INFO";
+  const type: FieldType = parts[0] === "s" ? "FORMAT" : "INFO";
   const prefix = parts[0] === "s" ? "f." : parts[1] + ".";
   const parent = type === "INFO" ? parts[1] : null;
-  const field = parts[2];
+  const field = mapFormatField(parts[2] as SelectorPart, type);
   let newClause = clause;
   const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
   if (categories.has(key)) {
@@ -215,10 +222,10 @@ function mapQueryOnNestedField(
   const sqlCol = `${prefix}${field}`;
   let partialStatement;
   ({ partialStatement, values } = mapOperatorToSql(newClause, sqlCol, meta, values));
-  const sampleKey = getUniqueKey(values, "sample_index");
+  const sampleKey = getUniqueKey(values, "sampleIndex");
   if (parts[0] === "s" && parts[1] !== "*") {
     values[sampleKey] = parts[1] as string;
-    partialStatement = `(${partialStatement} AND ${prefix}sample_index = ${sampleKey})`;
+    partialStatement = `(${partialStatement} AND ${prefix}sampleIndex = ${sampleKey})`;
   }
   return { partialStatement, values };
 }
@@ -230,9 +237,9 @@ function MapQueryOnInfoOrFormat(
   meta: VcfMetadata,
   values: ParamsObject,
 ) {
-  const type = parts[0] === "s" ? "FORMAT" : "INFO";
+  const type: FieldType = parts[0] === "s" ? "FORMAT" : "INFO";
   const prefix = parts[0] === "s" ? "f" : parts[0];
-  const field = parts[1];
+  const field = mapFormatField(parts[1] as SelectorPart, type);
   let newClause = clause;
   const key = `${type}/${field}`;
   if (categories.has(key)) {
@@ -345,7 +352,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
       inClause = `${sqlCol} IN (${keys})`;
       break;
     case "v.alt":
-    case "v.id_vcf":
+    case "v.idVcf":
     case "v.filter":
       inClause = `EXISTS (
             SELECT 1 FROM json_each(${sqlCol})
@@ -538,7 +545,7 @@ export function getColumnNames(db: Database | undefined, table: string): string[
 export function getNestedJoins(nestedTables: string[]) {
   let nestedJoins: string = "";
   for (const nestedTable of nestedTables) {
-    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variant_id = v.id`;
+    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variantId = v.id`;
   }
   return nestedJoins;
 }
@@ -556,12 +563,12 @@ export function getPagingQuery(
   return `SELECT DISTINCT v.*
                 FROM (SELECT v.*,
                              contig.value as chrom,
-                             v.id AS v_variant_id
+                             v.id AS v_variantId
                           ${orderCols.length ? "," + orderCols.join(", ") : ""}
                       FROM vcf v
-                          LEFT JOIN info n ON n.variant_id = v.id
+                          LEFT JOIN info n ON n.variantId = v.id
                           LEFT JOIN contig contig ON contig.id = v.chrom
-                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variant_id = v.id` : ""}
+                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
                           ${nestedJoins} 
                           ${whereClause}
                       GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v

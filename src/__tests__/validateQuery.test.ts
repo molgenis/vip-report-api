@@ -66,17 +66,17 @@ describe("validateQuery", () => {
     ).not.toThrow();
   });
 
-  it("validates sample_index field", () => {
+  it("validates sampleIndex field", () => {
     expect(() =>
       validateQuery(meta, {
-        selector: ["f", "sample_index"],
+        selector: ["f", "sampleIndex"],
         operator: "==",
         args: 7,
       } as QueryClause),
-    ).toThrow("Unknown field in selector: 'f,sample_index'");
+    ).toThrow("Unknown field in selector: 'f,sampleIndex'");
   });
 
-  it("validates GT_type field", () => {
+  it("validates GtType field", () => {
     expect(() =>
       validateQuery(meta, {
         selector: ["s", 1, "GT_type"],
@@ -86,14 +86,14 @@ describe("validateQuery", () => {
     ).not.toThrow();
   });
 
-  it("validates INFO GT_type field", () => {
+  it("validates INFO GtType field", () => {
     expect(() =>
       validateQuery(meta, {
-        selector: ["n", "GT_type"],
+        selector: ["n", "GtType"],
         operator: "==",
         args: 7,
       } as QueryClause),
-    ).toThrow("Unknown field in selector: 'n,GT_type'");
+    ).toThrow("Unknown field in selector: 'n,GtType'");
   });
 
   it("throws if integer comparison gets non-number", () => {

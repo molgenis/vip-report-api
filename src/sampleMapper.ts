@@ -3,7 +3,7 @@ import { DatabaseSample, SqlRow } from "./sql";
 
 export function mapSample(row: SqlRow): DatabaseSample {
   return {
-    id: row.sample_index as number,
+    id: row.sampleIndex as number,
     data: {
       person: {
         familyId: row.familyId as string,
@@ -13,7 +13,7 @@ export function mapSample(row: SqlRow): DatabaseSample {
         sex: mapSex(row.sex as string),
         affectedStatus: mapAffectedStatus(row.affectedStatus as string),
       },
-      index: row.sample_index as number,
+      index: row.sampleIndex as number,
       proband: row.proband === 1,
     },
   };
