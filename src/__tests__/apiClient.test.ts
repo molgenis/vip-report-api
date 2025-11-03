@@ -21,6 +21,20 @@ const record0: Item<VcfRecord> = {
     f: ["PASS"],
     i: [],
     n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -69,6 +83,8 @@ const record0: Item<VcfRecord> = {
           t: "het",
         },
         VIAB: 0.9,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -79,6 +95,8 @@ const record0: Item<VcfRecord> = {
           t: "hom_r",
         },
         VIAB: 1,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -107,6 +125,20 @@ const record1: Item<VcfRecord> = {
       n_bool6: true,
       n_bool7: true,
       n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
       n_object0: [
         {
           n_array1: ["1", "2", "3"],
@@ -143,6 +175,182 @@ const record1: Item<VcfRecord> = {
           p: true,
           t: "het",
         },
+        VIPC_S: ["U1", "U2", "U3"],
+      },
+      {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 1,
+      },
+      {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 1,
+      },
+    ],
+  },
+  id: 2,
+};
+const record0CsqFiltered: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+      ],
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat1: "AA",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: [
+      {
+        AD: [45, 5],
+        DP: 50,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 0.9,
+        VIPC_S: ["U2"],
+        VIPP_S: ["path2"],
+      },
+      {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+        VIPC_S: ["U2"],
+        VIPP_S: ["path2"],
+      },
+      {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+      },
+    ],
+  },
+  id: 1,
+};
+const record1CsqFiltered: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: [
+      {
+        AD: [0, 0],
+        DP: 10,
+        GT: {
+          a: [0, 1],
+          p: true,
+          t: "het",
+        },
+        VIPC_S: ["U2", "U3"],
       },
       {
         AD: [11, 0],
@@ -175,6 +383,20 @@ const record0desc: Item<VcfRecord> = {
     f: ["PASS"],
     i: [],
     n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -223,6 +445,8 @@ const record0desc: Item<VcfRecord> = {
           t: "het",
         },
         VIAB: 0.9,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -233,6 +457,8 @@ const record0desc: Item<VcfRecord> = {
           t: "hom_r",
         },
         VIAB: 1,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -255,6 +481,20 @@ const record0catA: Item<VcfRecord> = {
     f: ["PASS"],
     i: [],
     n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -285,6 +525,8 @@ const record0catA: Item<VcfRecord> = {
           t: "het",
         },
         VIAB: 0.9,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -295,6 +537,8 @@ const record0catA: Item<VcfRecord> = {
           t: "hom_r",
         },
         VIAB: 1,
+        VIPC_S: ["U1", "U2", "U3"],
+        VIPP_S: ["path1", "path2", "path3"],
       },
       {
         AD: [10, 0],
@@ -323,6 +567,20 @@ const record1desc: Item<VcfRecord> = {
       n_bool6: true,
       n_bool7: true,
       n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
       n_object0: [
         {
           n_array1: [],
@@ -359,6 +617,7 @@ const record1desc: Item<VcfRecord> = {
           p: true,
           t: "het",
         },
+        VIPC_S: ["U1", "U2", "U3"],
       },
       {
         AD: [11, 0],
@@ -641,6 +900,23 @@ test("get - records with categorical query on nested", async () => {
   expect(records).toEqual({
     items: [record0catA],
     page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with CSQ/VIPC filtering, inlcuding VIPC_S and VIPP_S", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "CSQ", "VIPC"],
+      operator: "==",
+      args: "LB",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0CsqFiltered, record1CsqFiltered],
+    page: { number: 0, size: 10, totalElements: 2 },
     total: 2,
   });
 });

@@ -24,7 +24,38 @@ type ValueMap = {
 
 export const excludeKeys = ["id", "v_variant_id", "variant_id", "GT_type"];
 
+function postProcessVIPC_SandVIPP_S(valueMap: ValueMap) {
+  //remove CSQ_index field from CSQ value, and store in separate array
+  const { csqIndices, objsWithoutCSQIndex } = separateCSQIndex(valueMap.nestedMap.get("CSQ") as ValueObject[]);
+  valueMap.nestedMap.set("CSQ", objsWithoutCSQIndex);
+
+  //use the CSQ_index array to filter VIPC_S and VIPP_S values
+  const fmt = valueMap.fmtArr;
+  const newFmt = [];
+  for (const value of fmt) {
+    const vipc = value.get("VIPC_S");
+    const vipp = value.get("VIPP_S");
+    if (vipc !== undefined && Array.isArray(vipc)) {
+      value.set(
+        "VIPC_S",
+        vipc.filter((_, index) => csqIndices.includes(index)),
+      );
+    }
+    if (vipp !== undefined && Array.isArray(vipp)) {
+      value.set(
+        "VIPP_S",
+        vipp.filter((_, index) => csqIndices.includes(index)),
+      );
+    }
+    newFmt.push(value);
+  }
+  valueMap.fmtArr = newFmt;
+}
+
 function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord {
+  if (valueMap.nestedMap.get("CSQ") !== undefined) {
+    postProcessVIPC_SandVIPP_S(valueMap);
+  }
   const n = Object.fromEntries(valueMap.infoMap);
   for (const nestedField of nestedFields) {
     n[nestedField] = valueMap.nestedMap.get(nestedField) ?? [];
@@ -49,6 +80,19 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
       s,
     } as VcfRecord,
   };
+}
+
+function separateCSQIndex(csqArray: ValueObject[]): { csqIndices: number[]; objsWithoutCSQIndex: ValueObject[] } {
+  const csqIndices: number[] = [];
+  const objsWithoutCSQIndex = csqArray.map((csq) => {
+    if (csq === null) {
+      throw new Error("Unexpected CSQ value null encountered.");
+    }
+    const { CSQ_index, ...rest } = csq;
+    csqIndices.push(CSQ_index as number);
+    return rest;
+  });
+  return { csqIndices, objsWithoutCSQIndex };
 }
 
 export function mapRows(
@@ -82,11 +126,11 @@ export function mapRows(
     // For each nested field, accumulate in variantMap.get(variantId)!.nestedMap
     for (const [field, nestedMap] of nestedFieldsMap) {
       if (nestedMap && nestedMap.size > 0) {
-        const csqId = nestedMap.get("id") as string;
+        const nestedId = nestedMap.get("id") as string;
         // Use a nested tracker to avoid duplicate by field
         if (!addedCsqMap.has(variantId)) addedCsqMap.set(variantId, new Map());
         const fieldSeenCsqs = addedCsqMap.get(variantId)!.get(field) ?? [];
-        if (!fieldSeenCsqs.includes(csqId)) {
+        if (!fieldSeenCsqs.includes(nestedId)) {
           if (!variantMap.get(variantId)!.nestedMap.has(field)) {
             variantMap.get(variantId)!.nestedMap.set(field, []);
           }
@@ -94,12 +138,11 @@ export function mapRows(
             .get(variantId)!
             .nestedMap.get(field)!
             .push(Object.fromEntries([...nestedMap.entries()].filter(([key]) => !excludeKeys.includes(key))));
-          fieldSeenCsqs.push(csqId);
+          fieldSeenCsqs.push(nestedId);
           addedCsqMap.get(variantId)!.set(field, fieldSeenCsqs);
         }
       }
     }
-
     // Accumulate unique FMT/sample maps
     if (fmtMap && fmtMap.size > 0) {
       const sampleId = fmtMap.get("sample_index") as number;
@@ -112,7 +155,6 @@ export function mapRows(
       }
     }
   }
-  // Compose VcfRecord objects
   return Array.from(variantMap.values()).map((valueMap) => mapVariant(valueMap, nestedFields));
 }
 
@@ -172,7 +214,8 @@ export function splitAndParseMap(
       for (const nestedMeta of nestedMetas) nestedMetaMap.set(nestedMeta.id, nestedMeta);
 
       const nestedKey = key.substring(key.indexOf("^") + 1);
-      if (excludeKeys.includes(nestedKey)) {
+      //CSQ_index exception because it is used in postprocessing to fix VIPC and VIPP
+      if (excludeKeys.includes(nestedKey) || nestedKey === "CSQ_index") {
         nestedMap.set(nestedKey, value as Value);
       } else {
         nestedMap.set(nestedKey, parseSqlValue(value, nestedMetaMap.get(nestedKey)!, categories, "INFO"));
