@@ -40,10 +40,10 @@ export class ReportDatabase {
     return this._meta;
   }
 
-  loadDecisionTree(id: string): DecisionTree {
+  loadDecisionTree(id: string): DecisionTree | null {
     const sql = "SELECT tree from decisiontree WHERE id = :id";
     const rows = executeSql(this.db, sql, { ":id": id });
-    if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find decision tree with id: " + id);
+    if (rows.length < 1 || rows[0] === undefined) return null;
     return JSON.parse(rows[0]["tree"] as string);
   }
 
@@ -108,6 +108,7 @@ export class ReportDatabase {
     const sql = `SELECT *
                  from config`;
     const rows = executeSql(this.db, sql, {});
+    if (rows.length < 1 || rows[0] === undefined) return null;
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
@@ -337,6 +338,7 @@ export class ReportDatabase {
                         m.numberCount,
                         m.required,
                         m.separator,
+                        m.nestedSeparator,
                         m.categories,
                         m.label,
                         m.description,

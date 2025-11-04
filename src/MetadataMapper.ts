@@ -90,7 +90,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
     if (row.nested === 1 || row.nested === true) {
       const childRows = rows.filter((r) => r.parent === row.name);
       field.nested = {
-        separator: row.separator as string,
+        separator: row.nestedSeparator as string,
         items: childRows.map((childRow) => metaMap.get(row.name + "_" + childRow.name)!),
       };
     }

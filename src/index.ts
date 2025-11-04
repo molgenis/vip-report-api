@@ -1,10 +1,12 @@
 import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { ApiClient as ApiClientAlias } from "./apiClient";
-import { WindowApiClient as WindowApiClientAlias } from "./WindowApiClient";
+import { WindowApiClientFactory as WindowApiClientAlias } from "./WindowApiClient";
+import { ReportDatabase as ReportDatabaseAlias } from "./ReportDatabase";
 
 // export API implementations
 export const ApiClient = ApiClientAlias;
-export const WindowApiClient = WindowApiClientAlias;
+export const WindowApiClientFactory = WindowApiClientAlias;
+export const ReportDatabase = ReportDatabaseAlias;
 
 // export API interface and types
 export interface Api {
