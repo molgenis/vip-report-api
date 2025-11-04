@@ -1,6 +1,7 @@
 import { ReportData } from "./index";
 import { ApiClient } from "./apiClient";
-import initSqlJs, { Database } from "sql.js";
+import initSqlJs from "sql.js";
+import { ReportDatabase } from "./ReportDatabase";
 
 export type EncodedReport = ReportData & {
   base85?: EncodedReportData;
@@ -19,31 +20,39 @@ declare global {
   }
 }
 
-async function createDatabase(wasmBinaryBytes: Uint8Array, database: Uint8Array): Promise<Database> {
-  const wasmBinary = wasmBinaryBytes.buffer as ArrayBuffer;
-  const SQL = await initSqlJs({ wasmBinary });
-  return new SQL.Database(database);
-}
-
 /**
- * API client that uses window.api object as data source.
+ * {@link ApiClient} factory that uses {@link EncodedReport} data stored in <code>window.api</code> as data source.
  */
-export class WindowApiClient extends ApiClient {
-  constructor() {
+export class WindowApiClientFactory {
+  static async create(): Promise<ApiClient> {
     const reportData = window.api;
     if (reportData === undefined) {
       alert("This is a report template. Use the vip-report tool to create reports using this template and data.");
     }
-    if (reportData.binary.wasmBinary === undefined) {
-      throw new Error("Reportdata is missing the required 'reportData.binary.wasmBinary'.");
-    }
-    if (reportData.database === undefined) {
-      throw new Error("Reportdata is missing the required 'reportData.database'.");
-    }
+
+    const database = await this.createReportDatabase(reportData);
+    return new ApiClient(database, reportData.binary);
+  }
+
+  private static async createReportDatabase(reportData: ReportData): Promise<ReportDatabase> {
+    // create SQLite application
     const wasmBinary = reportData.binary.wasmBinary;
+    if (wasmBinary === undefined) {
+      throw new Error("Report data is missing the required 'reportData.binary.wasmBinary'.");
+    }
+    const SQL = await initSqlJs({ wasmBinary: wasmBinary.buffer as ArrayBuffer });
+
+    // load SQLite database file
     const database = reportData.database;
-    super(reportData, createDatabase(wasmBinary, database));
+    if (database === undefined) {
+      throw new Error("Report data is missing the required 'reportData.database'.");
+    }
+    const sqlDatabase = new SQL.Database(database);
+
+    // make available for garbage collection
     delete reportData.binary.wasmBinary;
     delete reportData.database;
+
+    return new ReportDatabase(sqlDatabase);
   }
 }
