@@ -2,7 +2,6 @@ import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import {
   Api,
   AppMetadata,
-  BinaryReportData,
   Cram,
   DecisionTree,
   Item,
@@ -11,6 +10,7 @@ import {
   Params,
   Phenotype,
   RecordParams,
+  ReportData,
   Resource,
   Sample,
 } from "./index";
@@ -21,7 +21,7 @@ import { DatabaseRecord, DatabaseResource, TableSize } from "./sql";
 export class ApiClient implements Api {
   constructor(
     private readonly db: ReportDatabase,
-    private readonly binary: BinaryReportData,
+    private readonly reportData: ReportData,
   ) {}
 
   async getConfig(): Promise<Json | null> {
@@ -96,8 +96,8 @@ export class ApiClient implements Api {
 
   getFastaGz(contig: string, pos: number): Promise<Uint8Array | null> {
     let buffer: Uint8Array | null = null;
-    if (this.binary.fastaGz) {
-      for (const [key, value] of Object.entries(this.binary.fastaGz)) {
+    if (this.reportData.fastaGz) {
+      for (const [key, value] of Object.entries(this.reportData.fastaGz)) {
         const pair = key.split(":");
         if (pair[0] === contig) {
           const interval = pair[1]!.split("-");
@@ -116,12 +116,12 @@ export class ApiClient implements Api {
   }
 
   getGenesGz(): Promise<Uint8Array | null> {
-    const genesGz = this.binary.genesGz;
+    const genesGz = this.reportData.genesGz;
     return Promise.resolve(genesGz ?? null);
   }
 
   getCram(sampleId: string): Promise<Cram | null> {
-    const cram = this.binary.cram;
+    const cram = this.reportData.cram;
     const sampleCram = cram ? (cram[sampleId] ?? null) : null;
     return Promise.resolve(sampleCram);
   }

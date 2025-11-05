@@ -8,7 +8,7 @@ describe("window api client", () => {
 
   test("get records", async () => {
     window.api = {
-      binary: { wasmBinary: readFileSync(path.join(__dirname, "data", "sql-wasm.wasm")) },
+      wasmBinary: readFileSync(path.join(__dirname, "data", "sql-wasm.wasm")),
       database: readFileSync(path.join(__dirname, "data", "trio.db")),
     };
 

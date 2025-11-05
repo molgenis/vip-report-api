@@ -31,14 +31,14 @@ export class WindowApiClientFactory {
     }
 
     const database = await this.createReportDatabase(reportData);
-    return new ApiClient(database, reportData.binary);
+    return new ApiClient(database, reportData);
   }
 
   private static async createReportDatabase(reportData: ReportData): Promise<ReportDatabase> {
     // create SQLite application
-    const wasmBinary = reportData.binary.wasmBinary;
+    const wasmBinary = reportData.wasmBinary;
     if (wasmBinary === undefined) {
-      throw new Error("Report data is missing the required 'reportData.binary.wasmBinary'.");
+      throw new Error("Report data is missing the required 'reportData.wasmBinary'.");
     }
     const SQL = await initSqlJs({ wasmBinary: wasmBinary.buffer as ArrayBuffer });
 
@@ -50,7 +50,7 @@ export class WindowApiClientFactory {
     const sqlDatabase = new SQL.Database(database);
 
     // make available for garbage collection
-    delete reportData.binary.wasmBinary;
+    delete reportData.wasmBinary;
     delete reportData.database;
 
     return new ReportDatabase(sqlDatabase);

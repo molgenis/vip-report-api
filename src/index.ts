@@ -250,15 +250,11 @@ export type Cram = {
   crai: Uint8Array;
 };
 
-export interface ReportData {
-  database?: Uint8Array;
-  binary: BinaryReportData;
-}
-
 /*
  * wasmBinary -> sql.js 1.13.0 wasm binary
  */
-export interface BinaryReportData {
+export interface ReportData {
+  database?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
   wasmBinary?: Uint8Array;
