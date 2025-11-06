@@ -38,7 +38,7 @@ export function toNumberType(val: string): NumberType {
 }
 
 function parseCategories(raw: Value): CategoryRecord | undefined {
-  if (raw == null) return undefined;
+  if (raw === null) return undefined;
   try {
     return JSON.parse(raw as string);
   } catch {
