@@ -85,20 +85,20 @@ export class ReportDatabase {
   }
 
   loadSampleById(id: number): Sample {
-    const sql = `SELECT s.sampleIndex,
-                        s.familyId,
-                        s.individualId,
+    const sql = `SELECT sample.sampleIndex,
+                        sample.familyId,
+                        sample.individualId,
                         paternal.individualId AS paternalId,
                         maternal.individualId AS maternalId,
                         sex.value             AS sex,
                         affectedStatus.value  AS affectedStatus,
-                        s.proband
-                 FROM sample s
-                        LEFT JOIN sample paternal ON s.paternalId = paternal.sampleIndex
-                        LEFT JOIN sample maternal ON s.maternalId = maternal.sampleIndex
-                        LEFT JOIN sex ON s.sex = sex.id
-                        LEFT JOIN affectedStatus ON s.affectedStatus = affectedStatus.id
-                 WHERE s.sampleIndex = :id`;
+                        sample.proband
+                 FROM sample
+                        LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
+                        LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
+                        LEFT JOIN sex ON sample.sex = sex.id
+                        LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id
+                 WHERE sample.sampleIndex = :id`;
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
@@ -113,23 +113,22 @@ export class ReportDatabase {
   }
 
   loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
-    const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}, "s") : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
-    const selectClause = `SELECT s.sampleIndex,
-                                 s.familyId,
-                                 s.individualId,
+    const selectClause = `SELECT sample.sampleIndex,
+                                 sample.familyId,
+                                 sample.individualId,
                                  paternal.individualId AS paternalId,
                                  maternal.individualId AS maternalId,
                                  sex.value             AS sex,
                                  affectedStatus.value  AS affectedStatus,
-                                 s.proband
-                          FROM sample s
-                                 LEFT JOIN sample paternal ON s.paternalId = paternal.sampleIndex
-                                 LEFT JOIN sample maternal ON s.maternalId = maternal.sampleIndex
-                                 LEFT JOIN sex ON s.sex = sex.id
-                                 LEFT JOIN affectedStatus ON s.affectedStatus = affectedStatus.id`;
+                                 sample.proband
+                          FROM sample
+                                 LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
+                                 LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
+                                 LEFT JOIN sex ON sample.sex = sex.id
+                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id`;
     const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
     const sql = `${selectClause} ${whereClause} ${pagingSql}`;
     const rows = executeSql(this.db, sql, values);
@@ -137,33 +136,32 @@ export class ReportDatabase {
   }
 
   loadPhenotypes(page: number, size: number, query: Query | undefined): DatabaseResource[] {
-    const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
 
     const sql = `
-      SELECT sp.sampleIndex, p.id AS phenotypeId, p.label AS phenotypeLabel
+      SELECT sp.sampleIndex, phenotype.id AS phenotypeId, phenotype.label AS phenotypeLabel
       FROM samplePhenotype sp
-             JOIN phenotype p ON sp.phenotypeId = p.id
-             JOIN sample sample ON sp.sampleIndex = sample.sampleIndex ${whereClause}
+             JOIN phenotype ON sp.phenotypeId = phenotype.id
+             JOIN sample ON sp.sampleIndex = sample.sampleIndex ${whereClause}
             LIMIT ${size}
       OFFSET ${page * size}
     `;
     const rows = executeSql(this.db, sql, values);
-    const grouped: Record<string, { id: string; label: string }[]> = {};
+    const grouped: Record<number, { id: string; label: string }[]> = {};
     for (const row of rows) {
-      const sampleId = row.sampleId as string;
-      grouped[sampleId] ??= [];
-      if (grouped[row.sample_id as string]) {
-        grouped[sampleId].push({ id: row.phenotypeId as string, label: row.phenotypeLabel as string });
+      const sampleIndex = row.sampleIndex as number;
+      grouped[sampleIndex] ??= [];
+      if (grouped[row.sampleIndex as number]) {
+        grouped[sampleIndex].push({ id: row.phenotypeId as string, label: row.phenotypeLabel as string });
       }
     }
 
-    return Object.entries(grouped).map(([sampleId, features]) => ({
-      id: -1,
+    return Object.entries(grouped).map(([sampleIndex, features]) => ({
+      id: Number(sampleIndex),
       data: {
-        subject: { id: sampleId },
+        subject: { id: sampleIndex },
         phenotypicFeaturesList: features.map((f) => ({
           type: {
             id: f.id,
@@ -300,29 +298,27 @@ export class ReportDatabase {
   }
 
   countMatchingSamples(query: Query | undefined): TableSize {
-    const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}, "s") : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT (SELECT COUNT(*) FROM sample) AS total_size,
                         COUNT(DISTINCT sampleIndex) AS count
-                 from sample s ${whereClause}`;
+                 from sample ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
     return { size: (rows[0]["count"] ?? 0) as number, totalSize: (rows[0]["total_size"] ?? 0) as number };
   }
 
   countMatchingPhenotypes(query: Query | undefined): TableSize {
-    const categories = this.getCategories();
     const { partialStatement, values } =
-      query !== undefined ? simpleQueryToSql(query, categories, {}) : { partialStatement: "", values: {} };
+      query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
-    const sql = `SELECT (SELECT COUNT(*) FROM phenotype) AS total_size,
-                        COUNT(DISTINCT p.id) AS count
+    const sql = `SELECT (SELECT COUNT(*) FROM sample) AS total_size,
+                        COUNT(DISTINCT sp.sampleIndex) AS count
                  FROM samplePhenotype sp
-                   JOIN phenotype p
-                 ON sp.phenotypeId = p.id
-                   JOIN sample sample ON sp.sampleIndex = sample.sampleIndex
+                   JOIN phenotype
+                 ON sp.phenotypeId = phenotype.id
+                   JOIN sample ON sp.sampleIndex = sample.sampleIndex
                    ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };

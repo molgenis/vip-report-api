@@ -55,6 +55,24 @@
           "type": "CATEGORICAL",
           "index": 3,
           "categories": {
+            "false": {
+              "label": "A",
+              "description": "A DESC"
+            },
+            "BB": {
+              "label": "B",
+              "description": "B DESC"
+            }
+          }
+        },
+        "n_cat2": {
+          "label": "Categorical2 ",
+          "description": "Test categorical 2",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "CATEGORICAL",
+          "index": 4,
+          "categories": {
             "AA": {
               "label": "A",
               "description": "A DESC"
@@ -63,6 +81,10 @@
               "label": "B",
               "description": "B DESC"
             }
+          },
+          "nullValue": {
+            "label": "D",
+            "description": "Default"
           }
         }
       }

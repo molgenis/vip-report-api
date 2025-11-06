@@ -1,11 +1,13 @@
 import { beforeEach, expect, test } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
-import { Item, RecordParams } from "../index";
+import { Item, Params, RecordParams } from "../index";
 import { ApiClient } from "../apiClient";
-import { VcfRecord } from "@molgenis/vip-report-vcf";
+import { RecordSample, VcfRecord } from "@molgenis/vip-report-vcf";
 import initSqlJs from "sql.js";
 import { ReportDatabase } from "../ReportDatabase";
+import { DatabaseSample } from "../sql";
+import { expectedMeta } from "./data/expectedMeta";
 
 let api: ApiClient;
 
@@ -14,6 +16,75 @@ const sortAllExpected = {
   total: 2,
 };
 
+const samples0: RecordSample[] = [
+  {
+    AD: [45, 5],
+    DP: 50,
+    GT: {
+      a: [1, 0],
+      p: true,
+      t: "het",
+    },
+    VIAB: 0.9,
+    VIPC_S: ["U1", "U2", "U3"],
+    VIPP_S: ["path1", "path2", "path3"],
+  },
+  {
+    AD: [10, 0],
+    DP: 10,
+    GT: {
+      a: [0, 0],
+      p: true,
+      t: "hom_r",
+    },
+    VIAB: 1,
+    VIPC_S: ["U1", "U2", "U3"],
+    VIPP_S: ["path1", "path2", "path3"],
+  },
+  {
+    AD: [10, 0],
+    DP: 10,
+    GT: {
+      a: [1, 1],
+      p: true,
+      t: "hom_a",
+    },
+    VIAB: 1,
+  },
+];
+
+const samples1: RecordSample[] = [
+  {
+    AD: [0, 0],
+    DP: 10,
+    GT: {
+      a: [0, 1],
+      p: true,
+      t: "het",
+    },
+    VIPC_S: ["U1", "U2", "U3"],
+  },
+  {
+    AD: [11, 0],
+    DP: 11,
+    GT: {
+      a: [null, null],
+      p: false,
+      t: "miss",
+    },
+    VIAB: 1,
+  },
+  {
+    AD: [11, 0],
+    DP: 11,
+    GT: {
+      a: [1, null],
+      p: true,
+      t: "part",
+    },
+    VIAB: 1,
+  },
+];
 const record0: Item<VcfRecord> = {
   data: {
     a: ["T"],
@@ -45,24 +116,28 @@ const record0: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy4",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy5",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy7",
           n_string2: null,
-          n_cat1: "AA",
+          n_cat2: null,
+          n_cat1: "false",
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy8",
           n_string2: "d",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -73,42 +148,7 @@ const record0: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: [
-      {
-        AD: [45, 5],
-        DP: 50,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 0.9,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-      },
-    ],
+    s: samples0,
   },
   id: 1,
 };
@@ -144,18 +184,82 @@ const record1: Item<VcfRecord> = {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy2",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: "BB",
         },
         {
           n_array1: [],
           n_string1: "dummy6",
           n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: samples1,
+  },
+  id: 2,
+};
+const record1Sample1: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -167,37 +271,80 @@ const record1: Item<VcfRecord> = {
     q: null,
     r: "G",
     s: [
-      {
-        AD: [0, 0],
-        DP: 10,
-        GT: {
-          a: [0, 1],
-          p: true,
-          t: "het",
-        },
-        VIPC_S: ["U1", "U2", "U3"],
-      },
+      ,
+      // eslint-disable-next-line no-sparse-arrays
       {
         AD: [11, 0],
         DP: 11,
         GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 1,
-      },
-      {
-        AD: [11, 0],
-        DP: 11,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
+          a: [null, null],
+          p: false,
+          t: "miss",
         },
         VIAB: 1,
       },
     ],
+  },
+  id: 2,
+};
+const record1NoSamples: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: [],
   },
   id: 2,
 };
@@ -224,24 +371,28 @@ const record0CsqFiltered: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy4",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy5",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy7",
           n_string2: null,
-          n_cat1: "AA",
+          n_cat2: null,
+          n_cat1: "false",
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy8",
           n_string2: "d",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -281,9 +432,9 @@ const record0CsqFiltered: Item<VcfRecord> = {
         AD: [10, 0],
         DP: 10,
         GT: {
-          a: [0, 0],
+          a: [1, 1],
           p: true,
-          t: "hom_r",
+          t: "hom_a",
         },
         VIAB: 1,
       },
@@ -319,18 +470,21 @@ const record1CsqFiltered: Item<VcfRecord> = {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy2",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: "BB",
         },
         {
           n_array1: [],
           n_string1: "dummy6",
           n_string2: "a",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -356,9 +510,9 @@ const record1CsqFiltered: Item<VcfRecord> = {
         AD: [11, 0],
         DP: 11,
         GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
+          a: [null, null],
+          p: false,
+          t: "miss",
         },
         VIAB: 1,
       },
@@ -366,9 +520,9 @@ const record1CsqFiltered: Item<VcfRecord> = {
         AD: [11, 0],
         DP: 11,
         GT: {
-          a: [1, 0],
+          a: [1, null],
           p: true,
-          t: "het",
+          t: "part",
         },
         VIAB: 1,
       },
@@ -407,24 +561,28 @@ const record0desc: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy8",
           n_string2: "d",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy7",
           n_string2: null,
-          n_cat1: "AA",
+          n_cat2: null,
+          n_cat1: "false",
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy5",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2"],
           n_string1: "dummy4",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -435,42 +593,7 @@ const record0desc: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: [
-      {
-        AD: [45, 5],
-        DP: 50,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 0.9,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-      },
-    ],
+    s: samples0,
   },
   id: 1,
 };
@@ -505,7 +628,8 @@ const record0catA: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy7",
           n_string2: null,
-          n_cat1: "AA",
+          n_cat2: null,
+          n_cat1: "false",
         },
       ],
       n_string0: "a",
@@ -515,42 +639,7 @@ const record0catA: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: [
-      {
-        AD: [45, 5],
-        DP: 50,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 0.9,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-        VIPC_S: ["U1", "U2", "U3"],
-        VIPP_S: ["path1", "path2", "path3"],
-      },
-      {
-        AD: [10, 0],
-        DP: 10,
-        GT: {
-          a: [0, 0],
-          p: true,
-          t: "hom_r",
-        },
-        VIAB: 1,
-      },
-    ],
+    s: samples0,
   },
   id: 1,
 };
@@ -586,18 +675,21 @@ const record1desc: Item<VcfRecord> = {
           n_array1: [],
           n_string1: "dummy6",
           n_string2: "a",
+          n_cat2: null,
           n_cat1: null,
         },
         {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
+          n_cat2: null,
           n_cat1: "BB",
         },
         {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy2",
           n_string2: "c",
+          n_cat2: null,
           n_cat1: null,
         },
       ],
@@ -608,41 +700,56 @@ const record1desc: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: [
-      {
-        AD: [0, 0],
-        DP: 10,
-        GT: {
-          a: [0, 1],
-          p: true,
-          t: "het",
-        },
-        VIPC_S: ["U1", "U2", "U3"],
-      },
-      {
-        AD: [11, 0],
-        DP: 11,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 1,
-      },
-      {
-        AD: [11, 0],
-        DP: 11,
-        GT: {
-          a: [1, 0],
-          p: true,
-          t: "het",
-        },
-        VIAB: 1,
-      },
-    ],
+    s: samples1,
   },
   id: 2,
 };
+const sample0: DatabaseSample = {
+  id: 0,
+  data: {
+    index: 0,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_0",
+      individualId: "Patient",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: true,
+  },
+};
+const sample1: DatabaseSample = {
+  id: 1,
+  data: {
+    index: 1,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_1",
+      individualId: "Mother",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: false,
+  },
+};
+const sample2: DatabaseSample = {
+  id: 2,
+  data: {
+    index: 2,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_2",
+      individualId: "Father",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: false,
+  },
+};
+const expectedSamples = [sample0, sample1, sample2];
 
 beforeEach(async () => {
   const reportData = {
@@ -681,56 +788,73 @@ test("getAppMeta", async () => {
 test("get - all samples", async () => {
   const samples = await api.getSamples();
   expect(samples).toEqual({
-    items: [
-      {
-        data: {
-          index: 0,
-          person: {
-            affectedStatus: "MISSING",
-            familyId: "MISSING_0",
-            individualId: "Patient",
-            maternalId: "0",
-            paternalId: "0",
-            sex: "UNKNOWN_SEX",
-          },
-          proband: true,
-        },
-        id: 0,
-      },
-      {
-        data: {
-          index: 1,
-          person: {
-            affectedStatus: "MISSING",
-            familyId: "MISSING_1",
-            individualId: "Mother",
-            maternalId: "0",
-            paternalId: "0",
-            sex: "UNKNOWN_SEX",
-          },
-          proband: false,
-        },
-        id: 1,
-      },
-      {
-        data: {
-          index: 2,
-          person: {
-            affectedStatus: "MISSING",
-            familyId: "MISSING_2",
-            individualId: "Father",
-            maternalId: "0",
-            paternalId: "0",
-            sex: "UNKNOWN_SEX",
-          },
-          proband: false,
-        },
-        id: 2,
-      },
-    ],
+    items: [sample0, sample1, sample2],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
   });
+});
+
+test("get samples", async () => {
+  const samples = await api.getSamples({});
+  expect(samples).toEqual({
+    items: expectedSamples,
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
+  });
+});
+
+test("get samples - query and", async () => {
+  const params: Params = {
+    query: {
+      operator: "and",
+      args: [
+        {
+          selector: ["sample", "sampleIndex"],
+          operator: "==",
+          args: "1",
+        },
+        {
+          selector: ["sample", "familyId"],
+          operator: "==",
+          args: "MISSING_1",
+        },
+      ],
+    },
+  };
+  const samples = await api.getSamples(params);
+  expect(samples).toEqual({
+    items: [sample1],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get sampleById", async () => {
+  const samples = await api.getSampleById(2);
+  expect(samples).toEqual(sample2);
+});
+
+test("get record by id", async () => {
+  const records = await api.getRecordById(2, []);
+  expect(records).toEqual(record1);
+});
+
+test("get record by id - sample 1", async () => {
+  const records = await api.getRecordById(2, [1]);
+  expect(records).toEqual(record1Sample1);
+});
+
+test("get record by id - sampleLess", async () => {
+  const records = await api.getRecordById(2);
+  expect(records).toEqual(record1NoSamples);
 });
 
 test("get - all records", async () => {
@@ -884,7 +1008,7 @@ test("get - records with categorical query on nested", async () => {
     query: {
       selector: ["n", "n_object0", "n_cat1"],
       operator: "==",
-      args: "AA",
+      args: "false",
     },
   };
   const records = await api.getRecords(params);
@@ -895,7 +1019,7 @@ test("get - records with categorical query on nested", async () => {
   });
 });
 
-test("get - records with CSQ/VIPC filtering, inlcuding VIPC_S and VIPP_S", async () => {
+test("get - records with CSQ/VIPC filtering, including VIPC_S and VIPP_S", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
     query: {
@@ -1319,12 +1443,227 @@ test("get - not some records", async () => {
   });
 });
 
+test("get - in categorical with null", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_object0", "n_cat1"],
+      operator: "in",
+      args: ["false", "BB", null],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
+test("get - in only null", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_object0", "n_cat2"],
+      operator: "in",
+      args: [null],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
 test("get - all phenotypes", async () => {
   const phenotypes = await api.getPhenotypes();
   expect(phenotypes).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
-    total: 0,
+    items: [
+      {
+        id: 0,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "0" },
+        },
+      },
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "1" },
+        },
+      },
+      {
+        id: 2,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "2" },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
+  });
+});
+
+test("get - queried phenotypes", async () => {
+  const params: Params = { query: { operator: "==", selector: ["sample", "sampleIndex"], args: 1 } };
+  const phenotypes = await api.getPhenotypes(params);
+  expect(phenotypes).toEqual({
+    items: [
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "1" },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get - queried phenotypes or", async () => {
+  const params: Params = {
+    query: {
+      operator: "or",
+      args: [
+        { operator: "==", selector: ["sample", "sampleIndex"], args: 1 },
+        {
+          selector: ["label"],
+          operator: "==",
+          args: "HP:0003124",
+        },
+      ],
+    },
+  };
+  const phenotypes = await api.getPhenotypes(params);
+  expect(phenotypes).toEqual({
+    items: [
+      {
+        id: 0,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "0",
+          },
+        },
+      },
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "1",
+          },
+        },
+      },
+      {
+        id: 2,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "2",
+          },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
   });
 });
 
@@ -1367,4 +1706,13 @@ test("getDecisionTree", async () => {
 test("getSampleTree", async () => {
   const decisionTree = await api.getSampleTree();
   expect(decisionTree).not.toBe(null);
+});
+
+test("get metadata", async () => {
+  const metadata = await api.getRecordsMeta();
+  expect(metadata.lines).toEqual(expectedMeta.lines);
+  expect(metadata.info).toEqual(expectedMeta.info);
+  expect(metadata.format).toEqual(expectedMeta.format);
+  expect(metadata.samples).toEqual(expectedMeta.samples);
+  expect(metadata.supplement).toEqual(expectedMeta.supplement);
 });

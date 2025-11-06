@@ -488,18 +488,13 @@ function mapOperatorToSql(
   return { partialStatement, values };
 }
 
-export function simpleQueryToSql(
-  query: Query,
-  categories: Categories,
-  values: ParamsObject,
-  prefix: string | undefined = undefined,
-): PartialStatement {
+export function simpleQueryToSql(query: Query, values: ParamsObject): PartialStatement {
   if ("args" in query && Array.isArray(query.args) && (query.operator === "and" || query.operator === "or")) {
     const joinWord = query.operator.toUpperCase();
     let statement = "(";
     for (const subQuery of query.args) {
       let partialStatement;
-      ({ partialStatement, values } = simpleQueryToSql(subQuery, categories, values, prefix));
+      ({ partialStatement, values } = simpleQueryToSql(subQuery, values));
       if (statement !== "(") {
         statement += ` ${joinWord} `;
       }
@@ -518,20 +513,12 @@ export function simpleQueryToSql(
   }
 
   if (parts.length === 1) {
-    const sqlCol =
-      prefix !== undefined
-        ? `${prefix}.${mapField((parts[0] as SelectorPart).toString())}`
-        : mapField((parts[0] as SelectorPart).toString());
+    const sqlCol = mapField((parts[0] as SelectorPart).toString());
     return mapOperatorToSql(clause, sqlCol, null, values);
   } else if (parts.length === 2) {
     const prefix = parts[0];
-    const type = prefix === "s" ? "FORMAT" : "INFO";
     const field = parts[1];
     const sqlCol = `${prefix}.${field}`;
-    const key = `${type}/${field}`;
-    if (categories.has(key)) {
-      mapQueryCategories(categories, key, clause);
-    }
     return mapOperatorToSql(clause, sqlCol, null, values);
   }
   throw new Error("Unsupported query:" + JSON.stringify(parts));

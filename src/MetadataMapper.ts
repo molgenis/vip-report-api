@@ -38,7 +38,7 @@ export function toNumberType(val: string): NumberType {
 }
 
 function parseCategories(raw: Value): CategoryRecord | undefined {
-  if (!raw) return undefined;
+  if (raw == null) return undefined;
   try {
     return JSON.parse(raw as string);
   } catch {
@@ -58,7 +58,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
       number,
       type: row.valueType as ValueType,
       label: row.label as string | undefined,
-      description: row.description as string | undefined,
+      description: row.description ? (row.description as string) : undefined,
       categories: row.categories ? parseCategories(row.categories) : undefined,
       required: !!row.required,
       nullValue: row.nullValue === null ? undefined : (JSON.parse(row.nullValue as string) as ValueDescription),

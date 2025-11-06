@@ -35,12 +35,10 @@ export function parseCharacterValue(token: string | null): string | null {
   return value;
 }
 
-export function parseStringValue(token: string, unescape = true): string | null {
+export function parseStringValue(token: string): string | null {
   let value;
   if (token === null || token.length === 0) {
     value = null;
-  } else if (!unescape || token.includes("%")) {
-    value = token;
   } else {
     value = token
       .replaceAll(/%3A/g, ":")
