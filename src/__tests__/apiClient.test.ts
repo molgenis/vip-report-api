@@ -1,10 +1,14 @@
+/* eslint-disable no-sparse-arrays */
 import { beforeEach, expect, test } from "vitest";
-import { EncodedReport } from "../WindowApiClient";
 import { readFileSync } from "fs";
-import { parseVcf, SupplementaryMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import path from "path";
-import { DecisionTree, Item, Params } from "../index";
+import { Item, Params, RecordParams } from "../index";
 import { ApiClient } from "../apiClient";
+import { RecordSample, VcfRecord } from "@molgenis/vip-report-vcf";
+import initSqlJs from "sql.js";
+import { ReportDatabase } from "../ReportDatabase";
+import { DatabaseSample } from "../sql";
+import { expectedMeta } from "./data/expectedMeta";
 
 let api: ApiClient;
 
@@ -13,73 +17,148 @@ const sortAllExpected = {
   total: 2,
 };
 
+const samples0: RecordSample[] = [
+  {
+    AD: [45, 5],
+    DP: 50,
+    GT: {
+      a: [1, 0],
+      p: true,
+      t: "het",
+    },
+    VIAB: 0.9,
+    VIPC_S: ["U1", "U2", "U3"],
+    VIPP_S: ["path1", "path2", "path3"],
+  },
+  {
+    AD: [10, 0],
+    DP: 10,
+    GT: {
+      a: [0, 0],
+      p: true,
+      t: "hom_r",
+    },
+    VIAB: 1,
+    VIPC_S: ["U1", "U2", "U3"],
+    VIPP_S: ["path1", "path2", "path3"],
+  },
+  {
+    AD: [10, 0],
+    DP: 10,
+    GT: {
+      a: [1, 1],
+      p: true,
+      t: "hom_a",
+    },
+    VIAB: 1,
+  },
+];
+
+const samples1: RecordSample[] = [
+  {
+    AD: [0, 0],
+    DP: 10,
+    GT: {
+      a: [0, 1],
+      p: true,
+      t: "het",
+    },
+    VIPC_S: ["U1", "U2", "U3"],
+  },
+  {
+    AD: [11, 0],
+    DP: 11,
+    GT: {
+      a: [null, null],
+      p: false,
+      t: "miss",
+    },
+    VIAB: 1,
+  },
+  {
+    AD: [11, 0],
+    DP: 11,
+    GT: {
+      a: [1, null],
+      p: true,
+      t: "part",
+    },
+    VIAB: 1,
+  },
+];
 const record0: Item<VcfRecord> = {
-  id: 0,
   data: {
-    c: "1",
-    p: 10042538,
-    i: [],
-    r: "C",
     a: ["T"],
-    q: 80,
+    c: "1",
     f: ["PASS"],
+    i: [],
     n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
       n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
       n_number2: 1,
       n_object0: [
-        ["dummy5", "c", [1, 2]],
-        ["dummy7", null, [1, 2]],
-        ["dummy1", "d", [1, 2]],
-        ["dummy4", "b", [1, 2]],
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
       ],
       n_string0: "a",
       n_string3: "b",
       n_string4: "b",
     },
-    s: [
-      {
-        GT: {
-          a: [1, 0],
-          t: "het",
-          p: true,
-        },
-        DP: "50",
-        AD: [45, 5],
-        VIAB: 0.9,
-      },
-      {
-        GT: {
-          a: [0, 0],
-          t: "hom_r",
-          p: true,
-        },
-        DP: "10",
-        AD: [10, 0],
-        VIAB: 1,
-      },
-      {
-        GT: {
-          a: [0, 0],
-          t: "hom_r",
-          p: true,
-        },
-        DP: "10",
-        AD: [10, 0],
-        VIAB: 1,
-      },
-    ],
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: samples0,
   },
+  id: 1,
 };
 const record1: Item<VcfRecord> = {
-  id: 1,
   data: {
-    c: "1",
-    p: 16376412,
-    i: [],
-    r: "G",
     a: ["A"],
-    q: null,
+    c: "1",
     f: [],
+    i: [],
     n: {
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
@@ -87,80 +166,595 @@ const record1: Item<VcfRecord> = {
       n_bool6: true,
       n_bool7: true,
       n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
       n_object0: [
-        ["dummy3", "b", [1, 2, 3]],
-        ["dummy2", "c", [1, 2, 3]],
-        ["dummy6", "a", []],
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
       ],
       n_string0: "a",
       n_string3: "a",
       n_string4: "A",
     },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: samples1,
+  },
+  id: 2,
+};
+const record1Sample1: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
     s: [
+      ,
       {
-        GT: {
-          a: [0, 1],
-          t: "het",
-          p: true,
-        },
-        DP: "10",
-        AD: [0, 0],
-        VIAB: null,
-      },
-      {
-        GT: {
-          a: [1, 0],
-          t: "het",
-          p: true,
-        },
-        DP: "11",
         AD: [11, 0],
-        VIAB: 1,
-      },
-      {
+        DP: 11,
         GT: {
-          a: [1, 0],
-          t: "het",
-          p: true,
+          a: [null, null],
+          p: false,
+          t: "miss",
         },
-        DP: "11",
-        AD: [11, 0],
         VIAB: 1,
       },
     ],
   },
+  id: 2,
 };
-
-beforeEach(() => {
-  const reportData = {
-    metadata: {
-      app: {
-        name: "vcf-report",
-        version: "0.0.1",
-        args: "-i test.vcf -d",
-      },
-      htsFile: {
-        htsFormat: "VCF",
-        uri: "file://file0.vcf.gz",
-        genomeAssembly: "GRCh38",
-      },
-    },
-    data: {
-      samples: [
+const record1NoSamples: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
         {
-          name: "Patient",
+          Allele: "A",
+          VIPC: "LP",
         },
         {
-          name: "Mother",
+          Allele: "A",
+          VIPC: "LB",
         },
         {
-          name: "Father",
+          Allele: "A",
+          VIPC: "LB",
         },
       ],
-      phenotypes: [],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
     },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: [],
+  },
+  id: 2,
+};
+const record0CsqFiltered: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+      ],
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: [
+      {
+        AD: [45, 5],
+        DP: 50,
+        GT: {
+          a: [1, 0],
+          p: true,
+          t: "het",
+        },
+        VIAB: 0.9,
+        VIPC_S: ["U2"],
+        VIPP_S: ["path2"],
+      },
+      {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [0, 0],
+          p: true,
+          t: "hom_r",
+        },
+        VIAB: 1,
+        VIPC_S: ["U2"],
+        VIPP_S: ["path2"],
+      },
+      {
+        AD: [10, 0],
+        DP: 10,
+        GT: {
+          a: [1, 1],
+          p: true,
+          t: "hom_a",
+        },
+        VIAB: 1,
+      },
+    ],
+  },
+  id: 1,
+};
+const record1CsqFiltered: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: [
+      {
+        AD: [0, 0],
+        DP: 10,
+        GT: {
+          a: [0, 1],
+          p: true,
+          t: "het",
+        },
+        VIPC_S: ["U2", "U3"],
+      },
+      {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [null, null],
+          p: false,
+          t: "miss",
+        },
+        VIAB: 1,
+      },
+      {
+        AD: [11, 0],
+        DP: 11,
+        GT: {
+          a: [1, null],
+          p: true,
+          t: "part",
+        },
+        VIAB: 1,
+      },
+    ],
+  },
+  id: 2,
+};
+const record0desc: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: samples0,
+  },
+  id: 1,
+};
+const record0catA: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    i: [],
+    n: {
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: samples0,
+  },
+  id: 1,
+};
+const record1desc: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    i: [],
+    n: {
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: samples1,
+  },
+  id: 2,
+};
+const sample0: DatabaseSample = {
+  id: 0,
+  data: {
+    index: 0,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_0",
+      individualId: "Patient",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: true,
+  },
+};
+const sample1: DatabaseSample = {
+  id: 1,
+  data: {
+    index: 1,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_1",
+      individualId: "Mother",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: false,
+  },
+};
+const sample2: DatabaseSample = {
+  id: 2,
+  data: {
+    index: 2,
+    person: {
+      affectedStatus: "MISSING",
+      familyId: "MISSING_2",
+      individualId: "Father",
+      maternalId: "0",
+      paternalId: "0",
+      sex: "UNKNOWN_SEX",
+    },
+    proband: false,
+  },
+};
+const expectedSamples = [sample0, sample1, sample2];
+
+beforeEach(async () => {
+  const reportData = {
+    database: readFileSync(path.join(__dirname, "/data/trio.db")),
     binary: {
-      vcf: readFileSync(path.join(__dirname, "trio.vcf")),
       fastaGz: {
         "1:17350500-17350600": readFileSync(path.join(__dirname, "interval0.fasta")),
         "2:47637200-47637300": readFileSync(path.join(__dirname, "interval1.fasta")),
@@ -172,77 +766,11 @@ beforeEach(() => {
           crai: readFileSync(path.join(__dirname, "alignment.cram.crai")),
         },
       },
+      wasmBinary: readFileSync(path.join(__dirname, "data", "sql-wasm.wasm")),
     },
-    decisionTree: JSON.parse(readFileSync(path.join(__dirname, "decisionTree.json"), "utf8")) as DecisionTree,
-    sampleTree: JSON.parse(readFileSync(path.join(__dirname, "sampleTree.json"), "utf8")) as DecisionTree,
   };
-
-  const supplementaryMeta = {
-    info: {
-      n_object0: {
-        nestedFields: {
-          n_array1: {
-            label: "Array",
-            description: "Test array",
-            numberType: "OTHER",
-            separator: "&",
-            type: "INTEGER",
-          },
-        },
-      },
-    },
-    format: {},
-  } as SupplementaryMetadata;
-
-  const vcf = parseVcf(new TextDecoder().decode(reportData.binary.vcf), supplementaryMeta);
-  (reportData as unknown as EncodedReport).metadata.records = vcf.metadata;
-  (reportData as unknown as EncodedReport).data.records = vcf.data;
-  api = new ApiClient(reportData as unknown as EncodedReport);
-});
-
-test("postProcess - sample tree categories", async () => {
-  const metadata = await api.getRecordsMeta();
-  expect(metadata.format["VIPC_S"].categories).toEqual({
-    U1: {
-      description: "Usable: probably",
-      label: "probably",
-    },
-    U2: {
-      description: "Usable: maybe",
-      label: "maybe",
-    },
-    U3: {
-      description: "Usable: probably not",
-      label: "probably not",
-    },
-  });
-});
-
-test("postProcess - decision tree categories", async () => {
-  const metadata = await api.getRecordsMeta();
-  const csqItems = metadata.info.CSQ?.nested?.items;
-  const csqItem = csqItems.find((item) => item.id === "VIPC");
-  expect(csqItem.categories).toEqual({
-    B: {
-      label: "Benign",
-    },
-    LB: {
-      label: "Likely Benign",
-    },
-    LP: {
-      label: "Likely Pathogenic",
-    },
-    LQ: {
-      description: "Low quality variants.",
-      label: "LowQual",
-    },
-    P: {
-      label: "Pathogenic",
-    },
-    VUS: {
-      label: "Unknown Significance",
-    },
-  });
+  const SQL = await initSqlJs({ wasmBinary: reportData.binary.wasmBinary.buffer as ArrayBuffer });
+  api = new ApiClient(new ReportDatabase(new SQL.Database(reportData.database)), reportData.binary);
 });
 
 test("getAppMeta", async () => {
@@ -252,17 +780,7 @@ test("getAppMeta", async () => {
       name: "vcf-report",
       version: "0.0.1",
       args: "-i test.vcf -d",
-    }),
-  );
-});
-
-test("getHtsFileMetadata", async () => {
-  const metadata = await api.getHtsFileMetadata();
-  expect(metadata).toEqual(
-    expect.objectContaining({
-      genomeAssembly: "GRCh38",
-      htsFormat: "VCF",
-      uri: "file://file0.vcf.gz",
+      htsFile: { uri: "trio.vcf", htsFormat: "VCF", genomeAssembly: "GRCh38" },
     }),
   );
 });
@@ -270,18 +788,80 @@ test("getHtsFileMetadata", async () => {
 test("get - all samples", async () => {
   const samples = await api.getSamples();
   expect(samples).toEqual({
-    items: [
-      { id: 0, data: { name: "Patient" } },
-      { id: 1, data: { name: "Mother" } },
-      { id: 2, data: { name: "Father" } },
-    ],
+    items: [sample0, sample1, sample2],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
   });
 });
 
+test("get samples", async () => {
+  const samples = await api.getSamples({});
+  expect(samples).toEqual({
+    items: expectedSamples,
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
+  });
+});
+
+test("get samples - query and", async () => {
+  const params: Params = {
+    query: {
+      operator: "and",
+      args: [
+        {
+          selector: ["sample", "sampleIndex"],
+          operator: "==",
+          args: "1",
+        },
+        {
+          selector: ["sample", "familyId"],
+          operator: "==",
+          args: "MISSING_1",
+        },
+      ],
+    },
+  };
+  const samples = await api.getSamples(params);
+  expect(samples).toEqual({
+    items: [sample1],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get sampleById", async () => {
+  const samples = await api.getSampleById(2);
+  expect(samples).toEqual(sample2);
+});
+
+test("get record by id", async () => {
+  const records = await api.getRecordById(2, []);
+  expect(records).toEqual(record1);
+});
+
+test("get record by id - sample 1", async () => {
+  const records = await api.getRecordById(2, [1]);
+  expect(records).toEqual(record1Sample1);
+});
+
+test("get record by id - sampleLess", async () => {
+  const records = await api.getRecordById(2);
+  expect(records).toEqual(record1NoSamples);
+});
+
 test("get - all records", async () => {
-  const records = await api.getRecords();
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+  };
+  const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0, record1],
     page: { number: 0, size: 10, totalElements: 2 },
@@ -290,7 +870,8 @@ test("get - all records", async () => {
 });
 
 test("get - page of records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     page: 1,
     size: 1,
   };
@@ -303,7 +884,8 @@ test("get - page of records", async () => {
 });
 
 test("get - one record", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "==",
@@ -318,35 +900,9 @@ test("get - one record", async () => {
   });
 });
 
-test("get - one record array", async () => {
-  const params: Params = {
-    query: {
-      selector: ["a", 0],
-      operator: "==",
-      args: "T",
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
 test("get - records with greater than query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: ">",
@@ -362,7 +918,8 @@ test("get - records with greater than query", async () => {
 });
 
 test("get - records with greater than or equal query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: ">=",
@@ -378,7 +935,8 @@ test("get - records with greater than or equal query", async () => {
 });
 
 test("get - records with less than query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: "<",
@@ -394,7 +952,8 @@ test("get - records with less than query", async () => {
 });
 
 test("get - records with equals null query on qual", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["q"],
       operator: "==",
@@ -410,7 +969,8 @@ test("get - records with equals null query on qual", async () => {
 });
 
 test("get - records with equals empty filter", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["f"],
       operator: "==",
@@ -426,7 +986,8 @@ test("get - records with equals empty filter", async () => {
 });
 
 test("get - records with equals null query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIAB"],
       operator: "==",
@@ -441,8 +1002,43 @@ test("get - records with equals null query", async () => {
   });
 });
 
+test("get - records with categorical query on nested", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_object0", "n_cat1"],
+      operator: "==",
+      args: "false",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0catA],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with CSQ/VIPC filtering, including VIPC_S and VIPP_S", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "CSQ", "VIPC"],
+      operator: "==",
+      args: "LB",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0CsqFiltered, record1CsqFiltered],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
 test("get - records with equals not null query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIAB"],
       operator: "!=",
@@ -458,9 +1054,10 @@ test("get - records with equals not null query", async () => {
 });
 
 test("get - records with equals undefined query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
-      selector: ["s", 0, "TEST"],
+      selector: ["s", "0", "TEST"],
       operator: "==",
       args: undefined,
     },
@@ -474,7 +1071,8 @@ test("get - records with equals undefined query", async () => {
 });
 
 test("get - records with equals not undefined query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "TEST"],
       operator: "!=",
@@ -490,7 +1088,8 @@ test("get - records with equals not undefined query", async () => {
 });
 
 test("get - records with less than or equal query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_number2"],
       operator: "<=",
@@ -506,51 +1105,34 @@ test("get - records with less than or equal query", async () => {
 });
 
 test("get - records with less than or equal query invalid field", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["n", "n_string0"],
       operator: "<=",
       args: 1,
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value 'a' is of type 'string' instead of 'number'");
+  await expect(api.getRecords(params)).rejects.toThrow(
+    "Numerical operators are not allowed for values of type 'string'",
+  );
 });
 
 test("get - one record with invalid selector", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p", "x", "y", "z"],
       operator: "==",
       args: 10042538,
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - one record with invalid selector", async () => {
-  const params: Params = {
-    query: {
-      selector: ["p", "x", "y", "z"],
-      operator: "==",
-      args: 10042538,
-    },
-  };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
+  await expect(api.getRecords(params)).rejects.toThrow("Unknown field in selector: 'p,x,y,z'");
 });
 
 test("get - one record using composed and query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       operator: "and",
       args: [
@@ -576,59 +1158,20 @@ test("get - one record using composed and query", async () => {
 });
 
 test("get - all records sorted on n.n_bool0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool0"],
     },
   };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool1", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool1"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool2", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool2"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  await expect(api.getRecords(params)).rejects.toThrow("no such column: n.n_bool0");
 });
 
 test("get - all records sorted on n.n_bool3", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool3"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
-});
-
-test("get - all records sorted on n.n_bool4", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool4"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_bool5", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool5"],
     },
   };
   const records = await api.getRecords(params);
@@ -636,49 +1179,21 @@ test("get - all records sorted on n.n_bool5", async () => {
 });
 
 test("get - all records sorted on n.n_bool6", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool6"],
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool7", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_bool7"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
-});
-
-test("get - all records sorted on n.n_bool8", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_bool8"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_number0", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_number0"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
-});
-
-test("get - all records sorted on n.n_number1", async () => {
-  const params: Params = {
-    sort: {
-      property: ["n", "n_number1"],
     },
   };
   const records = await api.getRecords(params);
@@ -686,7 +1201,8 @@ test("get - all records sorted on n.n_number1", async () => {
 });
 
 test("get - all records sorted on n.n_number2", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_number2"],
     },
@@ -696,7 +1212,8 @@ test("get - all records sorted on n.n_number2", async () => {
 });
 
 test("get - all records sorted on n.n_string0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string0"],
     },
@@ -706,7 +1223,8 @@ test("get - all records sorted on n.n_string0", async () => {
 });
 
 test("get - all records sorted on n.n_string3", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string3"],
     },
@@ -716,7 +1234,8 @@ test("get - all records sorted on n.n_string3", async () => {
 });
 
 test("get - all records sorted on n.n_string4", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_string4"],
     },
@@ -726,7 +1245,8 @@ test("get - all records sorted on n.n_string4", async () => {
 });
 
 test("get - all records sorted on n.n_array0", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_array0"],
       compare: "asc",
@@ -737,9 +1257,10 @@ test("get - all records sorted on n.n_array0", async () => {
 });
 
 test("get - all records sorted on n.n_object0.n_string1 ascending", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
-      property: ["n", "n_object0", 1],
+      property: ["n", "n_object0", "n_string1"],
       compare: "asc",
     },
   };
@@ -748,27 +1269,30 @@ test("get - all records sorted on n.n_object0.n_string1 ascending", async () => 
 });
 
 test("get - all records sorted on n.n_object0.n_string1 descending", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
-      property: ["n", "n_object0", 1],
+      property: ["n", "n_object0", "n_string1"],
       compare: "desc",
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0desc, record1desc] } });
 });
 
 test("get - all records sorted on n.n_object0 throws an error", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: ["n", "n_object0"],
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("can't compare values of type 'object'.");
+  await expect(api.getRecords(params)).rejects.toThrow("no such column: n.n_object0");
 });
 
 test("get - all records sorted ascending on position implicitly", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p" },
   };
   const records = await api.getRecords(params);
@@ -776,7 +1300,8 @@ test("get - all records sorted ascending on position implicitly", async () => {
 });
 
 test("get - all records sorted ascending on position", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p", compare: "asc" },
   };
   const records = await api.getRecords(params);
@@ -784,7 +1309,8 @@ test("get - all records sorted ascending on position", async () => {
 });
 
 test("get - all records sorted descending on position", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "p", compare: "desc" },
   };
   const records = await api.getRecords(params);
@@ -792,7 +1318,8 @@ test("get - all records sorted descending on position", async () => {
 });
 
 test("get - all records sorted ascending on reference", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "r", compare: "asc" },
   };
   const records = await api.getRecords(params);
@@ -800,7 +1327,8 @@ test("get - all records sorted ascending on reference", async () => {
 });
 
 test("get - all records sorted descending on reference", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: { property: "r", compare: "desc" },
   };
   const records = await api.getRecords(params);
@@ -808,7 +1336,8 @@ test("get - all records sorted descending on reference", async () => {
 });
 
 test("get - all records sorted custom on identifier", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     sort: {
       property: "i",
       compare: function (a, b) {
@@ -825,7 +1354,8 @@ test("get - all records sorted custom on identifier", async () => {
 });
 
 test("get - not one record", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "!=",
@@ -841,7 +1371,8 @@ test("get - not one record", async () => {
 });
 
 test("get - some records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "in",
@@ -857,130 +1388,20 @@ test("get - some records", async () => {
 });
 
 test("get - some records with invalid selector", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p", "x", "y", "z"],
       operator: "in",
       args: [10042537, 10042538, 10042539],
     },
   };
-  await expect(api.getRecords(params)).rejects.toThrow("value '10042538' is of type 'number' instead of 'object'");
-});
-
-test("get - some records using wildcard selector part with has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["s", "*", "GT", "t"],
-      operator: "has_any",
-      args: ["hom_a", "hom_r"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any undefined", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_array1"],
-      operator: "has_any",
-      args: undefined,
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any with undefined values", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_array1"],
-      operator: "has_any",
-      args: ["a"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using has_any null", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "1"],
-      operator: "has_any",
-      args: null,
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record0],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using empty any_has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "2"],
-      operator: "any_has_any",
-      args: [],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
-});
-
-test("get - some records using undefined any_has_any value", async () => {
-  const params: Params = {
-    query: {
-      selector: ["n", "n_object0", "*", "5"],
-      operator: "any_has_any",
-      args: ["a"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
-    total: 2,
-  });
-});
-
-test("get - some records using wildcard selector part with !has_any", async () => {
-  const params: Params = {
-    query: {
-      selector: ["s", "*", "GT", "t"],
-      operator: "!has_any",
-      args: ["hom_a", "hom_r"],
-    },
-  };
-  const records = await api.getRecords(params);
-  expect(records).toEqual({
-    items: [record1],
-    page: { number: 0, size: 10, totalElements: 1 },
-    total: 2,
-  });
+  await expect(api.getRecords(params)).rejects.toThrow("Unknown field in selector: 'p,x,y,z'");
 });
 
 test("get - some records using composed query", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       operator: "or",
       args: [
@@ -1006,7 +1427,8 @@ test("get - some records using composed query", async () => {
 });
 
 test("get - not some records", async () => {
-  const params: Params = {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
     query: {
       selector: ["p"],
       operator: "!in",
@@ -1021,12 +1443,227 @@ test("get - not some records", async () => {
   });
 });
 
+test("get - in categorical with null", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_object0", "n_cat1"],
+      operator: "in",
+      args: ["false", "BB", null],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
+test("get - in only null", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_object0", "n_cat2"],
+      operator: "in",
+      args: [null],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
 test("get - all phenotypes", async () => {
   const phenotypes = await api.getPhenotypes();
   expect(phenotypes).toEqual({
-    items: [],
-    page: { number: 0, size: 10, totalElements: 0 },
-    total: 0,
+    items: [
+      {
+        id: 0,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "0" },
+        },
+      },
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "1" },
+        },
+      },
+      {
+        id: 2,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "2" },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
+  });
+});
+
+test("get - queried phenotypes", async () => {
+  const params: Params = { query: { operator: "==", selector: ["sample", "sampleIndex"], args: 1 } };
+  const phenotypes = await api.getPhenotypes(params);
+  expect(phenotypes).toEqual({
+    items: [
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: { id: "1" },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get - queried phenotypes or", async () => {
+  const params: Params = {
+    query: {
+      operator: "or",
+      args: [
+        { operator: "==", selector: ["sample", "sampleIndex"], args: 1 },
+        {
+          selector: ["label"],
+          operator: "==",
+          args: "HP:0003124",
+        },
+      ],
+    },
+  };
+  const phenotypes = await api.getPhenotypes(params);
+  expect(phenotypes).toEqual({
+    items: [
+      {
+        id: 0,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "0",
+          },
+        },
+      },
+      {
+        id: 1,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0000951",
+                label: "HP:0000951",
+              },
+            },
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "1",
+          },
+        },
+      },
+      {
+        id: 2,
+        data: {
+          phenotypicFeaturesList: [
+            {
+              type: {
+                id: "HP:0003124",
+                label: "HP:0003124",
+              },
+            },
+          ],
+          subject: {
+            id: "2",
+          },
+        },
+      },
+    ],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 3,
+    },
+    total: 3,
   });
 });
 
@@ -1069,4 +1706,13 @@ test("getDecisionTree", async () => {
 test("getSampleTree", async () => {
   const decisionTree = await api.getSampleTree();
   expect(decisionTree).not.toBe(null);
+});
+
+test("get metadata", async () => {
+  const metadata = await api.getRecordsMeta();
+  expect(metadata.lines).toEqual(expectedMeta.lines);
+  expect(metadata.info).toEqual(expectedMeta.info);
+  expect(metadata.format).toEqual(expectedMeta.format);
+  expect(metadata.samples).toEqual(expectedMeta.samples);
+  expect(metadata.supplement).toEqual(expectedMeta.supplement);
 });

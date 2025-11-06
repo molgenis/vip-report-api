@@ -1,10 +1,12 @@
-import { SupplementaryMetadata, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { ApiClient as ApiClientAlias } from "./apiClient";
-import { WindowApiClient as WindowApiClientAlias } from "./WindowApiClient";
+import { WindowApiClientFactory as WindowApiClientAlias } from "./WindowApiClient";
+import { ReportDatabase as ReportDatabaseAlias } from "./ReportDatabase";
 
 // export API implementations
 export const ApiClient = ApiClientAlias;
-export const WindowApiClient = WindowApiClientAlias;
+export const WindowApiClientFactory = WindowApiClientAlias;
+export const ReportDatabase = ReportDatabaseAlias;
 
 // export API interface and types
 export interface Api {
@@ -12,9 +14,16 @@ export interface Api {
 
   getRecordsMeta(): Promise<VcfMetadata>;
 
-  getRecords(params: Params): Promise<PagedItems<VcfRecord>>;
+  getRecords(params: RecordParams): Promise<PagedItems<VcfRecord>>;
 
-  getRecordById(id: number): Promise<Item<VcfRecord>>;
+  /**
+   *
+   * if sampleIds is undefined or missing -> return record including data for all samples
+   * if sampleIds is [] -> return record excluding sample data
+   * if sampleIds is e.g. [ 2 , 3 ] -> return record including data for sample 2 and 3
+   *
+   * */
+  getRecordById(id: number, sampleIds: number[] | undefined): Promise<Item<VcfRecord>>;
 
   getSamples(params: Params): Promise<PagedItems<Sample>>;
 
@@ -28,8 +37,6 @@ export interface Api {
 
   getCram(sampleId: string): Promise<Cram | null>;
 
-  getHtsFileMetadata(): Promise<HtsFileMetadata>;
-
   getAppMetadata(): Promise<AppMetadata>;
 
   getDecisionTree(): Promise<DecisionTree | null>;
@@ -38,12 +45,6 @@ export interface Api {
 }
 
 export type Json = string | number | boolean | null | { [property: string]: Json } | Json[];
-
-export interface Metadata {
-  app: AppMetadata;
-  htsFile: HtsFileMetadata;
-  records: VcfMetadata;
-}
 
 export interface Resource {
   [key: string]: unknown;
@@ -56,24 +57,15 @@ export interface Params {
   size?: number;
 }
 
+export interface RecordParams extends Params {
+  sampleIds?: number[];
+}
 export type SortPath = (string | number)[];
 
 export interface SortOrder {
   property: string | SortPath;
-  compare?: "asc" | "desc" | CompareFn;
+  compare?: "asc" | "desc";
 }
-
-export type CompareValueBoolean = boolean | null;
-export type CompareValueNumber = number | null;
-export type CompareValueString = string | null;
-export type CompareValue =
-  | CompareValueBoolean
-  | CompareValueBoolean[]
-  | CompareValueNumber
-  | CompareValueNumber[]
-  | CompareValueString
-  | CompareValueString[];
-export type CompareFn = (a: CompareValue, b: CompareValue) => number;
 
 export interface Sample extends Resource {
   person: Person;
@@ -105,6 +97,7 @@ export interface AppMetadata {
   name: string;
   version: string;
   args: string;
+  htsFile?: HtsFileMetadata;
 }
 
 export interface HtsFileMetadata {
@@ -123,22 +116,7 @@ export interface ComposedQuery {
 
 export type ComposedQueryOperator = "and" | "or";
 
-export type QueryOperator =
-  | "=="
-  | "~="
-  | "~=_any"
-  | "any_~=_any"
-  | "!="
-  | "in"
-  | "!in"
-  | "has_any"
-  | "!has_any"
-  | "any_has_any"
-  | "!any_has_any"
-  | ">"
-  | ">="
-  | "<"
-  | "<=";
+export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=";
 
 export interface QueryClause {
   operator: QueryOperator;
@@ -272,23 +250,13 @@ export type Cram = {
   crai: Uint8Array;
 };
 
+/*
+ * wasmBinary -> sql.js 1.13.0 wasm binary
+ */
 export interface ReportData {
-  config?: Json;
-  metadata: Metadata;
-  data: Data;
-  binary: BinaryReportData;
-  decisionTree?: DecisionTree;
-  sampleTree?: DecisionTree;
-  vcfMeta?: SupplementaryMetadata;
-}
-
-interface Data {
-  [key: string]: Resource[];
-}
-
-export interface BinaryReportData {
-  vcf?: Uint8Array;
+  database?: Uint8Array;
   fastaGz?: { [key: string]: Uint8Array };
   genesGz?: Uint8Array;
+  wasmBinary?: Uint8Array;
   cram?: { [key: string]: Cram };
 }

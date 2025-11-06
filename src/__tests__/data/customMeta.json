@@ -1,0 +1,93 @@
+{
+  "format": {
+  },
+  "info": {
+    "CSQ": {
+      "nestedAttributes" : {
+        "prefix": "Consequence annotations from Ensembl VEP. Format: ",
+        "separator": "|"
+      },
+      "nestedFields": {
+        "VIPC": {
+          "label": "VIP classification",
+          "description": "Variant consequence classification predicted by the Variant Interpretation Pipeline (VIP), see https://vip.molgeniscloud.org/ and https://doi.org/10.1101/2024.04.11.24305656",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "CATEGORICAL",
+          "required": true
+        }
+      }
+    },
+    "n_object0": {
+      "nestedAttributes" : {
+        "separator": "|"
+      },
+      "nestedFields": {
+        "n_array1": {
+          "label": "Array",
+          "description": "Test array",
+          "numberType": "OTHER",
+          "separator": "&",
+          "type": "STRING",
+          "index": 2
+        },
+        "n_string1": {
+          "label": "String",
+          "description": "Test string 1",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "STRING",
+          "index": 0
+        },
+        "n_string2": {
+          "label": "String",
+          "description": "Test string 2",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "STRING",
+          "index": 1
+        },
+        "n_cat1": {
+          "label": "Categorical",
+          "description": "Test categorical",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "CATEGORICAL",
+          "index": 3,
+          "categories": {
+            "false": {
+              "label": "A",
+              "description": "A DESC"
+            },
+            "BB": {
+              "label": "B",
+              "description": "B DESC"
+            }
+          }
+        },
+        "n_cat2": {
+          "label": "Categorical2 ",
+          "description": "Test categorical 2",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "CATEGORICAL",
+          "index": 4,
+          "categories": {
+            "AA": {
+              "label": "A",
+              "description": "A DESC"
+            },
+            "BB": {
+              "label": "B",
+              "description": "B DESC"
+            }
+          },
+          "nullValue": {
+            "label": "D",
+            "description": "Default"
+          }
+        }
+      }
+    }
+  }
+}
