@@ -298,7 +298,7 @@ function parseString(sqlCol: string): {
   } else {
     field_type = "INFO";
   }
-  if (table !== "n" && table !== "v") {
+  if (table !== "n" && table !== "v" && table !== "contig") {
     parent_field = table;
   }
   return { field_type, parent_field, field };
