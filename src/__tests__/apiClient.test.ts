@@ -1,3 +1,4 @@
+/* eslint-disable no-sparse-arrays */
 import { beforeEach, expect, test } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
@@ -272,7 +273,6 @@ const record1Sample1: Item<VcfRecord> = {
     r: "G",
     s: [
       ,
-      // eslint-disable-next-line no-sparse-arrays
       {
         AD: [11, 0],
         DP: 11,
