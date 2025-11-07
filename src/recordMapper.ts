@@ -38,13 +38,13 @@ function postProcessVIPC_SandVIPP_S(valueMap: ValueMap) {
     if (vipc !== undefined && Array.isArray(vipc)) {
       value.set(
         "VIPC_S",
-        vipc.filter((_, index) => csqIndices.includes(index)),
+        csqIndices.map((idx) => vipc[idx]).filter((v) => v !== undefined),
       );
     }
     if (vipp !== undefined && Array.isArray(vipp)) {
       value.set(
         "VIPP_S",
-        vipp.filter((_, index) => csqIndices.includes(index)),
+        csqIndices.map((idx) => vipp[idx]).filter((v) => v !== undefined),
       );
     }
     newFmt.push(value);
