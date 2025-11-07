@@ -211,7 +211,13 @@ export function splitAndParseMap(
       const parentMeta = meta.info[nestedField] as InfoMetadata;
       const nestedMetas = parentMeta.nested?.items as FieldMetadata[];
       const nestedMetaMap = new Map<string, FieldMetadata>();
-      for (const nestedMeta of nestedMetas) nestedMetaMap.set(nestedMeta.id, nestedMeta);
+      const orderedKeys = Object.keys(nestedMetas)
+        .map(Number)
+        .sort((a, b) => a - b);
+      for (const index of orderedKeys) {
+        const nestedMeta: FieldMetadata = nestedMetas[index]!;
+        nestedMetaMap.set(nestedMeta.id, nestedMeta);
+      }
 
       const nestedKey = key.substring(key.indexOf("^") + 1);
       //CsqIndex exception because it is used in postprocessing to fix VIPC and VIPP

@@ -340,6 +340,7 @@ export class ReportDatabase {
                         m.description,
                         m.parent,
                         m.nested,
+                        m.nestedIndex,
                         m.nullValue
                  FROM metadata m
                         LEFT JOIN fieldType ft ON m.fieldType = ft.id

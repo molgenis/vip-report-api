@@ -84,8 +84,8 @@ const data: VcfMetadata = {
       id: "CSQ",
       label: "CSQ",
       nested: {
-        items: [
-          {
+        items: {
+          "0": {
             categories: undefined,
             description: undefined,
             id: "Allele",
@@ -96,7 +96,7 @@ const data: VcfMetadata = {
             required: false,
             type: "STRING",
           },
-          {
+          "1": {
             categories: {
               B: { description: "", label: "Benign" },
               LB: { description: "", label: "Likely Benign" },
@@ -115,7 +115,7 @@ const data: VcfMetadata = {
             required: true,
             type: "CATEGORICAL",
           },
-        ],
+        },
         separator: "|",
       },
       nullValue: undefined,
@@ -209,8 +209,8 @@ const data: VcfMetadata = {
       id: "n_object0",
       label: "n_object0",
       nested: {
-        items: [
-          {
+        items: {
+          "0": {
             categories: undefined,
             description: "Test string 1",
             id: "n_string1",
@@ -221,7 +221,7 @@ const data: VcfMetadata = {
             required: false,
             type: "STRING",
           },
-          {
+          "3": {
             categories: {
               false: { description: "A DESC", label: "A" },
               BB: { description: "B DESC", label: "B" },
@@ -235,7 +235,7 @@ const data: VcfMetadata = {
             required: false,
             type: "CATEGORICAL",
           },
-          {
+          "4": {
             categories: {
               AA: { description: "A DESC", label: "A" },
               BB: { description: "B DESC", label: "B" },
@@ -249,7 +249,7 @@ const data: VcfMetadata = {
             required: false,
             type: "CATEGORICAL",
           },
-          {
+          "2": {
             categories: undefined,
             description: "Test array",
             id: "n_array1",
@@ -260,7 +260,7 @@ const data: VcfMetadata = {
             required: false,
             type: "STRING",
           },
-          {
+          "1": {
             categories: undefined,
             description: "Test string 2",
             id: "n_string2",
@@ -271,7 +271,7 @@ const data: VcfMetadata = {
             required: false,
             type: "STRING",
           },
-        ],
+        },
         separator: "|",
       },
       nullValue: undefined,
@@ -353,8 +353,12 @@ function assignParentFieldsToData(data: VcfMetadata): VcfMetadata {
   // Helper: assign parent to each item in a nested array, recurse into deeper nesting
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function assignParent(obj: any) {
-    if (obj.nested.items && Array.isArray(obj.nested.items)) {
-      for (const item of obj.nested.items) {
+    if (obj.nested.items && typeof obj.nested.items === "object") {
+      const orderedKeys = Object.keys(obj.nested.items)
+        .map(Number)
+        .sort((a, b) => a - b);
+      for (const index of orderedKeys) {
+        const item = obj.nested.items[index];
         item.parent = obj;
       }
     }

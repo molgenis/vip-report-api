@@ -88,10 +88,19 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
 
     // Nested children: link all fields whose parent is me!
     if (row.nested === 1 || row.nested === true) {
-      const childRows = rows.filter((r) => r.parent === row.name);
+      const childRows = rows
+        .filter((r) => r.parent === row.name)
+        .sort((a, b) => (a.nestedIndex! as number) - (b.nestedIndex! as number));
+
+      const items: { [index: number]: FieldMetadata } = {};
+
+      for (const childRow of childRows) {
+        items[childRow.nestedIndex as number] = metaMap.get(row.name + "_" + childRow.name)!;
+      }
+
       field.nested = {
         separator: row.nestedSeparator as string,
-        items: childRows.map((childRow) => metaMap.get(row.name + "_" + childRow.name)!),
+        items,
       };
     }
     if (row.parent === null) {

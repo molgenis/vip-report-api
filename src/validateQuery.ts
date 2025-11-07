@@ -134,7 +134,9 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
         if (field === "GT_type") {
           field = "gtType";
         }
-        fieldMeta = parentMeta.nested?.items.find((fm) => fm.id === field);
+        fieldMeta = parentMeta.nested?.items
+          ? Object.values(parentMeta.nested.items).find((fm) => fm.id === field)
+          : undefined;
       }
     }
     if (fieldMeta === undefined) {

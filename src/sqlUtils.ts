@@ -319,7 +319,11 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
     if (parentMeta.nested === undefined) {
       throw new Error(`Nested fields missing in parent metadata: '${parent_field}'`);
     }
-    for (const nested of parentMeta.nested.items) {
+    const orderedKeys = Object.keys(parentMeta.nested.items)
+      .map(Number)
+      .sort((a, b) => a - b);
+    for (const index of orderedKeys) {
+      const nested: FieldMetadata = parentMeta.nested.items[index]!;
       if (nested.id === field) {
         return nested;
       }
