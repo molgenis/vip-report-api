@@ -90,6 +90,7 @@ const record0: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
       CSQ: [
@@ -157,6 +158,7 @@ const record1: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
       n_array0: ["b", "c", "a"],
@@ -218,6 +220,7 @@ const record1Sample1: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
       n_array0: ["b", "c", "a"],
@@ -291,6 +294,7 @@ const record1NoSamples: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
       n_array0: ["b", "c", "a"],
@@ -352,6 +356,7 @@ const record0CsqFiltered: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
       CSQ: [
@@ -446,6 +451,7 @@ const record1CsqFiltered: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
       n_array0: ["b", "c", "a"],
@@ -534,6 +540,7 @@ const record0desc: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
       CSQ: [
@@ -601,6 +608,7 @@ const record0catA: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
       CSQ: [
@@ -647,6 +655,7 @@ const record1desc: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
       n_array0: ["b", "c", "a"],

@@ -47,6 +47,8 @@ export function mapField(part: string) {
       return `v.qual`;
     case "f":
       return `v.filter`;
+    case "g":
+      return `formatLookup.value`;
     default:
       return part.toString();
   }
@@ -348,6 +350,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
   let inClause;
   switch (sqlCol) {
     case "contig.value":
+    case "formatLookup.value":
     case "v.ref":
       inClause = `${sqlCol} IN (${keys})`;
       break;

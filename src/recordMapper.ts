@@ -74,8 +74,9 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
       i: valueMap.restMap.get("idVcf") === null ? [] : (valueMap.restMap.get("idVcf") as string[]),
       r: valueMap.restMap.get("ref") as string,
       a: valueMap.restMap.get("alt") as string[],
-      q: valueMap.restMap.get("filter") === null ? null : (valueMap.restMap.get("qual") as number),
+      q: valueMap.restMap.get("qual") === null ? null : (valueMap.restMap.get("qual") as number),
       f: valueMap.restMap.get("filter") === null ? [] : (valueMap.restMap.get("filter") as string[]),
+      g: valueMap.restMap.get("format") as string,
       n,
       s,
     } as VcfRecord,
@@ -240,6 +241,7 @@ function parseStandardField(token: Value, key: string): Value {
     case "v_variantId":
     case "chrom":
     case "ref":
+    case "format":
       return token as string;
     case "pos":
       return token as number;

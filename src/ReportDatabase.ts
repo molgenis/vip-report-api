@@ -209,6 +209,7 @@ export class ReportDatabase {
       "v.alt",
       "v.qual",
       "v.filter",
+      "formatLookup.value as format",
       ...columns,
     ];
     const { orderByClauses, distinctOrderByClauses, orderCols } = getSortClauses(sortOrders, nestedTables);
@@ -219,6 +220,7 @@ export class ReportDatabase {
       FROM (${getPagingQuery(orderCols, sampleIds !== undefined, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
              LEFT JOIN info n ON n.variantId = v.id
              LEFT JOIN contig contig ON contig.id = v.chrom
+             LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
@@ -277,13 +279,15 @@ export class ReportDatabase {
       "v.alt",
       "v.qual",
       "v.filter",
+      "formatLookup.value as format",
       ...columns,
     ];
     const sql = `
       SELECT ${selectCols}
       FROM (SELECT * FROM vcf) v
              LEFT JOIN info n ON n.variantId = v.id
-             LEFT JOIN contig contig ON contig.id = v.chrom
+             LEFT JOIN contig ON contig.id = v.chrom
+             LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""} ${nestedJoins}
       WHERE v.id = :id
     `;
