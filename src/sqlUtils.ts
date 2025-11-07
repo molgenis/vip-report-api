@@ -466,21 +466,29 @@ function mapOperatorToSql(
     return mapInQuery(args, sqlCol, operator, meta, values);
   }
 
-  values[key] = sqlEscape(args);
   let partialStatement;
   switch (operator) {
     case "==":
     case "!=":
+      values[key] = sqlEscape(args);
       partialStatement = `${sqlCol} ${operator} ${key}`;
       break;
     case ">":
     case ">=":
     case "<":
     case "<=":
+      values[key] = sqlEscape(args);
       if (typeof args !== "number") {
         throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
       }
       partialStatement = `${sqlCol} ${operator} ${key}`;
+      break;
+    case "~=":
+      if (typeof args !== "string") {
+        throw new Error(`LIKE query value '${args}' is of type '${typeof args}' instead of 'string'`);
+      }
+      values[key] = sqlEscape(`%${args}%`);
+      partialStatement = `${sqlCol} LIKE ${key}`;
       break;
     default:
       throw new Error("Unsupported op: " + operator);

@@ -230,6 +230,7 @@ export interface Path {
 export type ClauseOperator = "AND" | "OR";
 export type Operator =
   | "=="
+  | "~="
   | "!="
   | "<"
   | "<="

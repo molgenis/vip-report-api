@@ -17,7 +17,7 @@ const sortAllExpected = {
   total: 2,
 };
 
-const samples0: RecordSample[] = [
+const recordSamples0: RecordSample[] = [
   {
     AD: [45, 5],
     DP: 50,
@@ -53,8 +53,7 @@ const samples0: RecordSample[] = [
     VIAB: 1,
   },
 ];
-
-const samples1: RecordSample[] = [
+const recordSamples1: RecordSample[] = [
   {
     AD: [0, 0],
     DP: 10,
@@ -149,7 +148,7 @@ const record0: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -210,7 +209,7 @@ const record1: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: samples1,
+    s: recordSamples1,
   },
   id: 2,
 };
@@ -593,7 +592,7 @@ const record0desc: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -639,7 +638,7 @@ const record0catA: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -700,7 +699,7 @@ const record1desc: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: samples1,
+    s: recordSamples1,
   },
   id: 2,
 };
@@ -828,6 +827,26 @@ test("get samples - query and", async () => {
   const samples = await api.getSamples(params);
   expect(samples).toEqual({
     items: [sample1],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get samples - query like", async () => {
+  const params: Params = {
+    query: {
+      selector: ["sample", "IndividualId"],
+      operator: "~=",
+      args: "atien",
+    },
+  };
+  const samples = await api.getSamples(params);
+  expect(samples).toEqual({
+    items: [sample0],
     page: {
       number: 0,
       size: 10,
