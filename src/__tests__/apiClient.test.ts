@@ -785,9 +785,16 @@ test("getAppMeta", async () => {
 });
 
 test("get - all samples", async () => {
-  const samples = await api.getSamples();
+  const params = {
+    sort: [
+      { property: ["sample", "familyId"], compare: "desc" },
+      { property: ["sample", "proband"], compare: "desc" },
+      { property: ["sample", "individualId"], compare: "asc" },
+    ],
+  };
+  const samples = await api.getSamples(params);
   expect(samples).toEqual({
-    items: [sample0, sample1, sample2],
+    items: [sample2, sample1, sample0],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
   });

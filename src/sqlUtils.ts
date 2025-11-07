@@ -604,6 +604,23 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
   return { orderByClauses, distinctOrderByClauses, orderCols };
 }
 
+export function getSimpleSortClauses(sortOrders: SortOrder[]) {
+  const orderByClauses: string[] = [];
+  let col;
+  for (const order of sortOrders) {
+    if (order.property.length == 1) {
+      col = mapField(order.property[0] as string);
+    } else if (order.property.length == 2) {
+      col = `${order.property[0]}.${order.property[1]}`;
+    }
+    if (col === undefined) {
+      throw new Error("Error determining sort column for:" + order);
+    }
+    orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
+  }
+  return orderByClauses;
+}
+
 export function getColumns(db: Database | undefined, nestedTables: string[], includeFormat: boolean) {
   let columns: string[] = [];
   for (const nestedTable of nestedTables) {

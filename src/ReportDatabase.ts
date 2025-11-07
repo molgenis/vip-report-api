@@ -9,6 +9,7 @@ import {
   getNestedJoins,
   getNestedTables,
   getPagingQuery,
+  getSimpleSortClauses,
   getSortClauses,
   simpleQueryToSql,
   toSqlList,
@@ -112,10 +113,17 @@ export class ReportDatabase {
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
-  loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
+  loadSamples(
+    page: number,
+    size: number,
+    sort: SortOrder | SortOrder[] | undefined,
+    query: Query | undefined,
+  ): DatabaseSample[] {
     const { partialStatement, values } =
       query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
+    const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
+    const orderByClauses = getSimpleSortClauses(sortOrders);
     const selectClause = `SELECT sample.sampleIndex,
                                  sample.familyId,
                                  sample.individualId,
@@ -128,7 +136,8 @@ export class ReportDatabase {
                                  LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
                                  LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
                                  LEFT JOIN sex ON sample.sex = sex.id
-                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id`;
+                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id
+                                  ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}`;
     const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
     const sql = `${selectClause} ${whereClause} ${pagingSql}`;
     const rows = executeSql(this.db, sql, values);
@@ -353,7 +362,7 @@ export class ReportDatabase {
     for (const row of headerLines) {
       headers.push(row["line"] as string);
     }
-    const samples = this.loadSamples(-1, -1, undefined);
+    const samples = this.loadSamples(-1, -1, undefined, undefined);
     const sampleNames: string[] = [];
     for (const row of samples) {
       sampleNames.push(row.data.person.individualId);
