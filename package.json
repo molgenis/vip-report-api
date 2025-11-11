@@ -51,7 +51,7 @@
     "vitest": "^3.0.5"
   },
   "dependencies": {
-    "@molgenis/vip-report-vcf": "file:C:\\Users\\bartc\\WebstormProjects\\vip-report-vcf",
+    "@molgenis/vip-report-vcf": "4.0.2",
     "sql.js": "^1.13.0"
   },
   "engines": {

@@ -93,6 +93,7 @@ const record0: Item<VcfRecord> = {
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -161,6 +162,7 @@ const record1: Item<VcfRecord> = {
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -223,6 +225,7 @@ const record1Sample1: Item<VcfRecord> = {
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -297,6 +300,7 @@ const record1NoSamples: Item<VcfRecord> = {
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -359,6 +363,7 @@ const record0CsqFiltered: Item<VcfRecord> = {
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -454,6 +459,7 @@ const record1CsqFiltered: Item<VcfRecord> = {
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -543,6 +549,7 @@ const record0desc: Item<VcfRecord> = {
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -611,6 +618,7 @@ const record0catA: Item<VcfRecord> = {
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -658,6 +666,7 @@ const record1desc: Item<VcfRecord> = {
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -982,6 +991,40 @@ test("get - records with less than query", async () => {
   expect(records).toEqual({
     items: [record1],
     page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with greater than query on multivalue", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_number_array"],
+      operator: ">",
+      args: 4,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with less than or equal query on multivalue", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_number_array"],
+      operator: "<=",
+      args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
     total: 2,
   });
 });

@@ -349,8 +349,9 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
   const keys = processValueList(nonNulls, values, sqlCol);
   let inClause;
   switch (sqlCol) {
-    case "contig.value":
-    case "formatLookup.value":
+    case "contig.value": //FOREIGN column without metadata
+    case "formatLookup.value": //FOREIGN column without metadata
+    case "f.gtType": //Computed column without metadata
     case "v.ref":
       inClause = `${sqlCol} IN (${keys})`;
       break;
@@ -449,6 +450,29 @@ function mapInQuery(
   return { partialStatement: query, values: values };
 }
 
+function mapNumericalQuery(
+  values: ParamsObject,
+  key: string,
+  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+  meta: VcfMetadata | null,
+  sqlCol: string,
+  operator: ">" | ">=" | "<" | "<=",
+) {
+  values[key] = sqlEscape(args);
+  if (typeof args !== "number") {
+    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
+  }
+  const fieldMeta = meta !== null ? getMetadataForColumn(sqlCol, meta) : null;
+  if (fieldMeta !== null && fieldMeta?.number.count !== 1) {
+    return `EXISTS (
+               SELECT 1 FROM json_each(${sqlCol})
+                WHERE CAST(json_each.value as NUMBER) ${operator} ${key}
+            )`;
+  } else {
+    return `${sqlCol} ${operator} ${key}`;
+  }
+}
+
 function mapOperatorToSql(
   clause: QueryClause,
   sqlCol: string,
@@ -484,11 +508,7 @@ function mapOperatorToSql(
     case ">=":
     case "<":
     case "<=":
-      values[key] = sqlEscape(args);
-      if (typeof args !== "number") {
-        throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
-      }
-      partialStatement = `${sqlCol} ${operator} ${key}`;
+      partialStatement = mapNumericalQuery(values, key, args, meta, sqlCol, operator);
       break;
     case "~=":
       if (typeof args !== "string") {

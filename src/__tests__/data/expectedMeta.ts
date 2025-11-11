@@ -78,6 +78,19 @@ const data: VcfMetadata = {
     },
   },
   info: {
+    n_number_array: {
+      categories: undefined,
+      description: "n_numeric_array",
+      id: "n_number_array",
+      label: "n_number_array",
+      nullValue: undefined,
+      number: {
+        count: undefined,
+        type: "OTHER",
+      },
+      required: false,
+      type: "INTEGER",
+    },
     CSQ: {
       categories: undefined,
       description: "Consequence annotations from Ensembl VEP. Format: Allele|VIPC",
@@ -333,6 +346,7 @@ const data: VcfMetadata = {
     '##INFO=<ID=n_cat1,Number=1,Type=String,Description="n_cat1">',
     '##INFO=<ID=n_cat2,Number=1,Type=String,Description="n_cat2">',
     '##INFO=<ID=n_array0,Number=.,Type=String,Description="n_array0">',
+    '##INFO=<ID=n_number_array,Number=.,Type=Integer,Description="n_numeric_array">',
     '##INFO=<ID=n_array1,Number=.,Type=String,Description="n_array1">',
     '##INFO=<ID=n_object0,Number=.,Type=String,Description="Annotations from Object test. Format: n_string1|n_string2|n_array1">',
     '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|VIPC">',

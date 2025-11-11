@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@molgenis/vip-report-vcf':
-        specifier: file:C:\Users\bartc\WebstormProjects\vip-report-vcf
-        version: file:../vip-report-vcf
+        specifier: 4.0.2
+        version: 4.0.2
       sql.js:
         specifier: ^1.13.0
         version: 1.13.0
@@ -310,8 +310,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@molgenis/vip-report-vcf@file:../vip-report-vcf':
-    resolution: {directory: ../vip-report-vcf, type: directory}
+  '@molgenis/vip-report-vcf@4.0.2':
+    resolution: {integrity: sha512-TqvYGNUm+GC/EJNF0TtmmK+u++CVWT2XvDEb811vOj9986dgieG7bgye438GXY1guAH7r+BYMT7XjiUfvXJMBg==}
     engines: {node: '22', pnpm: '9'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -1373,7 +1373,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@molgenis/vip-report-vcf@file:../vip-report-vcf': {}
+  '@molgenis/vip-report-vcf@4.0.2': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
