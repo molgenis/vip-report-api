@@ -154,10 +154,10 @@ export class ReportDatabase {
                                  LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
                                  LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
                                  LEFT JOIN sex ON sample.sex = sex.id
-                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id
-                                  ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}`;
+                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id`;
+    const orderClause = `${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}`;
     const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
-    const sql = `${selectClause} ${whereClause} ${pagingSql}`;
+    const sql = `${selectClause} ${whereClause} ${orderClause} ${pagingSql}`;
     const rows = executeSql(this.db, sql, values);
     return mapSamples(rows);
   }
