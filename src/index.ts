@@ -1,4 +1,4 @@
-import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { InfoOrder, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { ApiClient as ApiClientAlias } from "./apiClient";
 import { WindowApiClientFactory as WindowApiClientAlias } from "./WindowApiClient";
 import { ReportDatabase as ReportDatabaseAlias } from "./ReportDatabase";
@@ -42,6 +42,8 @@ export interface Api {
   getDecisionTree(): Promise<DecisionTree | null>;
 
   getSampleTree(): Promise<DecisionTree | null>;
+
+  getInfoOrder(): Promise<InfoOrder>;
 }
 
 export type Json = string | number | boolean | null | { [property: string]: Json } | Json[];
@@ -230,6 +232,7 @@ export interface Path {
 export type ClauseOperator = "AND" | "OR";
 export type Operator =
   | "=="
+  | "~="
   | "!="
   | "<"
   | "<="

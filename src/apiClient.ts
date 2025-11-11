@@ -1,4 +1,4 @@
-import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { InfoOrder, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import {
   Api,
   AppMetadata,
@@ -72,7 +72,7 @@ export class ApiClient implements Api {
     const page = params.page ?? 0;
     const size = params.size ?? 10;
     const tableSize: TableSize = this.db.countMatchingSamples(params.query);
-    const samples = this.db.loadSamples(page, size, params.query);
+    const samples = this.db.loadSamples(page, size, params.sort, params.query);
     return this.toPagedItems(samples, page, size, tableSize.size, tableSize.totalSize) as PagedItems<Sample>;
   }
 
@@ -132,5 +132,9 @@ export class ApiClient implements Api {
 
   async getSampleTree(): Promise<DecisionTree | null> {
     return this.db.loadDecisionTree("sampleDecisionTree");
+  }
+
+  async getInfoOrder(): Promise<InfoOrder> {
+    return this.db.loadInfoOrder();
   }
 }

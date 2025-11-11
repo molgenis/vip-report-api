@@ -38,13 +38,13 @@ function postProcessVIPC_SandVIPP_S(valueMap: ValueMap) {
     if (vipc !== undefined && Array.isArray(vipc)) {
       value.set(
         "VIPC_S",
-        vipc.filter((_, index) => csqIndices.includes(index)),
+        csqIndices.map((idx) => vipc[idx]).filter((v) => v !== undefined),
       );
     }
     if (vipp !== undefined && Array.isArray(vipp)) {
       value.set(
         "VIPP_S",
-        vipp.filter((_, index) => csqIndices.includes(index)),
+        csqIndices.map((idx) => vipp[idx]).filter((v) => v !== undefined),
       );
     }
     newFmt.push(value);
@@ -74,8 +74,9 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
       i: valueMap.restMap.get("idVcf") === null ? [] : (valueMap.restMap.get("idVcf") as string[]),
       r: valueMap.restMap.get("ref") as string,
       a: valueMap.restMap.get("alt") as string[],
-      q: valueMap.restMap.get("filter") === null ? null : (valueMap.restMap.get("qual") as number),
+      q: valueMap.restMap.get("qual") === null ? null : (valueMap.restMap.get("qual") as number),
       f: valueMap.restMap.get("filter") === null ? [] : (valueMap.restMap.get("filter") as string[]),
+      g: valueMap.restMap.get("format") as string,
       n,
       s,
     } as VcfRecord,
@@ -211,7 +212,13 @@ export function splitAndParseMap(
       const parentMeta = meta.info[nestedField] as InfoMetadata;
       const nestedMetas = parentMeta.nested?.items as FieldMetadata[];
       const nestedMetaMap = new Map<string, FieldMetadata>();
-      for (const nestedMeta of nestedMetas) nestedMetaMap.set(nestedMeta.id, nestedMeta);
+      const orderedKeys = Object.keys(nestedMetas)
+        .map(Number)
+        .sort((a, b) => a - b);
+      for (const index of orderedKeys) {
+        const nestedMeta: FieldMetadata = nestedMetas[index]!;
+        nestedMetaMap.set(nestedMeta.id, nestedMeta);
+      }
 
       const nestedKey = key.substring(key.indexOf("^") + 1);
       //CsqIndex exception because it is used in postprocessing to fix VIPC and VIPP
@@ -234,6 +241,7 @@ function parseStandardField(token: Value, key: string): Value {
     case "v_variantId":
     case "chrom":
     case "ref":
+    case "format":
       return token as string;
     case "pos":
       return token as number;

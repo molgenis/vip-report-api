@@ -47,6 +47,8 @@ export function mapField(part: string) {
       return `v.qual`;
     case "f":
       return `v.filter`;
+    case "g":
+      return `formatLookup.value`;
     default:
       return part.toString();
   }
@@ -298,7 +300,7 @@ function parseString(sqlCol: string): {
   } else {
     field_type = "INFO";
   }
-  if (table !== "n" && table !== "v") {
+  if (table !== "n" && table !== "v" && table !== "contig") {
     parent_field = table;
   }
   return { field_type, parent_field, field };
@@ -319,7 +321,11 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
     if (parentMeta.nested === undefined) {
       throw new Error(`Nested fields missing in parent metadata: '${parent_field}'`);
     }
-    for (const nested of parentMeta.nested.items) {
+    const orderedKeys = Object.keys(parentMeta.nested.items)
+      .map(Number)
+      .sort((a, b) => a - b);
+    for (const index of orderedKeys) {
+      const nested: FieldMetadata = parentMeta.nested.items[index]!;
       if (nested.id === field) {
         return nested;
       }
@@ -343,7 +349,9 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
   const keys = processValueList(nonNulls, values, sqlCol);
   let inClause;
   switch (sqlCol) {
-    case "contig.value":
+    case "contig.value": //FOREIGN column without metadata
+    case "formatLookup.value": //FOREIGN column without metadata
+    case "f.gtType": //Computed column without metadata
     case "v.ref":
       inClause = `${sqlCol} IN (${keys})`;
       break;
@@ -442,6 +450,29 @@ function mapInQuery(
   return { partialStatement: query, values: values };
 }
 
+function mapNumericalQuery(
+  values: ParamsObject,
+  key: string,
+  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+  meta: VcfMetadata | null,
+  sqlCol: string,
+  operator: ">" | ">=" | "<" | "<=",
+) {
+  values[key] = sqlEscape(args);
+  if (typeof args !== "number") {
+    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
+  }
+  const fieldMeta = meta !== null ? getMetadataForColumn(sqlCol, meta) : null;
+  if (fieldMeta !== null && fieldMeta?.number.count !== 1) {
+    return `EXISTS (
+               SELECT 1 FROM json_each(${sqlCol})
+                WHERE CAST(json_each.value as NUMBER) ${operator} ${key}
+            )`;
+  } else {
+    return `${sqlCol} ${operator} ${key}`;
+  }
+}
+
 function mapOperatorToSql(
   clause: QueryClause,
   sqlCol: string,
@@ -466,21 +497,25 @@ function mapOperatorToSql(
     return mapInQuery(args, sqlCol, operator, meta, values);
   }
 
-  values[key] = sqlEscape(args);
   let partialStatement;
   switch (operator) {
     case "==":
     case "!=":
+      values[key] = sqlEscape(args);
       partialStatement = `${sqlCol} ${operator} ${key}`;
       break;
     case ">":
     case ">=":
     case "<":
     case "<=":
-      if (typeof args !== "number") {
-        throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
+      partialStatement = mapNumericalQuery(values, key, args, meta, sqlCol, operator);
+      break;
+    case "~=":
+      if (typeof args !== "string") {
+        throw new Error(`LIKE query value '${args}' is of type '${typeof args}' instead of 'string'`);
       }
-      partialStatement = `${sqlCol} ${operator} ${key}`;
+      values[key] = sqlEscape(`%${args}%`);
+      partialStatement = `${sqlCol} LIKE ${key}`;
       break;
     default:
       throw new Error("Unsupported op: " + operator);
@@ -590,6 +625,23 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
     );
   }
   return { orderByClauses, distinctOrderByClauses, orderCols };
+}
+
+export function getSimpleSortClauses(sortOrders: SortOrder[]) {
+  const orderByClauses: string[] = [];
+  let col;
+  for (const order of sortOrders) {
+    if (order.property.length == 1) {
+      col = mapField(order.property[0] as string);
+    } else if (order.property.length == 2) {
+      col = `${order.property[0]}.${order.property[1]}`;
+    }
+    if (col === undefined) {
+      throw new Error("Error determining sort column for:" + order);
+    }
+    orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
+  }
+  return orderByClauses;
 }
 
 export function getColumns(db: Database | undefined, nestedTables: string[], includeFormat: boolean) {

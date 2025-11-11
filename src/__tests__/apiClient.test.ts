@@ -17,7 +17,7 @@ const sortAllExpected = {
   total: 2,
 };
 
-const samples0: RecordSample[] = [
+const recordSamples0: RecordSample[] = [
   {
     AD: [45, 5],
     DP: 50,
@@ -53,8 +53,7 @@ const samples0: RecordSample[] = [
     VIAB: 1,
   },
 ];
-
-const samples1: RecordSample[] = [
+const recordSamples1: RecordSample[] = [
   {
     AD: [0, 0],
     DP: 10,
@@ -91,8 +90,10 @@ const record0: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -149,7 +150,7 @@ const record0: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -158,8 +159,10 @@ const record1: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -210,7 +213,7 @@ const record1: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: samples1,
+    s: recordSamples1,
   },
   id: 2,
 };
@@ -219,8 +222,10 @@ const record1Sample1: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -292,8 +297,10 @@ const record1NoSamples: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -353,8 +360,10 @@ const record0CsqFiltered: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -447,8 +456,10 @@ const record1CsqFiltered: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -535,8 +546,10 @@ const record0desc: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -593,7 +606,7 @@ const record0desc: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -602,8 +615,10 @@ const record0catA: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
     i: [],
     n: {
+      n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
@@ -639,7 +654,7 @@ const record0catA: Item<VcfRecord> = {
     p: 10042538,
     q: 80,
     r: "C",
-    s: samples0,
+    s: recordSamples0,
   },
   id: 1,
 };
@@ -648,8 +663,10 @@ const record1desc: Item<VcfRecord> = {
     a: ["A"],
     c: "1",
     f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
     n: {
+      n_number_array: [1, 4],
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -700,7 +717,7 @@ const record1desc: Item<VcfRecord> = {
     p: 16376412,
     q: null,
     r: "G",
-    s: samples1,
+    s: recordSamples1,
   },
   id: 2,
 };
@@ -786,9 +803,16 @@ test("getAppMeta", async () => {
 });
 
 test("get - all samples", async () => {
-  const samples = await api.getSamples();
+  const params = {
+    sort: [
+      { property: ["sample", "familyId"], compare: "desc" },
+      { property: ["sample", "proband"], compare: "desc" },
+      { property: ["sample", "individualId"], compare: "asc" },
+    ],
+  };
+  const samples = await api.getSamples(params);
   expect(samples).toEqual({
-    items: [sample0, sample1, sample2],
+    items: [sample2, sample1, sample0],
     page: { number: 0, size: 10, totalElements: 3 },
     total: 3,
   });
@@ -828,6 +852,26 @@ test("get samples - query and", async () => {
   const samples = await api.getSamples(params);
   expect(samples).toEqual({
     items: [sample1],
+    page: {
+      number: 0,
+      size: 10,
+      totalElements: 1,
+    },
+    total: 3,
+  });
+});
+
+test("get samples - query like", async () => {
+  const params: Params = {
+    query: {
+      selector: ["sample", "IndividualId"],
+      operator: "~=",
+      args: "atien",
+    },
+  };
+  const samples = await api.getSamples(params);
+  expect(samples).toEqual({
+    items: [sample0],
     page: {
       number: 0,
       size: 10,
@@ -947,6 +991,40 @@ test("get - records with less than query", async () => {
   expect(records).toEqual({
     items: [record1],
     page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with greater than query on multivalue", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_number_array"],
+      operator: ">",
+      args: 4,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - records with less than or equal query on multivalue", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "n_number_array"],
+      operator: "<=",
+      args: 1,
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
     total: 2,
   });
 });

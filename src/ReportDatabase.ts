@@ -1,4 +1,4 @@
-import type { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import type { InfoOrder, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { mapRows } from "./recordMapper";
 
 import { AppMetadata, DecisionTree, HtsFileMetadata, Json, Query, Sample, SortOrder } from "./index";
@@ -9,6 +9,7 @@ import {
   getNestedJoins,
   getNestedTables,
   getPagingQuery,
+  getSimpleSortClauses,
   getSortClauses,
   simpleQueryToSql,
   toSqlList,
@@ -45,6 +46,24 @@ export class ReportDatabase {
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) return null;
     return JSON.parse(rows[0]["tree"] as string);
+  }
+
+  loadInfoOrder(): InfoOrder {
+    const sql =
+      "SELECT infoOrder.variantId, metadata.name, infoOrder.infoIndex " +
+      "FROM infoOrder " +
+      "JOIN metadata ON infoOrder.metadataId = metadata.id ";
+    const rows = executeSql(this.db, sql, {});
+    const variantInfoOrder: InfoOrder = {};
+
+    for (const row of rows) {
+      const variantId = row.variantId as string;
+      if (variantInfoOrder[variantId] === undefined) {
+        variantInfoOrder[variantId] = new Map<string, number>();
+      }
+      variantInfoOrder[variantId].set(row.fieldname as string, Number(row.info_order));
+    }
+    return variantInfoOrder;
   }
 
   loadAppMetadata(): AppMetadata {
@@ -112,10 +131,17 @@ export class ReportDatabase {
     return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
   }
 
-  loadSamples(page: number, size: number, query: Query | undefined): DatabaseSample[] {
+  loadSamples(
+    page: number,
+    size: number,
+    sort: SortOrder | SortOrder[] | undefined,
+    query: Query | undefined,
+  ): DatabaseSample[] {
     const { partialStatement, values } =
       query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
+    const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
+    const orderByClauses = getSimpleSortClauses(sortOrders);
     const selectClause = `SELECT sample.sampleIndex,
                                  sample.familyId,
                                  sample.individualId,
@@ -129,8 +155,9 @@ export class ReportDatabase {
                                  LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
                                  LEFT JOIN sex ON sample.sex = sex.id
                                  LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id`;
+    const orderClause = `${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}`;
     const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
-    const sql = `${selectClause} ${whereClause} ${pagingSql}`;
+    const sql = `${selectClause} ${whereClause} ${orderClause} ${pagingSql}`;
     const rows = executeSql(this.db, sql, values);
     return mapSamples(rows);
   }
@@ -200,6 +227,7 @@ export class ReportDatabase {
       "v.alt",
       "v.qual",
       "v.filter",
+      "formatLookup.value as format",
       ...columns,
     ];
     const { orderByClauses, distinctOrderByClauses, orderCols } = getSortClauses(sortOrders, nestedTables);
@@ -210,6 +238,7 @@ export class ReportDatabase {
       FROM (${getPagingQuery(orderCols, sampleIds !== undefined, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
              LEFT JOIN info n ON n.variantId = v.id
              LEFT JOIN contig contig ON contig.id = v.chrom
+             LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
@@ -268,13 +297,15 @@ export class ReportDatabase {
       "v.alt",
       "v.qual",
       "v.filter",
+      "formatLookup.value as format",
       ...columns,
     ];
     const sql = `
       SELECT ${selectCols}
       FROM (SELECT * FROM vcf) v
              LEFT JOIN info n ON n.variantId = v.id
-             LEFT JOIN contig contig ON contig.id = v.chrom
+             LEFT JOIN contig ON contig.id = v.chrom
+             LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""} ${nestedJoins}
       WHERE v.id = :id
     `;
@@ -340,11 +371,13 @@ export class ReportDatabase {
                         m.description,
                         m.parent,
                         m.nested,
+                        m.nestedIndex,
                         m.nullValue
                  FROM metadata m
                         LEFT JOIN fieldType ft ON m.fieldType = ft.id
                         LEFT JOIN valueType vt ON m.valueType = vt.id
-                        LEFT JOIN numberType nt ON m.numberType = nt.id;`;
+                        LEFT JOIN numberType nt ON m.numberType = nt.id
+                 ORDER BY m.label ASC`; //sort on label since this is what the user sees
     const rows = executeSql(this.db, sql, {});
     const headerSql = "SELECT * FROM header";
     const headerLines = executeSql(this.db, headerSql, {});
@@ -352,7 +385,7 @@ export class ReportDatabase {
     for (const row of headerLines) {
       headers.push(row["line"] as string);
     }
-    const samples = this.loadSamples(-1, -1, undefined);
+    const samples = this.loadSamples(-1, -1, undefined, undefined);
     const sampleNames: string[] = [];
     for (const row of samples) {
       sampleNames.push(row.data.person.individualId);

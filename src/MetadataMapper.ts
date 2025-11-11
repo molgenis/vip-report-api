@@ -63,7 +63,7 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
       required: !!row.required,
       nullValue: row.nullValue === null ? undefined : (JSON.parse(row.nullValue as string) as ValueDescription),
     };
-    //Avoid name collision if field name is present both a CSQ child and INFO field
+    // Avoid name collision if field name is present both as a CSQ child and INFO field
     if (row.parent) {
       metaMap.set(row.parent + "_" + row.name, field);
     } else {
@@ -71,37 +71,46 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
     }
   }
 
-  // --- Step 2: Link parents and nesteds ---
   const postProcessedMetaMap = new Map<string, FieldMetadata>();
-  let field;
   for (const row of rows) {
+    let field: FieldMetadata;
     if (row.parent) {
       field = metaMap.get(row.parent + "_" + row.name)!;
     } else {
       field = metaMap.get(row.name as string)!;
     }
-    // Parent: link to top-level object if parent exists
+
+    // Parent field linking (for easier reference)
     if (row.parent) {
       const parentObj = metaMap.get(row.parent as string);
       if (parentObj) field.parent = parentObj;
     }
 
-    // Nested children: link all fields whose parent is me!
+    // Nested structure setup
     if (row.nested === 1 || row.nested === true) {
-      const childRows = rows.filter((r) => r.parent === row.name);
+      const childRows = rows
+        .filter((r) => r.parent === row.name)
+        .sort((a, b) => (a.nestedIndex! as number) - (b.nestedIndex! as number));
+
+      const items: { [index: number]: FieldMetadata } = {};
+      for (const childRow of childRows) {
+        items[childRow.nestedIndex as number] = metaMap.get(row.name + "_" + childRow.name)!;
+      }
+
       field.nested = {
         separator: row.nestedSeparator as string,
-        items: childRows.map((childRow) => metaMap.get(row.name + "_" + childRow.name)!),
+        items,
       };
     }
+
     if (row.parent === null) {
       postProcessedMetaMap.set(row.name as string, field);
     }
   }
 
-  // Now assign to info/format
   const info: FieldMetadataContainer = {};
   const format: FormatMetadataContainer = {};
+
   for (const row of rows.filter((r) => r.parent === null)) {
     const field = postProcessedMetaMap.get(row.name as string)!;
     if (row.fieldType === "INFO") {
@@ -115,6 +124,6 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
     lines: headerLines,
     info,
     format,
-    samples: samples,
+    samples,
   };
 }
