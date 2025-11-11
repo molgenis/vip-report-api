@@ -1,4 +1,4 @@
-import { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import { InfoOrder, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import {
   Api,
   AppMetadata,
@@ -132,5 +132,9 @@ export class ApiClient implements Api {
 
   async getSampleTree(): Promise<DecisionTree | null> {
     return this.db.loadDecisionTree("sampleDecisionTree");
+  }
+
+  async getInfoOrder(): Promise<InfoOrder> {
+    return this.db.loadInfoOrder();
   }
 }

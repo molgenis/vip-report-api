@@ -1,4 +1,4 @@
-import type { VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
+import type { InfoOrder, VcfMetadata, VcfRecord } from "@molgenis/vip-report-vcf";
 import { mapRows } from "./recordMapper";
 
 import { AppMetadata, DecisionTree, HtsFileMetadata, Json, Query, Sample, SortOrder } from "./index";
@@ -46,6 +46,24 @@ export class ReportDatabase {
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) return null;
     return JSON.parse(rows[0]["tree"] as string);
+  }
+
+  loadInfoOrder(): InfoOrder {
+    const sql =
+      "SELECT infoOrder.variantId, metadata.name, infoOrder.infoIndex " +
+      "FROM infoOrder " +
+      "JOIN metadata ON infoOrder.metadataId = metadata.id ";
+    const rows = executeSql(this.db, sql, {});
+    const variantInfoOrder: InfoOrder = {};
+
+    for (const row of rows) {
+      const variantId = row.variantId as string;
+      if (variantInfoOrder[variantId] === undefined) {
+        variantInfoOrder[variantId] = new Map<string, number>();
+      }
+      variantInfoOrder[variantId].set(row.fieldname as string, Number(row.info_order));
+    }
+    return variantInfoOrder;
   }
 
   loadAppMetadata(): AppMetadata {
@@ -358,7 +376,8 @@ export class ReportDatabase {
                  FROM metadata m
                         LEFT JOIN fieldType ft ON m.fieldType = ft.id
                         LEFT JOIN valueType vt ON m.valueType = vt.id
-                        LEFT JOIN numberType nt ON m.numberType = nt.id;`;
+                        LEFT JOIN numberType nt ON m.numberType = nt.id
+                 ORDER BY m.label ASC`; //sort on label since this is what the user sees
     const rows = executeSql(this.db, sql, {});
     const headerSql = "SELECT * FROM header";
     const headerLines = executeSql(this.db, headerSql, {});
