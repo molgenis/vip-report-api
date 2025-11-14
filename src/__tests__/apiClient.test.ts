@@ -1431,6 +1431,23 @@ test("get - all records sorted custom on identifier", async () => {
   expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
+test("get - get records with all samples where sample 0 is not HOM_REF", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 1, "GT_type"],
+      operator: "!=",
+      args: "HOM_REF",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record1],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
 test("get - not one record", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],

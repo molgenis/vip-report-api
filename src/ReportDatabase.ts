@@ -27,6 +27,8 @@ import {
 import { Database } from "sql.js";
 import { mapSqlRowsToVcfMetadata } from "./MetadataMapper";
 
+const GT_TYPE_COLUMN = "gtType.value AS FMT_GtType ";
+
 export class ReportDatabase {
   // lazy loaded and cached
   private _meta: VcfMetadata | undefined;
@@ -42,7 +44,7 @@ export class ReportDatabase {
   }
 
   loadDecisionTree(id: string): DecisionTree | null {
-    const sql = "SELECT tree from decisiontree WHERE id = :id";
+    const sql = "SELECT tree from decisionTree WHERE id = :id";
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) return null;
     return JSON.parse(rows[0]["tree"] as string);
@@ -235,11 +237,12 @@ export class ReportDatabase {
 
     const sql = `
       SELECT DISTINCT ${selectCols}
-      FROM (${getPagingQuery(orderCols, sampleIds !== undefined, sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
+      FROM (${getPagingQuery(orderCols, sampleIds !== undefined, columns.includes(GT_TYPE_COLUMN), sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
              LEFT JOIN info n ON n.variantId = v.id
              LEFT JOIN contig contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
@@ -247,10 +250,13 @@ export class ReportDatabase {
     return mapRows(rows, meta, categories, nestedTables);
   }
 
-  countMatchingVariants(query: Query | undefined): TableSize {
+  countMatchingVariants(query: Query | undefined, sampleIds: number[] | undefined): TableSize {
     const meta = this.getMetadata();
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
+    const sampleJoinQuery =
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sampleIndex in (${toSqlList(sampleIds)})` : "";
+    const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const { partialStatement, values } =
       query !== undefined
         ? complexQueryToSql(query, categories, nestedTables, meta)
@@ -267,7 +273,8 @@ export class ReportDatabase {
         LEFT JOIN info n
       ON n.variantId = v.id
         ${nestedJoins}
-        LEFT JOIN format f ON f.variantId = v.id
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
         ${whereClause}
     `;
 
@@ -307,6 +314,7 @@ export class ReportDatabase {
              LEFT JOIN contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""} ${nestedJoins}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
       WHERE v.id = :id
     `;
 

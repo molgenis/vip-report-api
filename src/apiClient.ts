@@ -36,7 +36,7 @@ export class ApiClient implements Api {
     const page = params.page ?? 0;
     const size = params.size ?? 10;
     validateQuery(this.db.getMetadata(), params.query);
-    const tableSize: TableSize = this.db.countMatchingVariants(params.query);
+    const tableSize: TableSize = this.db.countMatchingVariants(params.query, params.sampleIds);
     const variants: DatabaseRecord[] = this.db.loadVcfRecords(page, size, params.sort, params.query, params.sampleIds);
     return this.toPagedItems(variants, page, size, tableSize.size, tableSize.totalSize) as PagedItems<VcfRecord>;
   }

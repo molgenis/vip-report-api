@@ -1,6 +1,5 @@
 import { Query, QueryClause, SelectorPart } from "./index";
 import { FieldMetadata, VcfMetadata } from "@molgenis/vip-report-vcf";
-import { mapFormatField } from "./sqlUtils";
 
 function validate(fieldMeta: FieldMetadata, clause: QueryClause) {
   switch (clause.operator) {
@@ -122,7 +121,7 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
     }
     if (parts.length === 3) {
       if (parts[0] === "s") {
-        const field = mapFormatField(parts[2] as SelectorPart, "FORMAT");
+        const field = parts[2] as SelectorPart;
         fieldMeta = meta.format[field];
       } else {
         const parent = parts[1] as SelectorPart;

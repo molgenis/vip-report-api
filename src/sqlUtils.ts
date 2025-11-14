@@ -86,13 +86,6 @@ function mapQueryCategories(categories: Map<string, FieldCategories>, key: strin
   return { args: args, operator: clause.operator, selector: clause.selector };
 }
 
-export function mapFormatField(field: SelectorPart, type: "FORMAT" | "INFO") {
-  if (type === "FORMAT" && field === "GT_type") {
-    field = "gtType";
-  }
-  return field;
-}
-
 export function complexQueryToSql(
   query: Query,
   categories: Categories,
@@ -104,6 +97,7 @@ export function complexQueryToSql(
   const tables = usedTables(query);
   let joins = "vcf v";
   if (tables.has("s")) joins += " JOIN format f ON f.variantId = v.id";
+  if (meta.format != undefined && meta.format.GT !== undefined) joins += " LEFT JOIN gtType on gtType.id = f.GtType";
   joins += " LEFT JOIN contig contig ON contig.id = v.chrom";
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
@@ -215,13 +209,18 @@ function mapQueryOnNestedField(
   const type: FieldType = parts[0] === "s" ? "FORMAT" : "INFO";
   const prefix = parts[0] === "s" ? "f." : parts[1] + ".";
   const parent = type === "INFO" ? parts[1] : null;
-  const field = mapFormatField(parts[2] as SelectorPart, type);
+  const field = parts[2] as SelectorPart;
   let newClause = clause;
   const key = parent === null ? `${type}/${field}` : `${type}/${parent}/${field}`;
   if (categories.has(key)) {
     newClause = mapQueryCategories(categories, key, clause);
   }
-  const sqlCol = `${prefix}${field}`;
+  let sqlCol;
+  if (type === "FORMAT" && field === "GT_type") {
+    sqlCol = "gtType.value";
+  } else {
+    sqlCol = `${prefix}${field}`;
+  }
   let partialStatement;
   ({ partialStatement, values } = mapOperatorToSql(newClause, sqlCol, meta, values));
   const sampleKey = getUniqueKey(values, "sampleIndex");
@@ -241,7 +240,7 @@ function MapQueryOnInfoOrFormat(
 ) {
   const type: FieldType = parts[0] === "s" ? "FORMAT" : "INFO";
   const prefix = parts[0] === "s" ? "f" : parts[0];
-  const field = mapFormatField(parts[1] as SelectorPart, type);
+  const field = parts[1] as SelectorPart;
   let newClause = clause;
   const key = `${type}/${field}`;
   if (categories.has(key)) {
@@ -300,7 +299,7 @@ function parseString(sqlCol: string): {
   } else {
     field_type = "INFO";
   }
-  if (table !== "n" && table !== "v" && table !== "contig") {
+  if (table !== "n" && table !== "v" && table !== "contig" && table !== "gtType") {
     parent_field = table;
   }
   return { field_type, parent_field, field };
@@ -351,7 +350,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
   switch (sqlCol) {
     case "contig.value": //FOREIGN column without metadata
     case "formatLookup.value": //FOREIGN column without metadata
-    case "f.gtType": //Computed column without metadata
+    case "gtType.value": //Computed column without metadata
     case "v.ref":
       inClause = `${sqlCol} IN (${keys})`;
       break;
@@ -575,6 +574,7 @@ export function getNestedJoins(nestedTables: string[]) {
 export function getPagingQuery(
   orderCols: string[],
   includeFormat: boolean,
+  includeGt: boolean,
   sampleJoinQuery: string,
   nestedJoins: string,
   whereClause: string,
@@ -591,6 +591,7 @@ export function getPagingQuery(
                           LEFT JOIN info n ON n.variantId = v.id
                           LEFT JOIN contig contig ON contig.id = v.chrom
                           ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
+                          ${includeGt ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
                           ${nestedJoins} 
                           ${whereClause}
                       GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
@@ -652,7 +653,11 @@ export function getColumns(db: Database | undefined, nestedTables: string[], inc
     );
   }
   if (includeFormat) {
-    columns = columns.concat(getColumnNames(db, "format").map((col) => `f.${col} AS FMT_${col} `));
+    columns = columns.concat(
+      getColumnNames(db, "format").map((col) => {
+        return col === "GtType" ? "gtType.value AS FMT_GtType " : `f.${col} AS FMT_${col} `;
+      }),
+    );
   }
   columns = columns.concat(getColumnNames(db, "info").map((col) => `n.${col} AS INFO_${col} `));
   return columns;

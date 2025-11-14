@@ -24,5 +24,5 @@
 ##FORMAT=<ID=VIPP_S,Number=.,Type=String,Description="VIP decision tree path sample.">
 ##contig=<ID=1,length=1234>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Patient	Mother	Father
-1	10042538	.	C	T	80	PASS	n_number_array=1,2,5;CSQ=T|LP,T|LB,T|VUS;n_array0=c,,d,b;n_number2=1;n_object0=dummy5|c|1&2,dummy7||1&2|false,dummy8|d|1&2,dummy4|b|1&2;n_string0=a;n_string3=b;n_string4=b;	GT:DP:AD:VIAB:VIPC_S:VIPP_S	1|0:50:45,5:0.9:U1,U2,U3:path1,path2,path3	0|0:10:10,0:1:U1,U2,U3:path1,path2,path3	1|1:10:10,0:1
+1	10042538	.	C	T	80	PASS	n_number_array=1,2,5;CSQ=T|LP,T|LB,T|VUS;n_array0=c,,d,b;n_number2=1;n_object0=dummy5|c|1&2,dummy7||1&2|false,dummy8|d|1&2,dummy4|b|1&2;n_string0=a;n_string3=b;n_string4=b	GT:DP:AD:VIAB:VIPC_S:VIPP_S	1|0:50:45,5:0.9:U1,U2,U3:path1,path2,path3	0|0:10:10,0:1:U1,U2,U3:path1,path2,path3	1|1:10:10,0:1
 1	16376412	.	G	A	.	.	n_number_array=1,4;CSQ=A|LP,A|LB,A|LB;n_array0=b,c,a;n_array1=a,b;n_bool3;n_bool6;n_bool7;n_number2=0;n_object0=dummy3|b|1&2&3|BB,dummy2|c|1&2&3,dummy6|a|;n_string0=a;n_string3=a;n_string4=A	GT:DP:VIAB:AD:VIPC_S	0|1:10:.:0,0:U1,U2,U3	./.:11:1:11,0	1|.:11:1:11,0
