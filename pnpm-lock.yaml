@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@molgenis/vip-report-vcf':
-        specifier: 4.0.2
-        version: 4.0.2
+        specifier: 4.0.3
+        version: 4.0.3
       sql.js:
         specifier: ^1.13.0
         version: 1.13.0
@@ -310,8 +310,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@molgenis/vip-report-vcf@4.0.2':
-    resolution: {integrity: sha512-TqvYGNUm+GC/EJNF0TtmmK+u++CVWT2XvDEb811vOj9986dgieG7bgye438GXY1guAH7r+BYMT7XjiUfvXJMBg==}
+  '@molgenis/vip-report-vcf@4.0.3':
+    resolution: {integrity: sha512-tZ3jcBgQlr7M/pH1tIs35AnxPE8++UXAf8uXR3feiXqlVzQ15UTuo7zZEzxMewItGcJdZePdVx+JzMc1YXzq7g==}
     engines: {node: '22', pnpm: '9'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -1373,7 +1373,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@molgenis/vip-report-vcf@4.0.2': {}
+  '@molgenis/vip-report-vcf@4.0.3': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
