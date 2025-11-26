@@ -130,7 +130,7 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
           throw new Error(`Unknown parent field in selector: '${parts}'`);
         }
         let field = parts[2] as SelectorPart;
-        if (field === "GT_type") {
+        if (field === "_GT_type") {
           field = "gtType";
         }
         fieldMeta = parentMeta.nested?.items

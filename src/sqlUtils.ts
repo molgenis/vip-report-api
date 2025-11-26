@@ -38,7 +38,7 @@ export function mapField(part: string) {
     case "p":
       return `v.pos`;
     case "i":
-      return `v.idVcf`;
+      return `v.id`;
     case "r":
       return `v.ref`;
     case "a":
@@ -96,14 +96,14 @@ export function complexQueryToSql(
   let partialStatement;
   const tables = usedTables(query);
   let joins = "vcf v";
-  if (tables.has("s")) joins += " JOIN format f ON f.variantId = v.id";
-  if (meta.format != undefined && meta.format.GT !== undefined) joins += " LEFT JOIN gtType on gtType.id = f.GtType";
+  if (tables.has("s")) joins += " JOIN format f ON f._variantId = v._id";
+  if (meta.format != undefined && meta.format.GT !== undefined) joins += " LEFT JOIN gtType on gtType.id = f._GtType";
   joins += " LEFT JOIN contig contig ON contig.id = v.chrom";
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
-      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variantId = v.id`;
+      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
   }
-  if (tables.has("n")) joins += " JOIN info n ON n.variantId = v.id";
+  if (tables.has("n")) joins += " JOIN info n ON n._variantId = v._id";
 
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
@@ -116,8 +116,8 @@ export function complexQueryToSql(
   ({ partialStatement, values } = queryToSql(query, categories, nestedTables, meta, values));
 
   const statement = `
-v.id IN (
-  SELECT v.id
+  v._id IN (
+  SELECT v._id
   FROM ${joins}
   WHERE ${partialStatement}
 )
@@ -226,7 +226,7 @@ function mapQueryOnNestedField(
   const sampleKey = getUniqueKey(values, "sampleIndex");
   if (parts[0] === "s" && parts[1] !== "*") {
     values[sampleKey] = parts[1] as string;
-    partialStatement = `(${partialStatement} AND ${prefix}sampleIndex = ${sampleKey})`;
+    partialStatement = `(${partialStatement} AND ${prefix}_sampleIndex = ${sampleKey})`;
   }
   return { partialStatement, values };
 }
@@ -359,7 +359,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
       inClause = `${sqlCol} IN (${keys})`;
       break;
     case "v.alt":
-    case "v.idVcf":
+    case "v.id":
     case "v.filter":
       inClause = `EXISTS (
             SELECT 1 FROM json_each(${sqlCol})
@@ -566,7 +566,7 @@ export function getColumnNames(db: Database | undefined, table: string): string[
 export function getNestedJoins(nestedTables: string[]) {
   let nestedJoins: string = "";
   for (const nestedTable of nestedTables) {
-    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variantId = v.id`;
+    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
   }
   return nestedJoins;
 }
@@ -585,16 +585,16 @@ export function getPagingQuery(
   return `SELECT DISTINCT v.*
                 FROM (SELECT v.*,
                              contig.value as chrom,
-                             v.id AS v_variantId
+                             v._id AS v_variantId
                           ${orderCols.length ? "," + orderCols.join(", ") : ""}
                       FROM vcf v
-                          LEFT JOIN info n ON n.variantId = v.id
+                          LEFT JOIN info n ON n._variantId = v._id
                           LEFT JOIN contig contig ON contig.id = v.chrom
-                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
-                          ${includeGt ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
+                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
+                          ${includeGt ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
                           ${nestedJoins} 
                           ${whereClause}
-                      GROUP BY v.id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
+                      GROUP BY v._id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
                     LIMIT ${size} OFFSET ${page * size}`;
 }
 

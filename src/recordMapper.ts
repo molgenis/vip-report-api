@@ -22,7 +22,7 @@ type ValueMap = {
   restMap: Map<string, Value>;
 };
 
-export const excludeKeys = ["id", "v_variantId", "variantId", "GtType"];
+export const excludeKeys = ["_id", "v_variantId", "_variantId", "_GtType"];
 
 function postProcessVIPC_SandVIPP_S(valueMap: ValueMap) {
   //remove CsqIndex field from CSQ value, and store in separate array
@@ -62,8 +62,8 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
   }
   const s: RecordSample[] = [];
   for (const f of valueMap.fmtArr) {
-    const sampleIdx = f.get("sampleIndex") as number | undefined;
-    if (sampleIdx !== undefined) s[sampleIdx] = Object.fromEntries([...f].filter(([key]) => key !== "sampleIndex"));
+    const sampleIdx = f.get("_sampleIndex") as number | undefined;
+    if (sampleIdx !== undefined) s[sampleIdx] = Object.fromEntries([...f].filter(([key]) => key !== "_sampleIndex"));
   }
 
   return {
@@ -71,7 +71,7 @@ function mapVariant(valueMap: ValueMap, nestedFields: string[]): DatabaseRecord 
     data: {
       c: valueMap.restMap.get("chrom") as string,
       p: valueMap.restMap.get("pos") as number,
-      i: valueMap.restMap.get("idVcf") === null ? [] : (valueMap.restMap.get("idVcf") as string[]),
+      i: valueMap.restMap.get("id") === null ? [] : (valueMap.restMap.get("id") as string[]),
       r: valueMap.restMap.get("ref") as string,
       a: valueMap.restMap.get("alt") as string[],
       q: valueMap.restMap.get("qual") === null ? null : (valueMap.restMap.get("qual") as number),
@@ -127,7 +127,7 @@ export function mapRows(
     // For each nested field, accumulate in variantMap.get(variantId)!.nestedMap
     for (const [field, nestedMap] of nestedFieldsMap) {
       if (nestedMap && nestedMap.size > 0) {
-        const nestedId = nestedMap.get("id") as string;
+        const nestedId = nestedMap.get("_id") as string;
         // Use a nested tracker to avoid duplicate by field
         if (!addedCsqMap.has(variantId)) addedCsqMap.set(variantId, new Map());
         const fieldSeenCsqs = addedCsqMap.get(variantId)!.get(field) ?? [];
@@ -146,7 +146,7 @@ export function mapRows(
     }
     // Accumulate unique FMT/sample maps
     if (fmtMap && fmtMap.size > 0) {
-      const sampleId = fmtMap.get("sampleIndex") as number;
+      const sampleId = fmtMap.get("_sampleIndex") as number;
       const seenSamples = addedFmtMap.get(variantId) ?? [];
       if (!seenSamples.includes(sampleId)) {
         const filteredFmt = new Map([...fmtMap.entries()].filter(([key]) => !excludeKeys.includes(key)));
@@ -182,7 +182,7 @@ export function splitAndParseMap(
   for (const [key, value] of Object.entries(row)) {
     if (key.startsWith("FMT_")) {
       const fmtKey = key.substring("FMT_".length);
-      if (fmtKey === "sampleIndex") {
+      if (fmtKey === "_sampleIndex") {
         fmtMap.set(fmtKey, value as Value);
       } else if (!excludeKeys.includes(fmtKey)) {
         if (meta.format[fmtKey] !== undefined) {
@@ -246,7 +246,7 @@ function parseStandardField(token: Value, key: string): Value {
     case "pos":
       return token as number;
     case "alt":
-    case "idVcf":
+    case "id":
     case "filter":
       return JSON.parse(token as string);
     case "qual":
