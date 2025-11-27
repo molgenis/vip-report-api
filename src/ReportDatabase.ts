@@ -217,14 +217,14 @@ export class ReportDatabase {
         : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
-      "v.id as v_variantId",
+      "v._id as v_variantId",
       "contig.value as chrom",
       "v.pos",
-      "v.idVcf",
+      "v.id",
       "v.ref",
       "v.alt",
       "v.qual",
@@ -238,11 +238,11 @@ export class ReportDatabase {
     const sql = `
       SELECT DISTINCT ${selectCols}
       FROM (${getPagingQuery(orderCols, sampleIds !== undefined, columns.includes(GT_TYPE_COLUMN), sampleJoinQuery, nestedJoins, whereClause, distinctOrderByClauses, size, page)}) v
-             LEFT JOIN info n ON n.variantId = v.id
+             LEFT JOIN info n ON n._variantId = v._id
              LEFT JOIN contig contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
-        ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
+        ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
@@ -255,7 +255,7 @@ export class ReportDatabase {
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const { partialStatement, values } =
       query !== undefined
@@ -265,16 +265,16 @@ export class ReportDatabase {
     const nestedJoins = getNestedJoins(nestedTables);
 
     const sql = `
-      SELECT COUNT(DISTINCT v.id) AS count, 
-      v.id as v_variantId,
+      SELECT COUNT(DISTINCT v._id) AS count, 
+      v._id as v_variantId,
       (SELECT COUNT(*) FROM vcf) AS total_size
       FROM
         (SELECT * FROM vcf) v
         LEFT JOIN info n
-      ON n.variantId = v.id
+      ON n._variantId = v._id
         ${nestedJoins}
-        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
         ${whereClause}
     `;
 
@@ -288,18 +288,18 @@ export class ReportDatabase {
     const nestedTables: string[] = getNestedTables(meta);
     let nestedJoins: string = "";
     for (const nestedTable of nestedTables) {
-      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}.variantId = v.id`;
+      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
     }
 
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db, nestedTables, sampleIds !== undefined);
 
     const selectCols = [
-      "v.id as v_variantId",
+      "v._id as v_variantId",
       "contig.value as chrom",
       "v.pos",
-      "v.idVcf",
+      "v.id",
       "v.ref",
       "v.alt",
       "v.qual",
@@ -310,15 +310,15 @@ export class ReportDatabase {
     const sql = `
       SELECT ${selectCols}
       FROM (SELECT * FROM vcf) v
-             LEFT JOIN info n ON n.variantId = v.id
+             LEFT JOIN info n ON n._variantId = v._id
              LEFT JOIN contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
-        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f.variantId = v.id` : ""} ${nestedJoins}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f.GtType` : ""}
-      WHERE v.id = :id
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""} ${nestedJoins}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
+      WHERE v._id = :_id
     `;
 
-    const rows = executeSql(this.db, sql, { ":id": id });
+    const rows = executeSql(this.db, sql, { ":_id": id });
     if (rows.length === 0) {
       throw new Error(`No VCF Record returned for id ${id}`);
     }
