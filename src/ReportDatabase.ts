@@ -33,6 +33,7 @@ export class ReportDatabase {
   // lazy loaded and cached
   private _meta: VcfMetadata | undefined;
   private _categories: Categories | undefined;
+  private _config: Json | undefined;
 
   constructor(private readonly db: Database) {}
 
@@ -126,11 +127,14 @@ export class ReportDatabase {
   }
 
   loadConfig(): Json {
-    const sql = `SELECT *
+    if (this._config === undefined) {
+      const sql = `SELECT *
                  from config`;
-    const rows = executeSql(this.db, sql, {});
-    if (rows.length < 1 || rows[0] === undefined) return null;
-    return Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
+      const rows = executeSql(this.db, sql, {});
+      if (rows.length < 1 || rows[0] === undefined) return null;
+      this._config = Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
+    }
+    return this._config as Json;
   }
 
   loadSamples(
@@ -269,9 +273,8 @@ export class ReportDatabase {
       v._id as v_variantId,
       (SELECT COUNT(*) FROM vcf) AS total_size
       FROM
-        (SELECT * FROM vcf) v
-        LEFT JOIN info n
-      ON n._variantId = v._id
+        vcf v
+        LEFT JOIN info n ON n._variantId = v._id
         ${nestedJoins}
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
         ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
@@ -309,7 +312,7 @@ export class ReportDatabase {
     ];
     const sql = `
       SELECT ${selectCols}
-      FROM (SELECT * FROM vcf) v
+      FROM vcf v
              LEFT JOIN info n ON n._variantId = v._id
              LEFT JOIN contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
