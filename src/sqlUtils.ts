@@ -461,8 +461,8 @@ function mapNumericalQuery(
   if (typeof args !== "number") {
     throw new Error(`value '${args}' is of type '${typeof args}' instead of 'number'`);
   }
-  const fieldMeta = meta !== null ? getMetadataForColumn(sqlCol, meta) : null;
-  if (fieldMeta !== null && fieldMeta?.number.count !== 1) {
+  const fieldMeta = meta !== null ? getMetadataForColumn(sqlCol, meta) : undefined;
+  if (fieldMeta !== undefined && fieldMeta?.number.count !== 1) {
     return `EXISTS (
                SELECT 1 FROM json_each(${sqlCol})
                 WHERE CAST(json_each.value as NUMBER) ${operator} ${key}

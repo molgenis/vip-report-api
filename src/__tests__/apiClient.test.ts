@@ -116,13 +116,6 @@ const record0: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2"],
-          n_string1: "dummy4",
-          n_string2: "b",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2"],
           n_string1: "dummy5",
           n_string2: "c",
           n_cat2: null,
@@ -139,6 +132,13 @@ const record0: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy8",
           n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
           n_cat2: null,
           n_cat1: null,
         },
@@ -186,17 +186,17 @@ const record1: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2", "3"],
-          n_string1: "dummy2",
-          n_string2: "c",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
           n_cat2: null,
           n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
         },
         {
           n_array1: [],
@@ -249,17 +249,17 @@ const record1Sample1: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2", "3"],
-          n_string1: "dummy2",
-          n_string2: "c",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
           n_cat2: null,
           n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
         },
         {
           n_array1: [],
@@ -324,17 +324,17 @@ const record1NoSamples: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2", "3"],
-          n_string1: "dummy2",
-          n_string2: "c",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
           n_cat2: null,
           n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
         },
         {
           n_array1: [],
@@ -378,13 +378,6 @@ const record0CsqFiltered: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2"],
-          n_string1: "dummy4",
-          n_string2: "b",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2"],
           n_string1: "dummy5",
           n_string2: "c",
           n_cat2: null,
@@ -401,6 +394,13 @@ const record0CsqFiltered: Item<VcfRecord> = {
           n_array1: ["1", "2"],
           n_string1: "dummy8",
           n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
           n_cat2: null,
           n_cat1: null,
         },
@@ -479,17 +479,17 @@ const record1CsqFiltered: Item<VcfRecord> = {
       n_object0: [
         {
           n_array1: ["1", "2", "3"],
-          n_string1: "dummy2",
-          n_string2: "c",
-          n_cat2: null,
-          n_cat1: null,
-        },
-        {
-          n_array1: ["1", "2", "3"],
           n_string1: "dummy3",
           n_string2: "b",
           n_cat2: null,
           n_cat1: "BB",
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
         },
         {
           n_array1: [],
@@ -706,6 +706,138 @@ const record1desc: Item<VcfRecord> = {
           n_array1: ["1", "2", "3"],
           n_string1: "dummy2",
           n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "a",
+      n_string4: "A",
+    },
+    p: 16376412,
+    q: null,
+    r: "G",
+    s: recordSamples1,
+  },
+  id: 2,
+};
+const record0Asc: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "1",
+    f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    i: [],
+    n: {
+      n_number_array: [1, 2, 5],
+      CSQ: [
+        {
+          Allele: "T",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          VIPC: "VUS",
+        },
+      ],
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: recordSamples0,
+  },
+  id: 1,
+};
+const record1Asc: Item<VcfRecord> = {
+  data: {
+    a: ["A"],
+    c: "1",
+    f: [],
+    g: "GT:DP:VIAB:AD:VIPC_S",
+    i: [],
+    n: {
+      n_number_array: [1, 4],
+      n_array0: ["b", "c", "a"],
+      n_array1: ["a", "b"],
+      n_bool3: true,
+      n_bool6: true,
+      n_bool7: true,
+      n_number2: 0,
+      CSQ: [
+        {
+          Allele: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "A",
+          VIPC: "LB",
+        },
+      ],
+      n_object0: [
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy2",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2", "3"],
+          n_string1: "dummy3",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: "BB",
+        },
+        {
+          n_array1: [],
+          n_string1: "dummy6",
+          n_string2: "a",
           n_cat2: null,
           n_cat1: null,
         },
@@ -1343,7 +1475,7 @@ test("get - all records sorted on n.n_object0.n_string1 ascending", async () => 
     },
   };
   const records = await api.getRecords(params);
-  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1Asc, record0Asc] } });
 });
 
 test("get - all records sorted on n.n_object0.n_string1 descending", async () => {
