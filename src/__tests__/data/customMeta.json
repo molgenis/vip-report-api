@@ -15,6 +15,13 @@
           "numberCount": 1,
           "type": "CATEGORICAL",
           "required": true
+        },
+        "IS": {
+          "label": "Reserved",
+          "description": "Reserved keyword",
+          "numberType": "NUMBER",
+          "numberCount": 1,
+          "type": "STRING"
         }
       }
     },

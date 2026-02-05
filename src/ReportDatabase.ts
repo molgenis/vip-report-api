@@ -27,7 +27,7 @@ import {
 import { Database } from "sql.js";
 import { mapSqlRowsToVcfMetadata } from "./MetadataMapper";
 
-const GT_TYPE_COLUMN = "gtType.value AS FMT_GtType ";
+const GT_TYPE_COLUMN = '"gtType"."value" AS FMT_GtType ';
 
 export class ReportDatabase {
   // lazy loaded and cached
@@ -53,9 +53,9 @@ export class ReportDatabase {
 
   loadInfoOrder(): InfoOrder {
     const sql =
-      "SELECT infoOrder.variantId, metadata.name, infoOrder.infoIndex " +
-      "FROM infoOrder " +
-      "JOIN metadata ON infoOrder.metadataId = metadata.id ";
+      'SELECT "infoOrder"."variantId", "metadata"."name", "infoOrder"."infoIndex" ' +
+      'FROM "infoOrder" ' +
+      'JOIN "metadata" ON "infoOrder"."metadataId" = "metadata"."id" ';
     const rows = executeSql(this.db, sql, {});
     const variantInfoOrder: InfoOrder = {};
 
@@ -107,20 +107,20 @@ export class ReportDatabase {
   }
 
   loadSampleById(id: number): Sample {
-    const sql = `SELECT sample.sampleIndex,
-                        sample.familyId,
-                        sample.individualId,
-                        paternal.individualId AS paternalId,
-                        maternal.individualId AS maternalId,
-                        sex.value             AS sex,
-                        affectedStatus.value  AS affectedStatus,
-                        sample.proband
+    const sql = `SELECT "sample"."sampleIndex",
+                        "sample"."familyId",
+                        "sample"."individualId",
+                        "paternal"."individualId" AS "paternalId",
+                        "maternal"."individualId" AS "maternalId",
+                        "sex"."value"            AS "sex",
+                        "affectedStatus"."value"  AS "affectedStatus",
+                        "sample"."proband"
                  FROM sample
-                        LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
-                        LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
-                        LEFT JOIN sex ON sample.sex = sex.id
-                        LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id
-                 WHERE sample.sampleIndex = :id`;
+                        LEFT JOIN "sample" "paternal" ON "sample"."paternalId" = "paternal"."sampleIndex"
+                        LEFT JOIN "sample" "maternal" ON "sample"."maternalId" = "maternal"."sampleIndex"
+                        LEFT JOIN "sex" ON "sample"."sex" = "sex"."id"
+                        LEFT JOIN "affectedStatus" ON "sample"."affectedStatus" = "affectedStatus"."id"
+                 WHERE "sample"."sampleIndex" = :id`;
     const rows = executeSql(this.db, sql, { ":id": id });
     if (rows.length < 1 || rows[0] === undefined) throw new Error("Could not find sample with id: " + id);
     return mapSample(rows[0]).data;
@@ -129,7 +129,7 @@ export class ReportDatabase {
   loadConfig(): Json {
     if (this._config === undefined) {
       const sql = `SELECT *
-                 from config`;
+                 from "config"`;
       const rows = executeSql(this.db, sql, {});
       if (rows.length < 1 || rows[0] === undefined) return null;
       this._config = Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
@@ -148,19 +148,19 @@ export class ReportDatabase {
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const orderByClauses = getSimpleSortClauses(sortOrders);
-    const selectClause = `SELECT sample.sampleIndex,
-                                 sample.familyId,
-                                 sample.individualId,
-                                 paternal.individualId AS paternalId,
-                                 maternal.individualId AS maternalId,
-                                 sex.value             AS sex,
-                                 affectedStatus.value  AS affectedStatus,
-                                 sample.proband
+    const selectClause = `SELECT "sample"."sampleIndex",
+                            "sample"."familyId",
+                            "sample"."individualId",
+                            "paternal"."individualId" AS "paternalId",
+                            "maternal"."individualId" AS "maternalId",
+                            "sex"."value"             AS "sex",
+                            "affectedStatus"."value"  AS "affectedStatus",
+                            "sample"."proband"
                           FROM sample
-                                 LEFT JOIN sample paternal ON sample.paternalId = paternal.sampleIndex
-                                 LEFT JOIN sample maternal ON sample.maternalId = maternal.sampleIndex
-                                 LEFT JOIN sex ON sample.sex = sex.id
-                                 LEFT JOIN affectedStatus ON sample.affectedStatus = affectedStatus.id`;
+                                 LEFT JOIN "sample" "paternal" ON "sample"."paternalId" = "paternal"."sampleIndex"
+                                 LEFT JOIN "sample" "maternal" ON "sample"."maternalId" = "maternal"."sampleIndex"
+                                 LEFT JOIN "sex" ON "sample"."sex" = "sex"."id"
+                                 LEFT JOIN "affectedStatus" ON "sample"."affectedStatus" = "affectedStatus"."id"`;
     const orderClause = `${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}`;
     const pagingSql = page !== -1 && size !== -1 ? ` LIMIT ${size} OFFSET ${page * size}` : ``;
     const sql = `${selectClause} ${whereClause} ${orderClause} ${pagingSql}`;
@@ -174,10 +174,10 @@ export class ReportDatabase {
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
 
     const sql = `
-      SELECT sp.sampleIndex, phenotype.id AS phenotypeId, phenotype.label AS phenotypeLabel
-      FROM samplePhenotype sp
-             JOIN phenotype ON sp.phenotypeId = phenotype.id
-             JOIN sample ON sp.sampleIndex = sample.sampleIndex ${whereClause}
+      SELECT "sp"."sampleIndex", "phenotype"."id" AS "phenotypeId", "phenotype"."label" AS "phenotypeLabel"
+      FROM "samplePhenotype" "sp"
+             JOIN "phenotype" ON "sp"."phenotypeId" = "phenotype"."id"
+             JOIN "sample" ON "sp"."sampleIndex" = "sample"."sampleIndex" ${whereClause}
             LIMIT ${size}
       OFFSET ${page * size}
     `;
@@ -221,19 +221,19 @@ export class ReportDatabase {
         : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE "_sampleIndex" in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const selectCols = [
-      "v._id as v_variantId",
-      "contig.value as chrom",
-      "v.pos",
-      "v.id",
-      "v.ref",
-      "v.alt",
-      "v.qual",
-      "v.filter",
-      "formatLookup.value as format",
+      '"v"."_id" as "v_variantId"',
+      '"contig"."value" as "chrom"',
+      '"v"."pos"',
+      '"v"."id"',
+      '"v"."ref"',
+      '"v"."alt"',
+      '"v"."qual"',
+      '"v"."filter"',
+      '"formatLookup"."value" as "format"',
       ...columns,
     ];
     const { orderByClauses, distinctOrderByClauses, orderCols } = getSortClauses(sortOrders, nestedTables);
@@ -245,8 +245,8 @@ export class ReportDatabase {
              LEFT JOIN info n ON n._variantId = v._id
              LEFT JOIN contig contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
-        ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
+        ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
@@ -259,7 +259,7 @@ export class ReportDatabase {
     const categories = this.getCategories();
     const nestedTables: string[] = getNestedTables(meta);
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE "_sampleIndex" in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db as Database, nestedTables, sampleIds !== undefined);
     const { partialStatement, values } =
       query !== undefined
@@ -276,8 +276,8 @@ export class ReportDatabase {
         vcf v
         LEFT JOIN info n ON n._variantId = v._id
         ${nestedJoins}
-        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
         ${whereClause}
     `;
 
@@ -291,33 +291,33 @@ export class ReportDatabase {
     const nestedTables: string[] = getNestedTables(meta);
     let nestedJoins: string = "";
     for (const nestedTable of nestedTables) {
-      nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
+      nestedJoins += ` LEFT JOIN "variant_${nestedTable}" "${nestedTable}" ON "${nestedTable}"."_variantId" = "v"."_id"`;
     }
 
     const sampleJoinQuery =
-      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE _sampleIndex in (${toSqlList(sampleIds)})` : "";
+      sampleIds !== undefined && sampleIds.length > 0 ? `WHERE "_sampleIndex" in (${toSqlList(sampleIds)})` : "";
     const columns = getColumns(this.db, nestedTables, sampleIds !== undefined);
 
     const selectCols = [
-      "v._id as v_variantId",
-      "contig.value as chrom",
-      "v.pos",
-      "v.id",
-      "v.ref",
-      "v.alt",
-      "v.qual",
-      "v.filter",
-      "formatLookup.value as format",
+      '"v"."_id" AS "v_variantId"',
+      '"contig"."value" AS "chrom"',
+      '"v"."pos"',
+      '"v"."id"',
+      '"v"."ref"',
+      '"v"."alt"',
+      '"v"."qual"',
+      '"v"."filter"',
+      '"formatLookup"."value" AS "format"',
       ...columns,
     ];
     const sql = `
       SELECT ${selectCols}
-      FROM vcf v
-             LEFT JOIN info n ON n._variantId = v._id
-             LEFT JOIN contig ON contig.id = v.chrom
-             LEFT JOIN formatLookup ON formatLookup.id = v.format
-        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""} ${nestedJoins}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
+      FROM "vcf" "v"
+             LEFT JOIN "info" "n" ON "n"."_variantId" = "v"."_id"
+             LEFT JOIN "contig" ON "contig"."id" = "v"."chrom"
+             LEFT JOIN "formatLookup" ON "formatLookup"."id" = "v"."format"
+        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""} ${nestedJoins}
+        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
       WHERE v._id = :_id
     `;
 
@@ -355,12 +355,12 @@ export class ReportDatabase {
     const { partialStatement, values } =
       query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
-    const sql = `SELECT (SELECT COUNT(*) FROM sample) AS total_size,
-                        COUNT(DISTINCT sp.sampleIndex) AS count
-                 FROM samplePhenotype sp
-                   JOIN phenotype
-                 ON sp.phenotypeId = phenotype.id
-                   JOIN sample ON sp.sampleIndex = sample.sampleIndex
+    const sql = `SELECT (SELECT COUNT(*) FROM "sample") AS total_size,
+                        COUNT(DISTINCT "sp"."sampleIndex") AS count
+                 FROM "samplePhenotype" "sp"
+                   JOIN "phenotype"
+                 ON  "sp"."phenotypeId" = "phenotype"."id"
+                   JOIN "sample" ON "sp"."sampleIndex" = "sample"."sampleIndex"
                    ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
@@ -368,27 +368,27 @@ export class ReportDatabase {
   }
 
   private loadMetadata(): VcfMetadata {
-    const sql = `SELECT m.id,
-                        m.name,
-                        ft.value AS fieldType,
-                        vt.value AS valueType,
-                        nt.value AS numberType,
-                        m.numberCount,
-                        m.required,
-                        m.separator,
-                        m.nestedSeparator,
-                        m.categories,
-                        m.label,
-                        m.description,
-                        m.parent,
-                        m.nested,
-                        m.nestedIndex,
-                        m.nullValue
-                 FROM metadata m
-                        LEFT JOIN fieldType ft ON m.fieldType = ft.id
-                        LEFT JOIN valueType vt ON m.valueType = vt.id
-                        LEFT JOIN numberType nt ON m.numberType = nt.id
-                 ORDER BY m.label ASC`; //sort on label since this is what the user sees
+    const sql = `SELECT "m"."id",
+                        "m"."name",
+                        "ft"."value" AS "fieldType",
+                        "vt"."value" AS "valueType",
+                        "nt"."value" AS "numberType",
+                        "m"."numberCount",
+                        "m"."required",
+                        "m"."separator",
+                        "m"."nestedSeparator",
+                        "m"."categories",
+                        "m"."label",
+                        "m"."description",
+                        "m"."parent",
+                        "m"."nested",
+                        "m"."nestedIndex",
+                        "m"."nullValue"
+                 FROM "metadata" "m"
+                        LEFT JOIN "fieldType" "ft" ON "m"."fieldType" = "ft"."id"
+                        LEFT JOIN "valueType" "vt" ON "m"."valueType" = "vt"."id"
+                        LEFT JOIN "numberType" "nt" ON "m"."numberType" = "nt"."id"
+                 ORDER BY "m"."label" ASC;`; //sort on label since this is what the user sees
     const rows = executeSql(this.db, sql, {});
     const headerSql = "SELECT * FROM header";
     const headerLines = executeSql(this.db, headerSql, {});
@@ -405,7 +405,7 @@ export class ReportDatabase {
   }
 
   private loadCategories(): Categories {
-    const sql = "SELECT field, id, value FROM categories";
+    const sql = 'SELECT "field", "id", "value" FROM "categories"';
     const rows: SqlRow[] = executeSql(this.db, sql, {});
     const result = new Map<string, FieldCategories>();
 

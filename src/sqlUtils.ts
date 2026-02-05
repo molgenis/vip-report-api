@@ -95,15 +95,16 @@ export function complexQueryToSql(
   let values = {};
   let partialStatement;
   const tables = usedTables(query);
-  let joins = "vcf v";
-  if (tables.has("s")) joins += " JOIN format f ON f._variantId = v._id";
-  if (meta.format != undefined && meta.format.GT !== undefined) joins += " LEFT JOIN gtType on gtType.id = f._GtType";
-  joins += " LEFT JOIN contig contig ON contig.id = v.chrom";
+  let joins = '"vcf" "v"';
+  if (tables.has("s")) joins += ' JOIN "format" "f" ON "f"."_variantId" = "v"."_id"';
+  if (meta.format != undefined && meta.format.GT !== undefined)
+    joins += ' LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"';
+  joins += ' LEFT JOIN "contig" "contig" ON "contig"."id" = "v"."chrom" ';
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
-      joins += ` JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
+      joins += ` JOIN "variant_${nestedTable}" "${nestedTable}" ON "${nestedTable}"."_variantId" = "v"."_id"`;
   }
-  if (tables.has("n")) joins += " JOIN info n ON n._variantId = v._id";
+  if (tables.has("n")) joins += ' JOIN "info" "n" ON "n"."_variantId" = "v"."_id"';
 
   let nestedFilter = "";
   for (const nestedTable of nestedTables) {
@@ -116,8 +117,8 @@ export function complexQueryToSql(
   ({ partialStatement, values } = queryToSql(query, categories, nestedTables, meta, values));
 
   const statement = `
-  v._id IN (
-  SELECT v._id
+  "v"."_id" IN (
+  SELECT "v"."_id"
   FROM ${joins}
   WHERE ${partialStatement}
 )
@@ -207,7 +208,7 @@ function mapQueryOnNestedField(
   values: ParamsObject,
 ) {
   const type: FieldType = parts[0] === "s" ? "FORMAT" : "INFO";
-  const prefix = parts[0] === "s" ? "f." : parts[1] + ".";
+  const prefix = parts[0] === "s" ? "f" : parts[1];
   const parent = type === "INFO" ? parts[1] : null;
   const field = parts[2] as SelectorPart;
   let newClause = clause;
@@ -217,16 +218,16 @@ function mapQueryOnNestedField(
   }
   let sqlCol;
   if (type === "FORMAT" && field === "GT_type") {
-    sqlCol = "gtType.value";
+    sqlCol = `gtType.value`;
   } else {
-    sqlCol = `${prefix}${field}`;
+    sqlCol = `${prefix}.${field}`;
   }
   let partialStatement;
   ({ partialStatement, values } = mapOperatorToSql(newClause, sqlCol, meta, values));
   const sampleKey = getUniqueKey(values, "sampleIndex");
   if (parts[0] === "s" && parts[1] !== "*") {
     values[sampleKey] = parts[1] as string;
-    partialStatement = `(${partialStatement} AND ${prefix}_sampleIndex = ${sampleKey})`;
+    partialStatement = `(${partialStatement} AND "${prefix}"."_sampleIndex" = ${sampleKey})`;
   }
   return { partialStatement, values };
 }
@@ -242,7 +243,7 @@ function MapQueryOnInfoOrFormat(
   const prefix = parts[0] === "s" ? "f" : parts[0];
   const field = parts[1] as SelectorPart;
   let newClause = clause;
-  const key = `${type}/${field}`;
+  const key = `"${type}"/"${field}"`;
   if (categories.has(key)) {
     newClause = mapQueryCategories(categories, key, clause);
   }
@@ -305,6 +306,14 @@ function parseString(sqlCol: string): {
   return { field_type, parent_field, field };
 }
 
+function quoteColumn(path: string): string {
+  const [part1, part2] = path.split(".");
+  if (!part2) {
+    return `"${part1}"`;
+  }
+  return `"${part1}"."${part2}"`;
+}
+
 function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata | undefined {
   const { field_type, parent_field, field } = parseString(sqlCol);
   if (field === undefined) {
@@ -352,22 +361,22 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
     case "formatLookup.value": //FOREIGN column without metadata
     case "gtType.value": //Computed column without metadata
     case "v.ref":
-      inClause = `${sqlCol} IN (${keys})`;
+      inClause = `${quoteColumn(sqlCol)} IN (${keys})`;
       break;
     case "v.pos":
     case "v.qual":
-      inClause = `${sqlCol} IN (${keys})`;
+      inClause = `${quoteColumn(sqlCol)} IN (${keys})`;
       break;
     case "v.alt":
     case "v.id":
     case "v.filter":
       inClause = `EXISTS (
-            SELECT 1 FROM json_each(${sqlCol})
+            SELECT 1 FROM json_each(${quoteColumn(sqlCol)})
             WHERE CAST(json_each.value as TEXT) IN (${keys})
           )`;
       break;
     default:
-      throw new Error(`Unknown column '${sqlCol}'`);
+      throw new Error(`Unknown column '${quoteColumn(sqlCol)}'`);
   }
   return { partialStatement: inClause, values: values };
 }
@@ -375,20 +384,20 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
 function mapInQueryInfoFormat(fieldMeta: FieldMetadata, inClause: string, sqlCol: string, keys: string[]) {
   if (fieldMeta?.number.count !== 1) {
     inClause = `EXISTS (
-      SELECT 1 FROM json_each(${sqlCol})
+      SELECT 1 FROM json_each(${quoteColumn(sqlCol)})
       WHERE CAST(json_each.value as TEXT) IN (${keys})
     )`;
   } else {
     switch (fieldMeta.type) {
       case "CHARACTER":
       case "STRING":
-        inClause = `${sqlCol} IN (${keys})`;
+        inClause = `${quoteColumn(sqlCol)} IN (${keys})`;
         break;
       case "CATEGORICAL":
       case "INTEGER":
       case "FLAG":
       case "FLOAT":
-        inClause = `${sqlCol} IN (${keys})`;
+        inClause = `${quoteColumn(sqlCol)} IN (${keys})`;
         break;
       default:
         throw new Error(`Unknown FieldType: '${fieldMeta.type}'`);
@@ -406,7 +415,7 @@ function composeInQuery(
 ) {
   query = operator === "in" ? inClause : `NOT ${inClause}`;
   if (hasNull) {
-    const nullCheck = operator === "in" ? `${sqlCol} IS NULL` : `${sqlCol} IS NOT NULL`;
+    const nullCheck = operator === "in" ? `${quoteColumn(sqlCol)} IS NULL` : `${quoteColumn(sqlCol)} IS NOT NULL`;
     if (query !== null && query.trim()) {
       query = operator === "in" ? `(${query} OR ${nullCheck})` : `(${query} AND ${nullCheck})`;
     } else {
@@ -464,7 +473,7 @@ function mapNumericalQuery(
   const fieldMeta = meta !== null ? getMetadataForColumn(sqlCol, meta) : undefined;
   if (fieldMeta !== undefined && fieldMeta?.number.count !== 1) {
     return `EXISTS (
-               SELECT 1 FROM json_each(${sqlCol})
+               SELECT 1 FROM json_each(${quoteColumn(sqlCol)})
                 WHERE CAST(json_each.value as NUMBER) ${operator} ${key}
             )`;
   } else {
@@ -484,9 +493,9 @@ function mapOperatorToSql(
   if (args === null || args === undefined || (Array.isArray(args) && (args as Array<ArgsValue>).length === 0)) {
     switch (operator) {
       case "==":
-        return { partialStatement: `${sqlCol} IS NULL`, values: values };
+        return { partialStatement: `${quoteColumn(sqlCol)} IS NULL`, values: values };
       case "!=":
-        return { partialStatement: `${sqlCol} IS NOT NULL`, values: values };
+        return { partialStatement: `${quoteColumn(sqlCol)} IS NOT NULL`, values: values };
       default:
         throw new Error("Unsupported op: " + operator + " for NULL arg");
     }
@@ -501,7 +510,7 @@ function mapOperatorToSql(
     case "==":
     case "!=":
       values[key] = sqlEscape(args);
-      partialStatement = `${sqlCol} ${operator} ${key}`;
+      partialStatement = `${quoteColumn(sqlCol)} ${operator} ${key}`;
       break;
     case ">":
     case ">=":
@@ -514,7 +523,7 @@ function mapOperatorToSql(
         throw new Error(`LIKE query value '${args}' is of type '${typeof args}' instead of 'string'`);
       }
       values[key] = sqlEscape(`%${args}%`);
-      partialStatement = `${sqlCol} LIKE ${key}`;
+      partialStatement = `${quoteColumn(sqlCol)} LIKE ${key}`;
       break;
     default:
       throw new Error("Unsupported op: " + operator);
@@ -559,14 +568,14 @@ export function simpleQueryToSql(query: Query, values: ParamsObject): PartialSta
 }
 
 export function getColumnNames(db: Database | undefined, table: string): string[] {
-  const rows = executeSql(db, `PRAGMA table_info(${table});`, {});
+  const rows = executeSql(db, `PRAGMA table_info("${table}");`, {});
   return rows.map((row) => row.name as string);
 }
 
 export function getNestedJoins(nestedTables: string[]) {
   let nestedJoins: string = "";
   for (const nestedTable of nestedTables) {
-    nestedJoins += ` LEFT JOIN variant_${nestedTable} ${nestedTable} ON ${nestedTable}._variantId = v._id`;
+    nestedJoins += ` LEFT JOIN "variant_${nestedTable}" "${nestedTable}" ON "${nestedTable}"."_variantId" = "v"."_id"`;
   }
   return nestedJoins;
 }
@@ -588,10 +597,11 @@ export function getPagingQuery(
                              v._id AS v_variantId
                           ${orderCols.length ? "," + orderCols.join(", ") : ""}
                       FROM vcf v
-                          LEFT JOIN info n ON n._variantId = v._id
-                          LEFT JOIN contig contig ON contig.id = v.chrom
-                          ${includeFormat ? `LEFT JOIN (SELECT * FROM format ${sampleJoinQuery}) f ON f._variantId = v._id` : ""}
-                          ${includeGt ? `LEFT JOIN gtType on gtType.id = f._GtType` : ""}
+                          LEFT JOIN "info" "n" ON "n"."_variantId" = "v"."_id"
+                          LEFT JOIN "contig" "contig" ON "contig"."id" = \
+                                                     "v"."chrom"
+                          ${includeFormat ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
+                          ${includeGt ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
                           ${nestedJoins} 
                           ${whereClause}
                       GROUP BY v._id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
@@ -622,7 +632,7 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
     orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
     distinctOrderByClauses.push(`${order.compare === "desc" ? `MAX_${escapedCol} DESC` : `MIN_${escapedCol} ASC`}`);
     orderCols.push(
-      `${order.compare === "desc" ? `MAX(${col}) as MAX_${escapedCol}` : `MIN(${col}) as MIN_${escapedCol}`}`,
+      `${order.compare === "desc" ? `MAX("${col}") as MAX_${escapedCol}` : `MIN("${col}") as MIN_${escapedCol}`}`,
     );
   }
   return { orderByClauses, distinctOrderByClauses, orderCols };
@@ -649,17 +659,17 @@ export function getColumns(db: Database | undefined, nestedTables: string[], inc
   let columns: string[] = [];
   for (const nestedTable of nestedTables) {
     columns = columns.concat(
-      getColumnNames(db, `variant_${nestedTable}`).map((col) => `${nestedTable}.${col} AS "${nestedTable}^${col}"`),
+      getColumnNames(db, `variant_${nestedTable}`).map((col) => `"${nestedTable}"."${col}" AS "${nestedTable}^${col}"`),
     );
   }
   if (includeFormat) {
     columns = columns.concat(
       getColumnNames(db, "format").map((col) => {
-        return col === "GtType" ? "gtType.value AS FMT_GtType " : `f.${col} AS FMT_${col} `;
+        return col === "GtType" ? "gtType.value AS FMT_GtType " : `"f"."${col}" AS FMT_${col} `;
       }),
     );
   }
-  columns = columns.concat(getColumnNames(db, "info").map((col) => `n.${col} AS INFO_${col} `));
+  columns = columns.concat(getColumnNames(db, "info").map((col) => `"n"."${col}" AS INFO_${col} `));
   return columns;
 }
 
@@ -670,7 +680,7 @@ export function getNestedTables(meta: VcfMetadata): string[] {
 
 function getUniqueKey(valueObject: ParamsObject, key: string): string {
   let suffix = 1;
-  key = ":" + key.replaceAll(".", "_");
+  key = ":" + key.replaceAll('"', "").replaceAll(".", "_");
   let newKey = key;
   while (Object.hasOwn(valueObject, newKey)) {
     newKey = `${key}_${suffix}`;

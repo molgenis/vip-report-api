@@ -20,6 +20,7 @@ const sortAllExpected = {
 const recordSamples0: RecordSample[] = [
   {
     AD: [45, 5],
+    AS: "A",
     DP: 50,
     GT: {
       a: [1, 0],
@@ -32,6 +33,7 @@ const recordSamples0: RecordSample[] = [
   },
   {
     AD: [10, 0],
+    AS: "A",
     DP: 10,
     GT: {
       a: [0, 0],
@@ -90,24 +92,28 @@ const record0: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
-    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
     n: {
       n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "VUS",
         },
       ],
+      SELECT: "A",
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -163,6 +169,7 @@ const record1: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -172,14 +179,17 @@ const record1: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -226,6 +236,7 @@ const record1Sample1: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -235,14 +246,17 @@ const record1Sample1: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -301,6 +315,7 @@ const record1NoSamples: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -310,14 +325,17 @@ const record1NoSamples: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -360,16 +378,18 @@ const record0CsqFiltered: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
-    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
     n: {
       n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LB",
         },
       ],
+      SELECT: "A",
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -415,6 +435,7 @@ const record0CsqFiltered: Item<VcfRecord> = {
     s: [
       {
         AD: [45, 5],
+        AS: "A",
         DP: 50,
         GT: {
           a: [1, 0],
@@ -427,6 +448,7 @@ const record0CsqFiltered: Item<VcfRecord> = {
       },
       {
         AD: [10, 0],
+        AS: "A",
         DP: 10,
         GT: {
           a: [0, 0],
@@ -460,6 +482,7 @@ const record1CsqFiltered: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -469,10 +492,12 @@ const record1CsqFiltered: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -546,24 +571,28 @@ const record0desc: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
-    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
     n: {
       n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "VUS",
         },
       ],
+      SELECT: "A",
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -615,24 +644,28 @@ const record0catA: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
-    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
     n: {
       n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "VUS",
         },
       ],
+      SELECT: "A",
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -667,6 +700,7 @@ const record1desc: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -676,14 +710,17 @@ const record1desc: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -726,24 +763,28 @@ const record0Asc: Item<VcfRecord> = {
     a: ["T"],
     c: "1",
     f: ["PASS"],
-    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S",
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
     n: {
       n_number_array: [1, 2, 5],
       CSQ: [
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "T",
+          IS: "A",
           VIPC: "VUS",
         },
       ],
+      SELECT: "A",
       n_array0: ["c", null, "d", "b"],
       n_bool3: false,
       n_bool6: false,
@@ -799,6 +840,7 @@ const record1Asc: Item<VcfRecord> = {
     i: [],
     n: {
       n_number_array: [1, 4],
+      SELECT: "A",
       n_array0: ["b", "c", "a"],
       n_array1: ["a", "b"],
       n_bool3: true,
@@ -808,14 +850,17 @@ const record1Asc: Item<VcfRecord> = {
       CSQ: [
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LP",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
         {
           Allele: "A",
+          IS: "A",
           VIPC: "LB",
         },
       ],
@@ -1076,6 +1121,57 @@ test("get - one record", async () => {
   });
 });
 
+test("get - info reserved keyword", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "SELECT"],
+      operator: "==",
+      args: "A",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
+test("get - format reserved keyword", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 0, "AS"],
+      operator: "==",
+      args: "A",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - nested reserved keyword", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["n", "CSQ", "IS"],
+      operator: "==",
+      args: "A",
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0, record1],
+    page: { number: 0, size: 10, totalElements: 2 },
+    total: 2,
+  });
+});
+
 test("get - records with greater than query", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
@@ -1229,7 +1325,7 @@ test("get - records with categorical query on nested", async () => {
   });
 });
 
-test("get - records with CSQ/VIPC filtering, including VIPC_S and VIPP_S", async () => {
+test("get - records with CSQ/VIPC filtering, including VIPC_S and VIPP_S:AS", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
     query: {
