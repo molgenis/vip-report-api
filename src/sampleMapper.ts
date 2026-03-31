@@ -3,18 +3,18 @@ import { DatabaseSample, SqlRow } from "./sql";
 
 export function mapSample(row: SqlRow): DatabaseSample {
   return {
-    id: row.sampleIndex as number,
+    id: row["sampleIndex"] as number,
     data: {
       person: {
-        familyId: row.familyId as string,
-        individualId: row.individualId as string,
-        paternalId: row.paternalId === null ? "0" : (row.paternalId as string),
-        maternalId: row.maternalId === null ? "0" : (row.maternalId as string),
-        sex: mapSex(row.sex as string),
-        affectedStatus: mapAffectedStatus(row.affectedStatus as string),
+        familyId: row["familyId"] as string,
+        individualId: row["individualId"] as string,
+        paternalId: row["paternalId"] === null ? "0" : (row["paternalId"] as string),
+        maternalId: row["maternalId"] === null ? "0" : (row["maternalId"] as string),
+        sex: mapSex(row["sex"] as string),
+        affectedStatus: mapAffectedStatus(row["affectedStatus"] as string),
       },
-      index: row.sampleIndex as number,
-      proband: row.proband === 1,
+      index: row["sampleIndex"] as number,
+      proband: row["proband"] === 1,
     },
   };
 }

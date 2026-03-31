@@ -1,0 +1,5 @@
+blockExoticSubdeps: true
+minimumReleaseAge: 720
+minimumReleaseAgeExclude:
+  - "@molgenis/vip-report-vcf"
+trustPolicy: no-downgrade
