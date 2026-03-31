@@ -1,14 +1,14 @@
 import type {
-  VcfMetadata,
+  CategoryRecord,
   FieldMetadata,
   FieldMetadataContainer,
   FormatMetadataContainer,
-  NumberType,
-  ValueType,
   NumberMetadata,
-  CategoryRecord,
+  NumberType,
   Value,
   ValueDescription,
+  ValueType,
+  VcfMetadata,
 } from "@molgenis/vip-report-vcf";
 
 type SqlRow = { [column: string]: string | number | boolean | null | undefined };
@@ -50,73 +50,73 @@ export function mapSqlRowsToVcfMetadata(rows: SqlRow[], headerLines: string[], s
   const metaMap = new Map<string, FieldMetadata>();
   for (const row of rows) {
     const number: NumberMetadata = {
-      type: toNumberType(row.numberType as string),
-      count: row.numberCount == null ? undefined : (row.numberCount as number),
+      type: toNumberType(row["numberType"] as string),
+      ...(row["numberCount"] == null ? {} : { count: row["numberCount"] as number }),
     };
     const field: FieldMetadata = {
-      id: row.name as string,
+      id: row["name"] as string,
       number,
-      type: row.valueType as ValueType,
-      label: row.label as string | undefined,
-      description: row.description ? (row.description as string) : undefined,
-      categories: row.categories ? parseCategories(row.categories) : undefined,
-      required: !!row.required,
-      nullValue: row.nullValue === null ? undefined : (JSON.parse(row.nullValue as string) as ValueDescription),
+      type: row["valueType"] as ValueType,
+      ...(row["label"] === undefined ? {} : { label: row["label"] as string }),
+      ...(row["description"] ? { description: row["description"] as string } : {}),
+      ...(row["categories"] ? { categories: parseCategories(row["categories"]) || {} } : {}),
+      required: !!row["required"],
+      ...(row["nullValue"] === null ? {} : { nullValue: JSON.parse(row["nullValue"] as string) as ValueDescription }),
     };
     // Avoid name collision if field name is present both as a CSQ child and INFO field
-    if (row.parent) {
-      metaMap.set(row.parent + "_" + row.name, field);
+    if (row["parent"]) {
+      metaMap.set(row["parent"] + "_" + row["name"], field);
     } else {
-      metaMap.set(row.name as string, field);
+      metaMap.set(row["name"] as string, field);
     }
   }
 
   const postProcessedMetaMap = new Map<string, FieldMetadata>();
   for (const row of rows) {
     let field: FieldMetadata;
-    if (row.parent) {
-      field = metaMap.get(row.parent + "_" + row.name)!;
+    if (row["parent"]) {
+      field = metaMap.get(row["parent"] + "_" + row["name"])!;
     } else {
-      field = metaMap.get(row.name as string)!;
+      field = metaMap.get(row["name"] as string)!;
     }
 
     // Parent field linking (for easier reference)
-    if (row.parent) {
-      const parentObj = metaMap.get(row.parent as string);
+    if (row["parent"]) {
+      const parentObj = metaMap.get(row["parent"] as string);
       if (parentObj) field.parent = parentObj;
     }
 
     // Nested structure setup
-    if (row.nested === 1 || row.nested === true) {
+    if (row["nested"] === 1 || row["nested"] === true) {
       const childRows = rows
-        .filter((r) => r.parent === row.name)
-        .sort((a, b) => (a.nestedIndex! as number) - (b.nestedIndex! as number));
+        .filter((r) => r["parent"] === row["name"])
+        .sort((a, b) => (a["nestedIndex"]! as number) - (b["nestedIndex"]! as number));
 
       const items: { [index: number]: FieldMetadata } = {};
       for (const childRow of childRows) {
-        items[childRow.nestedIndex as number] = metaMap.get(row.name + "_" + childRow.name)!;
+        items[childRow["nestedIndex"] as number] = metaMap.get(row["name"] + "_" + childRow["name"])!;
       }
 
       field.nested = {
-        separator: row.nestedSeparator as string,
+        separator: row["nestedSeparator"] as string,
         items,
       };
     }
 
-    if (row.parent === null) {
-      postProcessedMetaMap.set(row.name as string, field);
+    if (row["parent"] === null) {
+      postProcessedMetaMap.set(row["name"] as string, field);
     }
   }
 
   const info: FieldMetadataContainer = {};
   const format: FormatMetadataContainer = {};
 
-  for (const row of rows.filter((r) => r.parent === null)) {
-    const field = postProcessedMetaMap.get(row.name as string)!;
-    if (row.fieldType === "INFO") {
-      info[row.name as string] = field;
-    } else if (row.fieldType === "FORMAT") {
-      format[row.name as string] = field;
+  for (const row of rows.filter((r) => r["parent"] === null)) {
+    const field = postProcessedMetaMap.get(row["name"] as string)!;
+    if (row["fieldType"] === "INFO") {
+      info[row["name"] as string] = field;
+    } else if (row["fieldType"] === "FORMAT") {
+      format[row["name"] as string] = field;
     }
   }
 

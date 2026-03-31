@@ -97,7 +97,7 @@ export function complexQueryToSql(
   const tables = usedTables(query);
   let joins = '"vcf" "v"';
   if (tables.has("s")) joins += ' JOIN "format" "f" ON "f"."_variantId" = "v"."_id"';
-  if (meta.format != undefined && meta.format.GT !== undefined)
+  if (meta.format != undefined && meta.format["GT"] !== undefined)
     joins += ' LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"';
   joins += ' LEFT JOIN "contig" "contig" ON "contig"."id" = "v"."chrom" ';
   for (const nestedTable of nestedTables) {
@@ -338,6 +338,7 @@ function getMetadataForColumn(sqlCol: string, meta: VcfMetadata): FieldMetadata 
         return nested;
       }
     }
+    return undefined;
   } else {
     return meta.info[field];
   }
@@ -569,7 +570,7 @@ export function simpleQueryToSql(query: Query, values: ParamsObject): PartialSta
 
 export function getColumnNames(db: Database | undefined, table: string): string[] {
   const rows = executeSql(db, `PRAGMA table_info("${table}");`, {});
-  return rows.map((row) => row.name as string);
+  return rows.map((row) => row["name"] as string);
 }
 
 export function getNestedJoins(nestedTables: string[]) {
@@ -592,20 +593,19 @@ export function getPagingQuery(
   page: number,
 ) {
   return `SELECT DISTINCT v.*
-                FROM (SELECT v.*,
-                             contig.value as chrom,
-                             v._id AS v_variantId
-                          ${orderCols.length ? "," + orderCols.join(", ") : ""}
-                      FROM vcf v
-                          LEFT JOIN "info" "n" ON "n"."_variantId" = "v"."_id"
-                          LEFT JOIN "contig" "contig" ON "contig"."id" = \
-                                                     "v"."chrom"
-                          ${includeFormat ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
-                          ${includeGt ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
-                          ${nestedJoins} 
-                          ${whereClause}
-                      GROUP BY v._id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
-                    LIMIT ${size} OFFSET ${page * size}`;
+          FROM (SELECT v.*,
+                       contig.value as chrom,
+                       v._id        AS v_variantId
+                  ${orderCols.length ? "," + orderCols.join(", ") : ""}
+                FROM vcf v
+                       LEFT JOIN "info" "n" ON "n"."_variantId" = "v"."_id"
+                       LEFT JOIN "contig" "contig" ON "contig"."id" =
+                                                      "v"."chrom"
+                  ${includeFormat ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""} ${includeGt ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
+                  ${nestedJoins}
+                  ${whereClause}
+                GROUP BY v._id ${distinctOrderByClauses.length ? "ORDER BY " + distinctOrderByClauses.join(", ") : ""}) v
+          LIMIT ${size} OFFSET ${page * size}`;
 }
 
 export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) {

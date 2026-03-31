@@ -1,15 +1,15 @@
 import type {
-  VcfRecord,
   FieldMetadata,
-  VcfMetadata,
-  InfoMetadata,
   Genotype,
-  Value,
-  RecordSampleType,
-  GenotypeType,
   GenotypeAllele,
-  ValueObject,
+  GenotypeType,
+  InfoMetadata,
   RecordSample,
+  RecordSampleType,
+  Value,
+  ValueObject,
+  VcfMetadata,
+  VcfRecord,
 } from "@molgenis/vip-report-vcf";
 import { parseIntegerValue } from "./sqlValueParser";
 import { parseSqlValue } from "./sqlDataParser";
@@ -112,7 +112,7 @@ export function mapRows(
   for (const row of rows) {
     // Partition fields and parse values
     const { fmtMap, nestedFieldsMap, infoMap, restMap } = splitAndParseMap(row, meta, categories, nestedFields);
-    const variantId = row.v_variantId as number;
+    const variantId = row["v_variantId"] as number;
 
     // Initialize variant container if not seen
     if (!variantMap.has(variantId)) {

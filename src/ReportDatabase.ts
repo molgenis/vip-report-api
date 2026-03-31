@@ -60,11 +60,11 @@ export class ReportDatabase {
     const variantInfoOrder: InfoOrder = {};
 
     for (const row of rows) {
-      const variantId = row.variantId as string;
+      const variantId = row["variantId"] as string;
       if (variantInfoOrder[variantId] === undefined) {
         variantInfoOrder[variantId] = new Map<string, number>();
       }
-      variantInfoOrder[variantId].set(row.fieldname as string, Number(row.info_order));
+      variantInfoOrder[variantId].set(row["fieldname"] as string, Number(row["info_order"]));
     }
     return variantInfoOrder;
   }
@@ -102,7 +102,7 @@ export class ReportDatabase {
       args: args,
       name: appName,
       version: version,
-      htsFile: htsFile,
+      ...(htsFile === undefined ? {} : { htsFile }),
     };
   }
 
@@ -112,7 +112,7 @@ export class ReportDatabase {
                         "sample"."individualId",
                         "paternal"."individualId" AS "paternalId",
                         "maternal"."individualId" AS "maternalId",
-                        "sex"."value"            AS "sex",
+                        "sex"."value"             AS "sex",
                         "affectedStatus"."value"  AS "affectedStatus",
                         "sample"."proband"
                  FROM sample
@@ -129,10 +129,10 @@ export class ReportDatabase {
   loadConfig(): Json {
     if (this._config === undefined) {
       const sql = `SELECT *
-                 from "config"`;
+                   from "config"`;
       const rows = executeSql(this.db, sql, {});
       if (rows.length < 1 || rows[0] === undefined) return null;
-      this._config = Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.value as string)]));
+      this._config = Object.fromEntries(rows.map((row) => [row["id"], JSON.parse(row["value"] as string)]));
     }
     return this._config as Json;
   }
@@ -149,13 +149,13 @@ export class ReportDatabase {
     const sortOrders = Array.isArray(sort) ? sort : sort ? [sort] : [];
     const orderByClauses = getSimpleSortClauses(sortOrders);
     const selectClause = `SELECT "sample"."sampleIndex",
-                            "sample"."familyId",
-                            "sample"."individualId",
-                            "paternal"."individualId" AS "paternalId",
-                            "maternal"."individualId" AS "maternalId",
-                            "sex"."value"             AS "sex",
-                            "affectedStatus"."value"  AS "affectedStatus",
-                            "sample"."proband"
+                                 "sample"."familyId",
+                                 "sample"."individualId",
+                                 "paternal"."individualId" AS "paternalId",
+                                 "maternal"."individualId" AS "maternalId",
+                                 "sex"."value"             AS "sex",
+                                 "affectedStatus"."value"  AS "affectedStatus",
+                                 "sample"."proband"
                           FROM sample
                                  LEFT JOIN "sample" "paternal" ON "sample"."paternalId" = "paternal"."sampleIndex"
                                  LEFT JOIN "sample" "maternal" ON "sample"."maternalId" = "maternal"."sampleIndex"
@@ -178,16 +178,15 @@ export class ReportDatabase {
       FROM "samplePhenotype" "sp"
              JOIN "phenotype" ON "sp"."phenotypeId" = "phenotype"."id"
              JOIN "sample" ON "sp"."sampleIndex" = "sample"."sampleIndex" ${whereClause}
-            LIMIT ${size}
-      OFFSET ${page * size}
+      LIMIT ${size} OFFSET ${page * size}
     `;
     const rows = executeSql(this.db, sql, values);
     const grouped: Record<number, { id: string; label: string }[]> = {};
     for (const row of rows) {
-      const sampleIndex = row.sampleIndex as number;
+      const sampleIndex = row["sampleIndex"] as number;
       grouped[sampleIndex] ??= [];
-      if (grouped[row.sampleIndex as number]) {
-        grouped[sampleIndex].push({ id: row.phenotypeId as string, label: row.phenotypeLabel as string });
+      if (grouped[row["sampleIndex"] as number]) {
+        grouped[sampleIndex].push({ id: row["phenotypeId"] as string, label: row["phenotypeLabel"] as string });
       }
     }
 
@@ -269,14 +268,12 @@ export class ReportDatabase {
     const nestedJoins = getNestedJoins(nestedTables);
 
     const sql = `
-      SELECT COUNT(DISTINCT v._id) AS count, 
-      v._id as v_variantId,
-      (SELECT COUNT(*) FROM vcf) AS total_size
-      FROM
-        vcf v
-        LEFT JOIN info n ON n._variantId = v._id
-        ${nestedJoins}
-        ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
+      SELECT COUNT(DISTINCT v._id)      AS count,
+             v._id                      as v_variantId,
+             (SELECT COUNT(*) FROM vcf) AS total_size
+      FROM vcf v
+             LEFT JOIN info n ON n._variantId = v._id
+        ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
         ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
         ${whereClause}
     `;
@@ -344,7 +341,7 @@ export class ReportDatabase {
       query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
     const sql = `SELECT (SELECT COUNT(*) FROM sample) AS total_size,
-                        COUNT(DISTINCT sampleIndex) AS count
+                        COUNT(DISTINCT sampleIndex)   AS count
                  from sample ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
@@ -355,12 +352,12 @@ export class ReportDatabase {
     const { partialStatement, values } =
       query !== undefined ? simpleQueryToSql(query, {}) : { partialStatement: "", values: {} };
     const whereClause = query !== undefined ? `WHERE ${partialStatement}` : "";
-    const sql = `SELECT (SELECT COUNT(*) FROM "sample") AS total_size,
+    const sql = `SELECT (SELECT COUNT(*) FROM "sample")    AS total_size,
                         COUNT(DISTINCT "sp"."sampleIndex") AS count
                  FROM "samplePhenotype" "sp"
-                   JOIN "phenotype"
-                 ON  "sp"."phenotypeId" = "phenotype"."id"
-                   JOIN "sample" ON "sp"."sampleIndex" = "sample"."sampleIndex"
+                        JOIN "phenotype"
+                             ON "sp"."phenotypeId" = "phenotype"."id"
+                        JOIN "sample" ON "sp"."sampleIndex" = "sample"."sampleIndex"
                    ${whereClause}`;
     const rows = executeSql(this.db, sql, values);
     if (!rows || rows.length === 0 || rows[0] === undefined) return { size: 0, totalSize: 0 };
@@ -410,15 +407,15 @@ export class ReportDatabase {
     const result = new Map<string, FieldCategories>();
 
     for (const row of rows) {
-      const field = row.field as string;
-      const value = row.value as string;
+      const field = row["field"] as string;
+      const value = row["value"] as string;
 
       let valueMap = result.get(field);
       if (!valueMap) {
         valueMap = new Map<number, string>();
         result.set(field, valueMap);
       }
-      valueMap.set(row.id as number, value);
+      valueMap.set(row["id"] as number, value);
     }
     return result;
   }
