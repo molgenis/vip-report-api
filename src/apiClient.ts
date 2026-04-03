@@ -126,6 +126,10 @@ export class ApiClient implements Api {
     return Promise.resolve(sampleCram);
   }
 
+  async getReportId() {
+    return this.reportData.id;
+  };
+
   async getDecisionTree(): Promise<DecisionTree | null> {
     return this.db.loadDecisionTree("decisionTree");
   }

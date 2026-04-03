@@ -8,6 +8,7 @@ export type EncodedReport = ReportData & {
 };
 
 export type EncodedReportData = {
+  id: string;
   fastaGz?: { [key: string]: string };
   genesGz?: string;
   cram?: { [key: string]: { cram: string; crai: string } };

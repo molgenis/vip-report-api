@@ -44,6 +44,8 @@ export interface Api {
   getSampleTree(): Promise<DecisionTree | null>;
 
   getInfoOrder(): Promise<InfoOrder>;
+
+  getReportId(): Promise<string>;
 }
 
 export type Json = string | number | boolean | null | { [property: string]: Json } | Json[];
@@ -262,4 +264,5 @@ export interface ReportData {
   genesGz?: Uint8Array;
   wasmBinary?: Uint8Array;
   cram?: { [key: string]: Cram };
+  id: string;
 }
