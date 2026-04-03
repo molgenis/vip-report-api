@@ -276,6 +276,7 @@ function queryToSql(
   }
   if (parts.length === 1) {
     const sqlCol = mapField((parts[0] as SelectorPart).toString());
+
     return mapOperatorToSql(clause, sqlCol, meta, values);
   }
   if (parts.length === 2) {
@@ -370,6 +371,7 @@ function mapInQueryRegular(sqlCol: string, nonNulls: (string | number)[], values
       break;
     case "v.alt":
     case "v.id":
+    case "v._id":
     case "v.filter":
       inClause = `EXISTS (
             SELECT 1 FROM json_each(${quoteColumn(sqlCol)})

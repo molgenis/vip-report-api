@@ -100,6 +100,8 @@ export function validateQuery(meta: VcfMetadata, query: Query | undefined) {
         case "f":
           validateArray(clause);
           break;
+        case "v._id":
+          break;
         default:
           throw new Error(`Unknown field: ${parts[0]}`);
       }
