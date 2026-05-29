@@ -629,7 +629,6 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
       throw new Error("Error determining sort column for:" + order);
     }
     const escapedCol = col.replace(".", "_").replaceAll('"', "");
-    console.log(escapedCol);
     orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
     distinctOrderByClauses.push(`${order.compare === "desc" ? `MAX_${escapedCol} DESC` : `MIN_${escapedCol} ASC`}`);
     orderCols.push(
