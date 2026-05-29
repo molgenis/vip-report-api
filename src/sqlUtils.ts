@@ -616,7 +616,6 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
   for (const order of sortOrders) {
     //possibly natural sorting issue in case of contig sorting
     if (order.property === "c") {
-      console.log("CONTIG sort!");
       const chromClause1 = `NUMERIC_CHROM ${order.compare === "desc" ? "DESC" : "ASC"}`;
       const chromClause2 = `chrom ${order.compare === "desc" ? "DESC" : "ASC"}`;
       orderByClauses.push(chromClause1, chromClause2);
