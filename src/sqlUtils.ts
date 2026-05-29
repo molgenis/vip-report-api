@@ -617,22 +617,23 @@ export function getSortClauses(sortOrders: SortOrder[], nestedTables: string[]) 
     if (order.property.length == 1) {
       col = mapField(order.property[0] as string);
     } else if (order.property.length == 2) {
-      col = `${order.property[0]}.${order.property[1]}`;
+      col = `"${order.property[0]}"."${order.property[1]}"`;
     } else if (order.property.length == 3) {
       const key = order.property[1] as string;
       if (!nestedTables.includes(key)) {
         throw new Error("Unknown nested field: " + order.property[1]);
       }
-      col = `${key}.${order.property[2]}`;
+      col = `"${key}"."${order.property[2]}"`;
     }
     if (col === undefined) {
       throw new Error("Error determining sort column for:" + order);
     }
-    const escapedCol = col.replace(".", "_");
+    const escapedCol = col.replace(".", "_").replaceAll('"', "");
+    console.log(escapedCol);
     orderByClauses.push(`${col} ${order.compare === "desc" ? "DESC" : "ASC"}`);
     distinctOrderByClauses.push(`${order.compare === "desc" ? `MAX_${escapedCol} DESC` : `MIN_${escapedCol} ASC`}`);
     orderCols.push(
-      `${order.compare === "desc" ? `MAX("${col}") as MAX_${escapedCol}` : `MIN("${col}") as MIN_${escapedCol}`}`,
+      `${order.compare === "desc" ? `MAX(${col}) as MAX_${escapedCol}` : `MIN(${col}) as MIN_${escapedCol}`}`,
     );
   }
   return { orderByClauses, distinctOrderByClauses, orderCols };
