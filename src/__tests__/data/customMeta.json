@@ -1,5 +1,12 @@
 {
-  "format": {
+  "format": {        
+    "VIPC_S": {
+      "label": "VIPC_S",
+      "description": "VIP decision tree classification sample.",
+      "numberType": "OTHER",
+      "type": "CATEGORICAL",
+      "required": false
+    }
   },
   "info": {
     "CSQ": {

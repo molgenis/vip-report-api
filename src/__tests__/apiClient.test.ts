@@ -90,7 +90,7 @@ const recordSamples1: RecordSample[] = [
 const record0: Item<VcfRecord> = {
   data: {
     a: ["T"],
-    c: "1",
+    c: "chr2",
     f: ["PASS"],
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
@@ -163,7 +163,7 @@ const record0: Item<VcfRecord> = {
 const record1: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -230,7 +230,7 @@ const record1: Item<VcfRecord> = {
 const record1Sample1: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -309,7 +309,7 @@ const record1Sample1: Item<VcfRecord> = {
 const record1NoSamples: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -376,7 +376,7 @@ const record1NoSamples: Item<VcfRecord> = {
 const record0CsqFiltered: Item<VcfRecord> = {
   data: {
     a: ["T"],
-    c: "1",
+    c: "chr2",
     f: ["PASS"],
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
@@ -476,7 +476,7 @@ const record0CsqFiltered: Item<VcfRecord> = {
 const record1CsqFiltered: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -569,7 +569,7 @@ const record1CsqFiltered: Item<VcfRecord> = {
 const record0desc: Item<VcfRecord> = {
   data: {
     a: ["T"],
-    c: "1",
+    c: "chr2",
     f: ["PASS"],
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
@@ -642,7 +642,7 @@ const record0desc: Item<VcfRecord> = {
 const record0catA: Item<VcfRecord> = {
   data: {
     a: ["T"],
-    c: "1",
+    c: "chr2",
     f: ["PASS"],
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
@@ -694,7 +694,7 @@ const record0catA: Item<VcfRecord> = {
 const record1desc: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -761,7 +761,7 @@ const record1desc: Item<VcfRecord> = {
 const record0Asc: Item<VcfRecord> = {
   data: {
     a: ["T"],
-    c: "1",
+    c: "chr2",
     f: ["PASS"],
     g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
     i: [],
@@ -834,7 +834,7 @@ const record0Asc: Item<VcfRecord> = {
 const record1Asc: Item<VcfRecord> = {
   data: {
     a: ["A"],
-    c: "1",
+    c: "chr10",
     f: [],
     g: "GT:DP:VIAB:AD:VIPC_S",
     i: [],
@@ -1445,7 +1445,7 @@ test("get - one record using composed and query", async () => {
         {
           selector: "c",
           operator: "==",
-          args: "1",
+          args: "chr2",
         },
         {
           selector: "p",
@@ -1461,6 +1461,30 @@ test("get - one record using composed and query", async () => {
     page: { number: 0, size: 10, totalElements: 1 },
     total: 2,
   });
+});
+
+test("get - all records sorted on chrom ASC", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    sort: {
+      compare: "asc",
+      property: ["c"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record1, record0] } });
+});
+
+test("get - all records sorted on chrom desc", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    sort: {
+      compare: "desc",
+      property: ["c"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({ ...sortAllExpected, ...{ items: [record0, record1] } });
 });
 
 test("get - all records sorted on n.n_bool0", async () => {
