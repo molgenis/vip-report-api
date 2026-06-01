@@ -65,7 +65,7 @@ export function parseSqlMultiValue(
   let jsonValues;
   if (token.length > 0) {
     jsonValues = JSON.parse(token);
-    if (jsonValues !== null && jsonValues.length > 0) {
+    if (jsonValues !== null && jsonValues !== "") {
       if (!isIterable(jsonValues)) {
         jsonValues = [jsonValues];
       }
