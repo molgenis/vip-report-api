@@ -245,7 +245,7 @@ export class ReportDatabase {
              LEFT JOIN contig contig ON contig.id = v.chrom
              LEFT JOIN formatLookup ON formatLookup.id = v.format
         ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) && sampleIds !== undefined ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
         ${whereClause}
         ${orderByClauses.length ? "ORDER BY " + orderByClauses.join(", ") : ""}
     `;
@@ -274,7 +274,7 @@ export class ReportDatabase {
       FROM vcf v
              LEFT JOIN info n ON n._variantId = v._id
         ${nestedJoins} ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) && sampleIds !== undefined ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
         ${whereClause}
     `;
 
@@ -314,7 +314,7 @@ export class ReportDatabase {
              LEFT JOIN "contig" ON "contig"."id" = "v"."chrom"
              LEFT JOIN "formatLookup" ON "formatLookup"."id" = "v"."format"
         ${sampleIds !== undefined ? `LEFT JOIN (SELECT * FROM "format" ${sampleJoinQuery}) "f" ON "f"."_variantId" = "v"."_id"` : ""} ${nestedJoins}
-        ${columns.includes(GT_TYPE_COLUMN) ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
+        ${columns.includes(GT_TYPE_COLUMN) && sampleIds !== undefined ? `LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"` : ""}
       WHERE v._id = :_id
     `;
 

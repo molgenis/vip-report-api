@@ -160,6 +160,81 @@ const record0: Item<VcfRecord> = {
   },
   id: 1,
 };
+
+const record0NoSample: Item<VcfRecord> = {
+  data: {
+    a: ["T"],
+    c: "chr2",
+    f: ["PASS"],
+    g: "GT:DP:AD:VIAB:VIPC_S:VIPP_S:AS",
+    i: [],
+    n: {
+      n_number_array: [1, 2, 5],
+      CSQ: [
+        {
+          Allele: "T",
+          IS: "A",
+          VIPC: "LP",
+        },
+        {
+          Allele: "T",
+          IS: "A",
+          VIPC: "LB",
+        },
+        {
+          Allele: "T",
+          IS: "A",
+          VIPC: "VUS",
+        },
+      ],
+      SELECT: "A",
+      n_array0: ["c", null, "d", "b"],
+      n_bool3: false,
+      n_bool6: false,
+      n_bool7: false,
+      n_number2: 1,
+      n_object0: [
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy5",
+          n_string2: "c",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy7",
+          n_string2: null,
+          n_cat2: null,
+          n_cat1: "false",
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy8",
+          n_string2: "d",
+          n_cat2: null,
+          n_cat1: null,
+        },
+        {
+          n_array1: ["1", "2"],
+          n_string1: "dummy4",
+          n_string2: "b",
+          n_cat2: null,
+          n_cat1: null,
+        },
+      ],
+      n_string0: "a",
+      n_string3: "b",
+      n_string4: "b",
+    },
+    p: 10042538,
+    q: 80,
+    r: "C",
+    s: [],
+  },
+  id: 1,
+};
+
 const record1: Item<VcfRecord> = {
   data: {
     a: ["A"],
@@ -1729,6 +1804,23 @@ test("get - some records", async () => {
   const records = await api.getRecords(params);
   expect(records).toEqual({
     items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - some records samples undefined", async () => {
+  const params: RecordParams = {
+    sampleIds: undefined,
+    query: {
+      selector: ["p"],
+      operator: "in",
+      args: [10042537, 10042538, 10042539],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0NoSample],
     page: { number: 0, size: 10, totalElements: 1 },
     total: 2,
   });

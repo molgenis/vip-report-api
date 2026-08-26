@@ -96,9 +96,12 @@ export function complexQueryToSql(
   let partialStatement;
   const tables = usedTables(query);
   let joins = '"vcf" "v"';
-  if (tables.has("s")) joins += ' JOIN "format" "f" ON "f"."_variantId" = "v"."_id"';
-  if (meta.format != undefined && meta.format["GT"] !== undefined)
-    joins += ' LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"';
+  if (tables.has("s")) {
+    joins += ' JOIN "format" "f" ON "f"."_variantId" = "v"."_id"';
+    if (meta.format != undefined && meta.format["GT"] !== undefined) {
+      joins += ' LEFT JOIN "gtType" on "gtType"."id" = "f"."_GtType"';
+    }
+  }
   joins += ' LEFT JOIN "contig" "contig" ON "contig"."id" = "v"."chrom" ';
   for (const nestedTable of nestedTables) {
     if (tables.has(nestedTable))
