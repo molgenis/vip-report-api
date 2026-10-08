@@ -120,7 +120,7 @@ export interface ComposedQuery {
 
 export type ComposedQueryOperator = "and" | "or";
 
-export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=";
+export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=" | "contains_all";
 
 export interface QueryClause {
   operator: QueryOperator;

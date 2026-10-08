@@ -462,6 +462,66 @@ function mapInQuery(
   return { partialStatement: query, values: values };
 }
 
+function isListColumn(sqlCol: string, meta: VcfMetadata | null): boolean {
+  switch (sqlCol) {
+    case "v.alt":
+    case "v.id":
+    case "v.filter":
+      return true;
+    case "v.ref":
+    case "v.pos":
+    case "v.qual":
+    case "contig.value":
+    case "formatLookup.value":
+    case "gtType.value":
+      return false;
+  }
+  // no metadata available: assume true
+  if (meta === null) return true;
+
+  const fieldMeta = getMetadataForColumn(sqlCol, meta);
+  if (fieldMeta === undefined) {
+    throw new Error(`Unknown column '${quoteColumn(sqlCol)}'`);
+  }
+  return fieldMeta.number.count !== 1;
+}
+
+function mapContainsAllQuery(
+  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+  sqlCol: string,
+  meta: VcfMetadata | null,
+  values: ParamsObject,
+): PartialStatement {
+  if (!Array.isArray(args)) {
+    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
+  }
+
+  const col = quoteColumn(sqlCol);
+  const isList = isListColumn(sqlCol, meta);
+  const conditions: string[] = [];
+
+  // duplicates add nothing to an "all of" check
+  for (const arg of new Set<string | number | null | undefined>(args)) {
+    if (arg === null || arg === undefined) {
+      conditions.push(
+        isList ? `EXISTS (SELECT 1 FROM json_each(${col}) WHERE json_each.value IS NULL)` : `${col} IS NULL`,
+      );
+      continue;
+    }
+
+    const key = getUniqueKey(values, sqlCol);
+    values[key] = toSqlList(arg);
+
+    conditions.push(
+      isList
+        ? `EXISTS (SELECT 1 FROM json_each(${col}) WHERE CAST(json_each.value AS TEXT) = ${key})`
+        : `${col} = ${key}`,
+    );
+  }
+
+  return { partialStatement: `(${conditions.join(" AND ")})`, values };
+}
+
 function mapNumericalQuery(
   values: ParamsObject,
   key: string,
@@ -507,6 +567,10 @@ function mapOperatorToSql(
 
   if (operator === "in" || operator === "!in") {
     return mapInQuery(args, sqlCol, operator, meta, values);
+  }
+
+  if (operator === "contains_all") {
+    return mapContainsAllQuery(args, sqlCol, meta, values);
   }
 
   let partialStatement;
