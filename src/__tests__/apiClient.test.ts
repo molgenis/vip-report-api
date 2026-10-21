@@ -1826,12 +1826,12 @@ test("get - some records with in query", async () => {
   });
 });
 
-test("get - some records with contains_all query with extra value", async () => {
+test("get - some records with has_all query with extra value", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIPP_S"],
-      operator: "contains_all",
+      operator: "has_all",
       args: ["path1", "path2", "path3", "path4"],
     },
   };
@@ -1843,12 +1843,12 @@ test("get - some records with contains_all query with extra value", async () => 
   });
 });
 
-test("get - some records with contains_all query", async () => {
+test("get - some records with has_all query", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIPP_S"],
-      operator: "contains_all",
+      operator: "has_all",
       args: ["path1", "path2", "path3"],
     },
   };
@@ -1860,12 +1860,12 @@ test("get - some records with contains_all query", async () => {
   });
 });
 
-test("get - some records with contains_all query subset", async () => {
+test("get - some records with has_all query subset", async () => {
   const params: RecordParams = {
     sampleIds: [0, 1, 2],
     query: {
       selector: ["s", 0, "VIPP_S"],
-      operator: "contains_all",
+      operator: "has_all",
       args: ["path1", "path2"],
     },
   };

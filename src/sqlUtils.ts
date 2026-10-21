@@ -467,12 +467,12 @@ function isListColumn(sqlCol: string, meta: VcfMetadata | null): boolean {
     case "v.alt":
     case "v.id":
     case "v.filter":
+    case "formatLookup.value":
       return true;
     case "v.ref":
     case "v.pos":
     case "v.qual":
     case "contig.value":
-    case "formatLookup.value":
     case "gtType.value":
       return false;
   }
@@ -486,23 +486,19 @@ function isListColumn(sqlCol: string, meta: VcfMetadata | null): boolean {
   return fieldMeta.number.count !== 1;
 }
 
-function mapContainsAllQuery(
-  args: string | number | string[] | (string | null)[] | number[] | (number | null)[] | boolean,
+function mapHasAllQuery(
+  args: string[] | (string | null)[] | number[] | (number | null)[],
   sqlCol: string,
   meta: VcfMetadata | null,
   values: ParamsObject,
 ): PartialStatement {
-  if (!Array.isArray(args)) {
-    throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
-  }
-
   const col = quoteColumn(sqlCol);
   const isList = isListColumn(sqlCol, meta);
   const conditions: string[] = [];
 
   // duplicates add nothing to an "all of" check
-  for (const arg of new Set<string | number | null | undefined>(args)) {
-    if (arg === null || arg === undefined) {
+  for (const arg of new Set<string | number | null>(args)) {
+    if (arg === null) {
       conditions.push(
         isList ? `EXISTS (SELECT 1 FROM json_each(${col}) WHERE json_each.value IS NULL)` : `${col} IS NULL`,
       );
@@ -569,8 +565,11 @@ function mapOperatorToSql(
     return mapInQuery(args, sqlCol, operator, meta, values);
   }
 
-  if (operator === "contains_all") {
-    return mapContainsAllQuery(args, sqlCol, meta, values);
+  if (operator === "has_all") {
+    if (!Array.isArray(args)) {
+      throw new Error(`value '${args}' is of type '${typeof args}' instead of 'array'`);
+    }
+    return mapHasAllQuery(args, sqlCol, meta, values);
   }
 
   let partialStatement;
