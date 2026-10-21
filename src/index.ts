@@ -123,7 +123,7 @@ export type ComposedQueryOperator = "and" | "or";
 /**
  * - "==": equals
  * - "~=": like (uses the SQL LIKE operator)
- * - "!=": mot equals
+ * - "!=": not equals
  * - "in": value is present in a field with multiple values (not applicable for single value fields)
  * - "!in": value is not present in a field with multiple values (not applicable for single value fields)
  * - ">": Greater than
