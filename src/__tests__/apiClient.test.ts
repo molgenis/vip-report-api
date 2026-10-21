@@ -1809,6 +1809,74 @@ test("get - some records", async () => {
   });
 });
 
+test("get - some records with in query", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 0, "VIPP_S"],
+      operator: "in",
+      args: ["path1", "path2", "path3", "path4"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - some records with has_all query with extra value", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 0, "VIPP_S"],
+      operator: "has_all",
+      args: ["path1", "path2", "path3", "path4"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [],
+    page: { number: 0, size: 10, totalElements: 0 },
+    total: 2,
+  });
+});
+
+test("get - some records with has_all query", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 0, "VIPP_S"],
+      operator: "has_all",
+      args: ["path1", "path2", "path3"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
+test("get - some records with has_all query subset", async () => {
+  const params: RecordParams = {
+    sampleIds: [0, 1, 2],
+    query: {
+      selector: ["s", 0, "VIPP_S"],
+      operator: "has_all",
+      args: ["path1", "path2"],
+    },
+  };
+  const records = await api.getRecords(params);
+  expect(records).toEqual({
+    items: [record0],
+    page: { number: 0, size: 10, totalElements: 1 },
+    total: 2,
+  });
+});
+
 test("get - some records samples undefined", async () => {
   const params: RecordParams = {
     sampleIds: undefined,

@@ -120,7 +120,19 @@ export interface ComposedQuery {
 
 export type ComposedQueryOperator = "and" | "or";
 
-export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=";
+/**
+ * - "==": equals
+ * - "~=": like (uses the SQL LIKE operator)
+ * - "!=": not equals
+ * - "in": value is present in a field with multiple values (not applicable for single value fields)
+ * - "!in": value is not present in a field with multiple values (not applicable for single value fields)
+ * - ">": Greater than
+ * - ">=": Greater than or equal to
+ * - "<": Less than
+ * - "<=": Less than or equal to
+ * - "has_all": list of values are all present in a field with multiple values (not applicable for single value fields)
+ */
+export type QueryOperator = "==" | "~=" | "!=" | "in" | "!in" | ">" | ">=" | "<" | "<=" | "has_all";
 
 export interface QueryClause {
   operator: QueryOperator;
