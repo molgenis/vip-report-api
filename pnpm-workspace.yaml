@@ -3,3 +3,6 @@ minimumReleaseAge: 720
 minimumReleaseAgeExclude:
   - "@molgenis/vip-report-vcf"
 trustPolicy: no-downgrade
+overrides:
+  brace-expansion: 5.0.12
+  source-map-js: 1.2.2
