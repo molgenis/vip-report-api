@@ -12,8 +12,8 @@ importers:
         specifier: ^4.0.10
         version: 4.0.10
       sql.js:
-        specifier: ^1.13.0
-        version: 1.14.2
+        specifier: ^1.15.2
+        version: 1.15.2
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.5
@@ -808,8 +808,8 @@ packages:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
-  sql.js@1.14.2:
-    resolution: {integrity: sha512-3ZGPovObMFrdw79zrUHbfdE/DLIsy8jdNdssmMSQuRAymedU6q84asPt0kgiqrdMYlPegDItiIMfmIXzZnYFcw==}
+  sql.js@1.15.2:
+    resolution: {integrity: sha512-ZmMYFsZPZWDKIJUh3A5rdnpRV3hB/r7AijwAzSzLnfv/9CSx4obUmDtA8brAjWJWjGtUVh43nIEJ+6nl6HuOUg==}
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -1665,7 +1665,7 @@ snapshots:
 
   source-map-js@1.2.2: {}
 
-  sql.js@1.14.2: {}
+  sql.js@1.15.2: {}
 
   stackback@0.0.2: {}
 
